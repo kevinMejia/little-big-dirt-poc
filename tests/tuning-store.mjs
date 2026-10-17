@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {tuningFields,fieldPath,tuningValue,defaultTuningValue,setTuning,resetTuning,loadTuning,tuningKey,exportTuning,snapshotTuning,tuningDefaults} from '../TuningStore.js';
+import {tuningFields,fieldPath,tuningValue,defaultTuningValue,setTuning,resetTuning,loadTuning,tuningKey,exportTuning,exportEnvironmentTuning,snapshotTuning,tuningDefaults} from '../TuningStore.js';
 const map=new Map(),storage={getItem:key=>map.get(key)??null,setItem:(key,value)=>map.set(key,value)};
 assert.deepEqual(snapshotTuning(),tuningDefaults,'no saved settings preserves every file default, including out-of-range values');
 const field=tuningFields.find(field=>field.id==='drive.acceleration');
@@ -23,5 +23,17 @@ loadTuning(storage);assert.equal(tuningValue(dirty),22);assert.equal({}.polluted
 map.set(tuningKey(),'{broken');loadTuning(storage);assert.deepEqual(snapshotTuning(),initial,'invalid storage returns to defaults');
 setTuning(dirty,24,null);assert.equal(tuningValue(dirty),24,'blocked persistence does not block live tuning');
 resetTuning(undefined,storage);assert.deepEqual(snapshotTuning(),initial);
-for(const field of tuningFields)for(const vehicle of ['dirty','stinky'])for(const mode of ['hybrid','original'])assert.equal(typeof tuningValue(fieldPath(field,vehicle,mode)),'number',field.id+' exists in defaults');
+for(const field of tuningFields)for(const vehicle of ['dirty','stinky'])for(const mode of ['hybrid','original'])assert.equal(typeof tuningValue(fieldPath(field,vehicle,mode)),field.type==='boolean'?'boolean':'number',field.id+' exists in defaults');
 console.log('PASS: tuning defaults unchanged; independent live overrides, persistence, reset, real bounds, blocked/corrupt storage, safe whitelist and executable config export.');
+
+setTuning('worldAppearance.treeDensityPercent',50,storage);
+setTuning('worldAppearance.fogEnabled',true,storage);
+assert.equal(tuningValue('worldAppearance.treeDensityPercent'),50);
+assert.equal(tuningValue('worldAppearance.fogEnabled'),true);
+assert.equal(setTuning('worldAppearance.fogEnabled',1,storage),false,'boolean settings reject numeric values');
+loadTuning(storage);assert.equal(tuningValue('worldAppearance.treeDensityPercent'),50);assert.equal(tuningValue('worldAppearance.fogEnabled'),true);
+const environment=await import('data:text/javascript,'+encodeURIComponent(exportEnvironmentTuning()));
+assert.equal(environment.worldAppearance.treeDensityPercent,50);assert.equal(environment.worldAppearance.fogEnabled,true);
+assert(!exportTuning().includes('export const worldAppearance'),'vehicle export stays compatible with the existing vehicle config');
+resetTuning(undefined,storage);assert.deepEqual(snapshotTuning(),initial,'environment reset restores file defaults without changing vehicle defaults');
+console.log('PASS: environment numeric/boolean overrides use the shared store, survive reload, reset to file defaults and export separately from vehicle tuning.');

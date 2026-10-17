@@ -1,16 +1,8 @@
 import * as THREE from 'three';
 
-// Appearance only. Percentages clamp to 0–100; changes apply on page reload.
-export const worldAppearance={
-  fogEnabled:false,
-  distantHillsEnabled:true,
-  terrainColorVariation:25,
-  dirtPatchPercent:15,
-  rockyGroundPercent:8,
-  grassDetailDensity:60,
-  vegetationClusteringPercent:60,
-  hazeStrengthPercent:8,
-};
+// Preserve the existing public import while keeping defaults dependency-free.
+import {worldAppearance} from './WorldEnvironmentConfig.js';
+export {worldAppearance};
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
 const smooth=t=>{t=clamp(t);return t*t*(3-2*t);};
 const pct=v=>clamp(Number(v)||0,0,100)/100;
@@ -57,6 +49,7 @@ export function createTerrainPainter(height,halfSize,config=worldAppearance){
 function seeded(seed){return ()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};}
 export function createSceneryLayout(painter,halfSize,config=worldAppearance){
   const random=seeded(3184),cluster=pct(config.vegetationClusteringPercent),treeLimit=halfSize-18,rockLimit=halfSize-35;
+  const treeTarget=Math.round(175*clamp(config.treeDensityPercent??100,0,200)/100),rockTarget=Math.round(80*clamp(config.rockDensityPercent??100,0,200)/100);
   const centers=[],rockCenters=[],trees=[],rocks=[];
   for(let i=0;i<12;i++)centers.push({x:(random()-.5)*treeLimit*1.65,z:(random()-.5)*treeLimit*1.65});
   for(let tries=0;tries<1500&&rockCenters.length<8;tries++){
@@ -68,7 +61,7 @@ export function createSceneryLayout(painter,halfSize,config=worldAppearance){
     if(random()<cluster){const center=centers[Math.floor(random()*centers.length)],angle=random()*Math.PI*2,radius=Math.sqrt(random())*(13+random()*15);return {x:clamp(center.x+Math.cos(angle)*radius,-limit,limit),z:clamp(center.z+Math.sin(angle)*radius,-limit,limit)};}
     return {x:(random()*2-1)*limit,z:(random()*2-1)*limit};
   };
-  for(let tries=0;tries<20000&&trees.length<175;tries++){
+  for(let tries=0;tries<20000&&trees.length<treeTarget;tries++){
     const p=point(treeLimit,centers),field=landscapeFields(p.x,p.z);
     if(Math.hypot(p.x,p.z)<25||pathDistance(p.x,p.z)<8.5)continue;
     if(random()>1-cluster+cluster*(.12+.88*smooth((field.woods-.25)/.5)))continue;
@@ -77,7 +70,7 @@ export function createSceneryLayout(painter,halfSize,config=worldAppearance){
     if(trees.some(t=>Math.hypot(t.x-p.x,t.z-p.z)<2.1+scale+t.scale))continue;
     trees.push({...p,scale});
   }
-  for(let tries=0;tries<16000&&rocks.length<80;tries++){
+  for(let tries=0;tries<16000&&rocks.length<rockTarget;tries++){
     const p=point(rockLimit,rockCenters),radius=.45+random()*1.2;
     if(Math.hypot(p.x,p.z)<22||pathDistance(p.x,p.z)<7.5)continue;
     if(rocks.some(r=>Math.hypot(r.x-p.x,r.z-p.z)<r.radius+radius+1))continue;

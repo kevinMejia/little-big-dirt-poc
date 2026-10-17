@@ -37,3 +37,9 @@ for(const batch of details.group.children){assert.ok(batch.isInstancedMesh&&!bat
 const matrices=details.group.children[0].instanceMatrix.array.slice();details.dispose();
 const repeat=createGroundDetails(scene,height,220,painter,layout,{...worldAppearance,grassDetailDensity:2});assert.deepEqual(repeat.group.children[0].instanceMatrix.array,matrices);repeat.dispose();assert.equal(scene.children.length,0);
 console.log('PASS: deterministic clustered trees/rock patches, clear meadows/road, terrain palette and patch controls, horizon color seam, instanced detail budgets/terrain seating/cleanup; '+uniqueColors.size+' sampled ground colors.');
+
+const empty=createSceneryLayout(painter,220,{...worldAppearance,treeDensityPercent:0,rockDensityPercent:0});assert.equal(empty.trees.length,0);assert.equal(empty.rocks.length,0);
+const sparse=createSceneryLayout(painter,220,{...worldAppearance,treeDensityPercent:50,rockDensityPercent:50});assert.equal(sparse.trees.length,88);assert.equal(sparse.rocks.length,40);
+const dense=createSceneryLayout(painter,220,{...worldAppearance,treeDensityPercent:200,rockDensityPercent:200});assert.equal(dense.trees.length,350);assert.equal(dense.rocks.length,160);
+assert.deepEqual(createSceneryLayout(painter,220,{...worldAppearance,treeDensityPercent:500,rockDensityPercent:500}),dense,'density capped at 200%');
+console.log('PASS: unchanged original counts at defaults; zero/half/double density and supported upper cap affect actual scenery counts.');

@@ -17,7 +17,7 @@ owns its typing. Key releases always reach the driving handlers.
 
 ## Defaults and persistence
 
-- `VehicleConfig.js` remains the source of every default. No defaults changed.
+- `VehicleConfig.js` remains the source of vehicle defaults; `WorldEnvironmentConfig.js` holds environment defaults. No defaults changed.
 - `TuningStore.js` whitelists implemented settings and mutates those same exported
   objects. It introduces no independent physics parameters or controller.
 - The vehicle selector chooses whose tuning to edit; it does not switch or reset
@@ -138,3 +138,37 @@ verify the initial hide rules precede the HUD markup. VehicleConfig.js and all
 vehicle models/controllers are unchanged by this fix.
 
 [Verified display toggles](docs/screenshots/display-visibility.png).
+
+## Environment settings
+
+Settings → Environment exposes global tree/rock density, grass/flower/pebble
+ density, vegetation clustering, base terrain color variation, dirt and rocky
+ ground coverage, fog, haze strength and distant hills. Existing environment
+ defaults moved from WorldAppearance.js to the dependency-free
+ WorldEnvironmentConfig.js; WorldAppearance.js re-exports that same object.
+ The two new density multipliers default to 100%, retaining the original
+ 175-tree and 80-rock targets. Their supported range is 0–200%; safe placement
+ and ramp exclusions can reduce the final counts.
+
+These settings reuse TuningStore's existing override storage, validation and
+ resets. They apply to both vehicles in Play, not lab/showroom test layouts.
+ They are setup-time controls: use **Reload Play to apply environment** explicitly
+ after editing; this rebuilds scenery and resets the vehicle position. Sliders
+ never reload the page automatically. Ground-debris controls in World Interactions
+ continue updating live. Environment changes in another page apply the next time
+ Play is loaded. Resetting environment values also requires that reload.
+
+**Export environment settings** downloads WorldEnvironmentConfig.tuned.js.
+ VehicleConfig.js export stays vehicle-only. Reset all tuning includes environment
+ overrides but still preserves HUD/guide/input preferences.
+
+Verified actual zero/half/double scenery counts, clamping, unchanged default
+ layout, persisted numeric/boolean overrides and separate executable exports.
+ Browser testing set tree, rock and grass density to zero, applied the reload and
+ visually confirmed the rebuilt world had no trees, boulders or decorative grass;
+ resetting those three values and reloading restored the original scenery.
+ Play explicitly imports the shared override store before constructing scenery.
+ No vehicle physics defaults were changed. The full project check passes.
+
+[Environment controls](docs/screenshots/environment-settings.png) ·
+[Zero-density verification](docs/screenshots/environment-zero-density.png).

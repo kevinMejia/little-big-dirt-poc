@@ -1,4 +1,4 @@
-import {tuningFields,fieldPath,tuningValue,defaultTuningValue,setTuning,resetTuning,exportTuning} from './TuningStore.js';
+import {tuningFields,fieldPath,tuningValue,defaultTuningValue,setTuning,resetTuning,exportTuning,exportEnvironmentTuning} from './TuningStore.js';
 import {readGamePreferences,saveGamePreference,resetGamePreference,gamePreferenceStorage} from './GamePreferences.js?v=central-settings-3';
 import {settingsPlacement} from './SettingsPlacement.js';
 
@@ -21,7 +21,8 @@ function createSettingsPanel(){
  const isPlay=()=>!!document.querySelector('#physicsMode');
  const isLab=()=>location.pathname.endsWith('/jumps.html');
  const mode=()=>isPlay()&&document.querySelector('#physicsMode').value==='original'?'original':'hybrid';
- const report=saved=>{$('#status').textContent=saved?'Saved automatically · changes are live where applicable.':'Applied for this page; browser storage is unavailable.';};
+ const report=saved=>{$('#status').textContent=saved?'Saved automatically.':'Applied for this page; browser storage is unavailable.';};
+ function downloadConfiguration(filename,source){const url=URL.createObjectURL(new Blob([source],{type:'text/javascript'})),link=document.createElement('a');link.href=url;link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
  function render(){
   const expanded=new Set([...root.querySelectorAll('details[open]')].map(element=>element.dataset.group));
   const first=!root.querySelector('details');
@@ -35,10 +36,20 @@ function createSettingsPanel(){
    const section=document.createElement('div');section.className='section';details.append(summary,section);main.append(details);
    if(group==='Suspension and Body'){const note=document.createElement('p');note.textContent='Body feedback is visual. Hybrid terrain alignment supplies grounded stability; no adjustable rollover or center-of-mass system is active.';section.append(note);}
    if(group==='World Interactions'&&!isPlay()){const note=document.createElement('p');note.textContent='Saved for Play. This environment has no interactive trees, rocks or ground debris.';section.append(note);}
-   if(group==='Camera and Graphics'){const note=document.createElement('p');note.textContent='Only live graphics settings are shown. Terrain colors, textures and shadow quality are created at scene setup. Showroom lighting stays in its local visual controls.';section.append(note);}
+   if(group==='Camera and Graphics'){const note=document.createElement('p');note.textContent='Live graphics controls. Terrain colors and scenery density are in Environment and require reloading Play. Showroom lighting stays in its local visual controls.';section.append(note);}
+   if(group==='Environment'){
+    const note=document.createElement('p');note.textContent='Global Play environment settings, shared by both vehicles. Saved immediately; changes apply when Play reloads and rebuilds scenery. Reload resets the vehicle position. Lab and showroom layouts stay independent. Live ground-debris density is in World Interactions.';section.append(note);
+    if(isPlay()){const apply=document.createElement('button');apply.textContent='Reload Play to apply environment';apply.onclick=()=>location.reload();section.append(apply);}
+    const exportButton=document.createElement('button');exportButton.textContent='Export environment settings';exportButton.onclick=()=>downloadConfiguration('WorldEnvironmentConfig.tuned.js',exportEnvironmentTuning());section.append(exportButton);
+   }
    const paths=[];
    for(const field of fields){
     const path=fieldPath(field,vehicle.value,mode());paths.push(path);
+    if(field.type==='boolean'){
+     const row=document.createElement('div');row.className='field';const label=document.createElement('label');label.className='check';const input=document.createElement('input');input.type='checkbox';input.setAttribute('aria-label',field.label);input.checked=tuningValue(path);label.append(input,document.createTextNode(field.label));
+     const description=document.createElement('p');description.textContent=field.description;const reset=document.createElement('button');reset.textContent='Reset';reset.setAttribute('aria-label','Reset '+field.label);
+     input.onchange=()=>{const saved=setTuning(path,input.checked);report(saved);if(saved)$('#status').textContent='Environment saved · reload Play to apply.';};reset.onclick=()=>{report(resetTuning([path]));input.checked=tuningValue(path);};row.append(label,description,reset);section.append(row);continue;
+    }
     const row=document.createElement('div');row.className='field';
     const label=document.createElement('label');const id='tune-'+field.id.replaceAll('.','-');label.htmlFor=id;label.textContent=field.label;
     const description=document.createElement('p');description.textContent=field.description+(field.scope==='camera'&&!isPlay()?' Saved for Play; this view uses its own camera.':'');
@@ -83,7 +94,7 @@ function createSettingsPanel(){
  $('#reset-all').onclick=()=>{$('#confirm').hidden=false;$('#confirm-reset').focus();};
  $('#cancel-reset').onclick=()=>{$('#confirm').hidden=true;};
  $('#confirm-reset').onclick=()=>{report(resetTuning());$('#confirm').hidden=true;render();};
- $('#export').onclick=()=>{const url=URL.createObjectURL(new Blob([exportTuning()],{type:'text/javascript'})),link=document.createElement('a');link.href=url;link.download='VehicleConfig.tuned.js';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$('#status').textContent='Exported current values. Review before replacing your configuration file.';};
+ $('#export').onclick=()=>{downloadConfiguration('VehicleConfig.tuned.js',exportTuning());$('#status').textContent='Exported current vehicle values. Environment has its own export in the Environment section.';};
  function place(){
   if(!dialog.open)return;
   const css=getComputedStyle(host),viewport=window.visualViewport;

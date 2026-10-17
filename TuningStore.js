@@ -1,4 +1,6 @@
-import * as config from './VehicleConfig.js';
+import * as vehicleDefaults from './VehicleConfig.js';
+import {worldAppearance} from './WorldEnvironmentConfig.js';
+const config={...vehicleDefaults,worldAppearance};
 
 // VehicleConfig.js owns defaults. This module stores only explicit user overrides.
 export const tuningConfig=config;
@@ -100,6 +102,20 @@ add('Camera and Graphics','visualPolishConfig',[
  ['dustIntensityPercent','Dust intensity',0,100,1,'%','Both vehicles: driving and landing dust opacity and emission.'],
  ['tireTrackOpacityPercent','Tire track opacity',0,100,1,'%','Both vehicles: ground trail visibility.'],
 ]);
+add('Environment','worldAppearance',[
+ ['treeDensityPercent','Tree density',0,200,5,'%','Play: 100% targets 175 trees; 0 removes them. Placement/ramp exclusions may reduce counts. Requires reload.'],
+ ['rockDensityPercent','Rock density',0,200,5,'%','Play: 100% targets 80 boulders; 0 removes them. Changes interactive rocks as well as visuals. Requires reload.'],
+ ['grassDetailDensity','Grass and detail density',0,100,1,'%','Play: scales decorative grass, flowers and pebbles together. 100% budgets 10,000 grass, 700 flowers and 450 pebbles. Requires reload.'],
+ ['vegetationClusteringPercent','Vegetation clustering',0,100,1,'%','Play: higher groups trees and rocks into patches; lower distributes them more evenly. Requires reload.'],
+ ['terrainColorVariation','Terrain color variation',0,100,1,'%','Play: higher varies grass colors more strongly. Does not change terrain height. Requires reload.'],
+ ['dirtPatchPercent','Dirt patch coverage',0,100,1,'%','Play: dirt-colored coverage; roads and steep slopes also contribute. Requires reload.'],
+ ['rockyGroundPercent','Rocky ground coverage',0,100,1,'%','Play: stone-colored ground coverage, separate from boulder density. Requires reload.'],
+ ['hazeStrengthPercent','Haze strength',0,100,1,'%','Play: fog beyond 350 m. Enable distant fog for this to take effect. Requires reload.'],
+],{scope:'environment'});
+for(const [key,label,description] of [
+ ['fogEnabled','Distant fog','Play: enable distant haze; Haze strength controls its intensity. Requires reload.'],
+ ['distantHillsEnabled','Distant hills','Play: decorative horizon hills, without colliders. Requires reload.'],
+])tuningFields.push({id:'worldAppearance.'+key,root:'worldAppearance',key,label,description,group:'Environment',type:'boolean',mode:'both',scope:'environment',vehicle:false});
 export function fieldPath(field,vehicle='dirty',mode='hybrid'){
  const name=vehicle==='dirty'?'backhoe':'garbageTruck';
  if(field.root==='drive')return `${mode==='original'?'originalDriveConfig':'arcadeHandlingConfig'}.${vehicle}.${field.key}`;
@@ -114,8 +130,9 @@ let overrides={};
 function notify(paths){if(typeof window!=='undefined')window.dispatchEvent(new CustomEvent('lbd:tuning-change',{detail:{paths}}));}
 function persist(storage=tuningStorage()){try{storage.setItem(tuningKey(),JSON.stringify({version:1,overrides}));return true;}catch{return false;}}
 export function setTuning(path,value,storage=tuningStorage()){
- const field=allowed.get(path);if(!field||typeof value!=='number'||!Number.isFinite(value))return false;
- if(field.hardMin!==null)value=Math.max(field.hardMin,value);if(field.hardMax!==null)value=Math.min(field.hardMax,value);
+ const field=allowed.get(path);if(!field)return false;
+ if(field.type==='boolean'){if(typeof value!=='boolean')return false;}
+ else{if(typeof value!=='number'||!Number.isFinite(value))return false;if(field.hardMin!==null)value=Math.max(field.hardMin,value);if(field.hardMax!==null)value=Math.min(field.hardMax,value);}
  assign(path,value);
  if(value===defaultTuningValue(path))delete overrides[path];else overrides[path]=value;
  const saved=persist(storage);notify([path]);return saved;
@@ -129,12 +146,15 @@ export function loadTuning(storage=tuningStorage()){
  // Clear old overrides before accepting a replacement from another page/tab.
  for(const path of Object.keys(overrides))assign(path,defaultTuningValue(path));overrides={};
  try{const saved=JSON.parse(storage.getItem(tuningKey()));if(saved?.version===1)for(const [path,value] of Object.entries(saved.overrides??{})){
-  const field=allowed.get(path);if(!field||typeof value!=='number'||!Number.isFinite(value))continue;
+  const field=allowed.get(path);if(!field)continue;
+  if(field.type==='boolean'){if(typeof value!=='boolean')continue;assign(path,value);overrides[path]=value;continue;}
+  if(typeof value!=='number'||!Number.isFinite(value))continue;
   const bounded=Math.max(field.hardMin??-Infinity,Math.min(field.hardMax??Infinity,value));assign(path,bounded);overrides[path]=bounded;
  }}catch{/* Unavailable or corrupt storage leaves file defaults intact. */}
  return [...allowed.keys()].filter(path=>before.get(path)!==tuningValue(path));
 }
-export function exportTuning(){return '// Exported current configuration. Review before replacing VehicleConfig.js.\n'+Object.entries(config).map(([key,value])=>`export const ${key} = ${JSON.stringify(value,null,2)};`).join('\n\n')+'\n';}
+export function exportTuning(){return '// Exported current configuration. Review before replacing VehicleConfig.js.\n'+Object.entries(vehicleDefaults).map(([key,value])=>`export const ${key} = ${JSON.stringify(value,null,2)};`).join('\n\n')+'\n';}
+export function exportEnvironmentTuning(){return '// Global environment values. Review before replacing WorldEnvironmentConfig.js.\nexport const worldAppearance = '+JSON.stringify(worldAppearance,null,2)+';\n';}
 export function snapshotTuning(){return clone(config);}
 if(typeof window!=='undefined'){
  loadTuning();

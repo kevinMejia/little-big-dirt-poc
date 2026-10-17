@@ -109,7 +109,9 @@ import { TreeCollisionSystem } from './TreeCollisionSystem.js?v=rapier-world-2';
 import { RockInteractionSystem } from './RockInteractionSystem.js';
 import { EnvironmentAssets } from './EnvironmentAssets.js';
 import { EnvironmentWorld } from './EnvironmentWorld.js';
-import { worldAppearance, createWorldAtmosphere, createTerrainPainter, createSceneryLayout, createGroundDetails } from './WorldAppearance.js';
+// Apply shared saved overrides before constructing any environment objects.
+import './TuningStore.js';
+import { worldAppearance, createWorldAtmosphere, createTerrainPainter, createSceneryLayout, createGroundDetails } from './WorldAppearance.js?v=environment-settings-1';
 
 import { cameraSettings, groundDebrisConfig, jumpConfig } from './VehicleConfig.js';
 
