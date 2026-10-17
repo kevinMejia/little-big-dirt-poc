@@ -36,6 +36,9 @@ def verify():
             for url in parser.urls:local(url,built)
             for url in re.findall(r'''(?:from\s*|import\s*)['"]([^'"]+)['"]''',text):
                 if url.startswith('.'):local(url,built)
+            scripts=[text] if built.suffix=='.js' else re.findall(r'<script\s+type="module"[^>]*>([\s\S]*?)</script>',text)
+            for script in scripts:
+                subprocess.run(['node','--input-type=module','--check'],input=script,text=True,check=True,capture_output=True)
         if built.suffix=='.glb':
             raw=built.read_bytes();magic,version,total=struct.unpack_from('<4sII',raw)
             assert magic==b'glTF' and version==2 and total==len(raw),relative

@@ -147,3 +147,49 @@ HTTPS URL on a real iPhone/iPad:
 This deployment setup does not change driving physics, suspension, vehicle models,
 terrain, collisions or touch behavior. The approved environment integration remains
 pending rather than being included in these deployment changes.
+
+## Camera, visual body feedback and soft boundaries
+
+Drag an empty area of the game canvas with a mouse or one finger to orbit the
+selected vehicle. Driving buttons retain their own pointer IDs, so another finger
+can still accelerate or steer. Vertical orbit is limited to elevations .12–1.15
+radians; the rendered camera stays at least 1.3 units above sampled terrain.
+
+In VehicleConfig.js, cameraSettings.cameraReturnSpeedPercent defaults to 50.
+Released orbit offsets are multiplied by exp(-8 * percent/100 * dt). At 0 the view
+holds its offset; at 50 the return rate is 4/s (95% offset decay in .75 seconds);
+at 100 it is 8/s (95% in .375 seconds). The existing camera-follow interpolation
+still smooths its final position. Reset returns to the default chase view.
+
+Each vehicle exposes bodyRollPercent (25), bodyPitchPercent (20),
+suspensionBouncePercent (20), boundaryBouncePercent (25) and
+boundaryBodyRockPercent (30). These settings do not change collider orientation.
+VehicleFeedback.js is a small math/feedback helper, not a rigidbody suspension engine.
+
+- Body roll scales a maximum 12-degree visual turn angle, reached at lateral
+  acceleration 12 units/s². At 25%, that is up to 3 degrees of outward roll.
+- Pitch scales a maximum 10-degree acceleration/braking angle, reached at
+  longitudinal acceleration magnitude 12 units/s². At 20%, that is up to 2 degrees.
+- Bounce scales a .3-unit maximum terrain-response heave target, plus up to
+  5 degrees of terrain rocking. At 20%, these are .06 units and 1 degree.
+- A bounded damped spring smooths and settles these visual targets with substeps
+  no larger than 1/120 second. The visual parent receives feedback after terrain
+  alignment; wheels compensate through their own parent transforms. Hydraulic
+  updates run afterward. Logical position/heading and the chase target do not bounce.
+- The old boundary launch is replaced by collision-normal velocity removal and
+  a small inward rebound: min(3 units/s, incoming normal speed * bouncePercent/100).
+  The vehicle's existing capsule bounds are kept inside the map's boundary inset.
+  Oblique contacts preserve tangential motion, with residual motion passing through
+  the existing tree/rock contact routines and fading smoothly. Release/Space/E brakes
+  also stop that motion. A latch prevents repeated impulses from held outward input;
+  clear the barrier and release or drive away to rearm it.
+- Boundary body rocking scales a short spring impulse (at 100%, up to 2 units/s
+  compression velocity and 1.5 rad/s pitch/roll velocity), normalized by impact speed
+  up to 10 units/s. It settles without moving the logical collider. Setting the
+  corresponding percentage to zero disables each visual/rebound contribution.
+
+Visual front-wheel steering uses the same turn sign as the heading update for both
+vehicles; reverse preserves the normal reversed yaw response. Model/asset files and
+the existing hill, release-stop and obstacle thresholds are unchanged. Regression
+coverage includes frame-rate-independent return/feedback, every wall/corner, reverse,
+rebound caps, held-wall input, settling, and ground contact using the real GLB pivots.

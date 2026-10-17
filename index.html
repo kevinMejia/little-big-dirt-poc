@@ -163,10 +163,6 @@ const configs=[{hill:vehicleConfig.backhoe,name:'Backhoe Loader',mass:8,accel:11
 
 let index=0,vehicle,position=new THREE.Vector3(start.x,0,start.z),heading=0,speed=0,steer=0,tilt=0;
 
-
-
-
-
 const vehicleRoot=new THREE.Group();scene.add(vehicleRoot);
 const vehicleVisual=new THREE.Group();vehicleRoot.add(vehicleVisual);
 const bodyFeedback=new VehicleFeedback(),boundaryMotion=new SoftBoundary();
@@ -331,7 +327,7 @@ const model=vehicle.userData.controller;
 
 if(model){model.setSteering(-steer*.35);if(!emergencyBrake)model.setWheelRotation(model.wheelAngle+speed*dt/(model.wheelReferenceRadius??.65))}
 
-for(const pivot of (model?.wheels?model.wheels.map(w=>w.steering||w):vehicle.children)){const w=pivot.userData.wheel;if(!w)continue;const contact=vehicleRoot.localToWorld(new THREE.Vector3(w.x,0,w.z));contact.y=height(contact.x,contact.z)-.035+w.r;pivot.position.copy(pivot.parent.worldToLocal(contact));if(!model){pivot.rotation.y=w.z>0?-steer*.35:0;if(!emergencyBrake)pivot.userData.roll.rotation.x+=speed*dt/w.r}}
+for(const pivot of (model?.wheels?model.wheels.map(w=>w.steering||w):vehicle.children)){const w=pivot.userData.wheel;if(!w)continue;groundVisualWheel(pivot,vehicleRoot,height);if(!model){pivot.rotation.y=w.z>0?-steer*.35:0;if(!emergencyBrake)pivot.userData.roll.rotation.x+=speed*dt/w.r}}
 
 if(model)model.update(dt);
 
