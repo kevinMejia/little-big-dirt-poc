@@ -96,7 +96,8 @@ import { DrivingInput } from './DrivingInput.js';
 import { applyReleaseDeceleration, getSpeedMultiplier } from './VehicleMotion.js';
 import { GroundDebrisSystem, DebrisWheelContacts } from './GroundDebrisSystem.js';
 import { createDebrisDebug } from './GroundDebrisDebug.js';
-import { VehicleFeedback, SoftBoundary, cameraReturnDecay, boundaryFlightProgress } from './VehicleFeedback.js';
+import { BoundaryCannon } from './BoundaryCannon.js';
+import { VehicleFeedback, SoftBoundary, cameraReturnDecay } from './VehicleFeedback.js';
 
 const hillPhysics=new HillSpeedPhysics(height);
 
@@ -120,7 +121,7 @@ function groundNormal(x,z){const e=.7;return new THREE.Vector3(height(x-e,z)-hei
 
 // Map distances are in world units. The terrain spans -220 to +220 on each axis.
 
-const mapSettings={halfSize:220,boundaryInset:15,launchHeightFraction:.2,landingWidthFraction:.2,flightSeconds:3};
+const mapSettings={halfSize:220,boundaryInset:15};
 
 const world=mapSettings.halfSize,segments=220,geo=new THREE.PlaneGeometry(world*2,world*2,segments,segments);geo.rotateX(-Math.PI/2);const pos=geo.attributes.position,colors=[];
 
@@ -181,10 +182,10 @@ let index=0,vehicle,position=new THREE.Vector3(start.x,0,start.z),heading=0,spee
 
 const vehicleRoot=new THREE.Group();scene.add(vehicleRoot);
 const vehicleVisual=new THREE.Group();vehicleRoot.add(vehicleVisual);
-const bodyFeedback=new VehicleFeedback(),boundaryMotion=new SoftBoundary();let flight=null;
+const bodyFeedback=new VehicleFeedback(),boundaryMotion=new SoftBoundary(),boundaryCannon=new BoundaryCannon();let flight=null;
 function launchFromBoundary(){
- const range=world*mapSettings.landingWidthFraction,destination=new THREE.Vector3((rand()*2-1)*range,0,(rand()*2-1)*range);destination.y=height(destination.x,destination.z)-.09;
- flight={from:position.clone(),to:destination,elapsed:0};heading=Math.atan2(destination.x-position.x,destination.z-position.z);speed=0;steer=0;hillPhysics.reset();bodyFeedback.reset();boundaryMotion.reset();
+ if(!boundaryCannon.launch(position,configs[index].hill.boundaryCannon))return false;
+ flight=boundaryCannon.flight;hillPhysics.reset();bodyFeedback.reset();boundaryMotion.reset();return true;
 }
 
 // Orbit the existing chase camera. Only canvas pointers can own an orbit;
@@ -199,7 +200,7 @@ addEventListener('blur',releaseOrbit);addEventListener('resize',releaseOrbit);ad
 
 function choose(i){hillPhysics.reset();bodyFeedback.reset();boundaryMotion.reset();vehicleVisual.position.set(0,0,0);vehicleVisual.rotation.set(0,0,0);index=i; if(vehicle){if(vehicle.userData.controller)vehicle.userData.controller.dispose();else{vehicleVisual.remove(vehicle);vehicle.traverse(o=>{if(o.isMesh)o.geometry.dispose()})}}vehicle=configs[i].build();vehicleVisual.add(vehicle);if(i===1){for(const x of [-.8,.8]){box(vehicle,.35,.22,.12,x,index===0?1.7:1.85,index===0?2.38:3.43,white);box(vehicle,.3,.18,.12,x,1.35,index===0?-2.4:-3.13,red)}box(vehicle,.16,.85,.16,.7,3.7,-.5,metal);}document.querySelector('#vehicleName').textContent=configs[i].name;document.querySelector('#backhoeBtn').classList.toggle('active',i===0);document.querySelector('#garbageBtn').classList.toggle('active',i===1);speed=0}
 
-function reset(){flight=null;hillPhysics.reset();bodyFeedback.reset();boundaryMotion.reset();releaseOrbit();cameraOrbit.yaw=cameraOrbit.pitch=0;position.set(0,height(0,0),0);heading=0;speed=0;steer=0}
+function reset(){flight=null;boundaryCannon.reset();hillPhysics.reset();bodyFeedback.reset();boundaryMotion.reset();releaseOrbit();cameraOrbit.yaw=cameraOrbit.pitch=0;position.set(0,height(0,0),0);heading=0;speed=0;steer=0}
 
 choose(0);reset();
 
@@ -272,6 +273,11 @@ function treeImpactSound(strength,kind='wobble'){
 
 }
 
+function landingSound(impact){
+ if(!audio||audio.state!=='running')return;
+ try{const now=audio.currentTime,osc=audio.createOscillator(),gain=audio.createGain();osc.type='sine';osc.frequency.setValueAtTime(95,now);osc.frequency.exponentialRampToValueAtTime(38,now+.22);gain.gain.setValueAtTime(Math.min(.06,impact*.002),now);gain.gain.exponentialRampToValueAtTime(.0001,now+.3);osc.connect(gain);gain.connect(audio.destination);osc.start(now);osc.stop(now+.31);osc.onended=()=>{osc.disconnect();gain.disconnect();};}catch(error){}
+}
+
 function honk(){try{audio??=new (window.AudioContext||window.webkitAudioContext)();const osc=audio.createOscillator(),gain=audio.createGain();osc.type='sawtooth';osc.frequency.value=index===0?310:195;gain.gain.setValueAtTime(.11,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+.24);osc.connect(gain);gain.connect(audio.destination);osc.start();osc.stop(audio.currentTime+.25)}catch(e){}}
 
 const clock=new THREE.Clock(),camTarget=new THREE.Vector3(),targetPos=new THREE.Vector3(),up=new THREE.Vector3(0,1,0);
@@ -289,6 +295,7 @@ let slope=0;
 
 
 
+boundaryCannon.rearm(position,world-mapSettings.boundaryInset);
 if(!flight){
 let thrust=forward?1:back?-1:0;
 
@@ -318,7 +325,7 @@ for(let step=0;step<movementSteps;step++){
  speed=treeCollisions.move(position,heading,speed,movementDt,cfg.collision,{baseMaxSpeed:cfg.max,treeKnockdownSpeedPercent:cfg.hill.treeKnockdownSpeedPercent});
  speed=rockInteractions.resolveMovement(position,startX,startZ,heading,speed,movementDt,cfg.collision,{baseMaxSpeed:cfg.max,...cfg.hill});
  const contact=boundaryMotion.resolve(position,heading,speed,world-mapSettings.boundaryInset,cfg.collision,cfg.hill,thrust);
- if(contact.nx||contact.nz){position.y=height(position.x,position.z)-.09;launchFromBoundary();break;}
+ if(contact.nx||contact.nz){position.y=height(position.x,position.z)-.09;if(!launchFromBoundary())speed=contact.speed;break;}
 }
 
 hillPhysics.recordTravel(position.x-previousX,position.z-previousZ);
@@ -326,9 +333,16 @@ hillPhysics.recordTravel(position.x-previousX,position.z-previousZ);
 position.y=height(position.x,position.z)-.09;
 }
 if(flight){
- flight.elapsed+=dt;const state=boundaryFlightProgress(flight.elapsed,mapSettings.flightSeconds);
- position.lerpVectors(flight.from,flight.to,state.progress);position.y+=state.arc*world*2*mapSettings.launchHeightFraction;
- if(state.landed){flight=null;speed=0;hillPhysics.reset();bodyFeedback.reset();bodyFeedback.landingImpact(cfg.hill);}
+ const state=boundaryCannon.update(dt,position,height,steer,world-mapSettings.boundaryInset);
+ flight=boundaryCannon.flight;
+ if(state.unrecoverable){reset();}
+ else if(state.landed){
+   speed=state.speed;heading=state.heading;hillPhysics.reset();bodyFeedback.reset();bodyFeedback.landingImpact(cfg.hill,state.impact,state.bounce);
+   rockInteractions.puff(position.x,position.y+.25,position.z,Math.min(24,8+Math.round(state.impact*.4)));
+   landingSound(state.impact);
+ }else{
+   speed=state.speed;const delta=Math.atan2(Math.sin(state.heading-heading),Math.cos(state.heading-heading));heading+=delta*(1-Math.exp(-1.8*dt));
+ }
 }
 
 vehicleRoot.position.copy(position);vehicleRoot.rotation.order='YXZ';vehicleRoot.rotation.y=heading;
@@ -337,30 +351,31 @@ const frontH=height(position.x+Math.sin(heading)*2,position.z+Math.cos(heading)*
 
 const rightH=height(position.x+Math.cos(heading)*1.3,position.z-Math.sin(heading)*1.3),leftH=height(position.x-Math.cos(heading)*1.3,position.z+Math.sin(heading)*1.3);
 
-vehicleRoot.rotation.x=THREE.MathUtils.damp(vehicleRoot.rotation.x,Math.atan2(backH-frontH,4),5,dt);
+vehicleRoot.rotation.x=THREE.MathUtils.damp(vehicleRoot.rotation.x,flight?0:Math.atan2(backH-frontH,4),5,dt);
 
-vehicleRoot.rotation.z=THREE.MathUtils.damp(vehicleRoot.rotation.z,Math.atan2(rightH-leftH,2.6),9,dt);
+vehicleRoot.rotation.z=THREE.MathUtils.damp(vehicleRoot.rotation.z,flight?0:Math.atan2(rightH-leftH,2.6),9,dt);
 
 const debrisTargets=debrisContacts.sample(vehicle,vehicleRoot,groundDebris,cfg.hill,!!flight);
 // Body feedback follows terrain alignment on a visual-only parent.
 if(!flight)bodyFeedback.update(dt,{speed,yawRate:(heading-previousHeading)/Math.max(dt,.001),groundY:position.y,groundPitch:vehicleRoot.rotation.x,groundRoll:vehicleRoot.rotation.z,config:cfg.hill,debris:debrisTargets});
 vehicleVisual.position.y=bodyFeedback.heave.value;vehicleVisual.rotation.set(bodyFeedback.pitch.value,0,bodyFeedback.roll.value);
+if(flight){vehicleVisual.position.y=0;vehicleVisual.rotation.x=.12*Math.tanh(flight.vy/12)+Math.sin(flight.elapsed*1.6)*.18*flight.spin;vehicleVisual.rotation.z=Math.sin(flight.elapsed*1.8)*.25*flight.spin;}
 // Ground each wheel in its actual parent space, compensating body movement.
 
 vehicleRoot.updateMatrixWorld(true);
 
 const model=vehicle.userData.controller;
 
-if(model){model.setSteering(-steer*.35);if(!emergencyBrake&&!flight)model.setWheelRotation(model.wheelAngle+speed*dt/(model.wheelReferenceRadius??.65))}
+if(model){model.setSteering(-steer*.35);if(!emergencyBrake)model.setWheelRotation(model.wheelAngle+speed*dt/(model.wheelReferenceRadius??.65))}
 
-for(const {pivot} of debrisContacts.wheels){const w=pivot.userData.wheel;if(!w)continue;if(flight){const center=vehicleRoot.localToWorld(new THREE.Vector3(w.x,w.r,w.z));pivot.position.copy(pivot.parent.worldToLocal(center));}else {/* Independent contacts grounded below. */}if(!model){pivot.rotation.y=w.z>0?-steer*.35:0;if(!emergencyBrake&&!flight)pivot.userData.roll.rotation.x+=speed*dt/w.r}}
+for(const {pivot} of debrisContacts.wheels){const w=pivot.userData.wheel;if(!w)continue;if(flight){const center=vehicleRoot.localToWorld(new THREE.Vector3(w.x,w.r-.12,w.z));pivot.position.copy(pivot.parent.worldToLocal(center));}else {/* Independent contacts grounded below. */}if(!model){pivot.rotation.y=w.z>0?-steer*.35:0;if(!emergencyBrake)pivot.userData.roll.rotation.x+=speed*dt/w.r}}
 
 if(!flight)debrisContacts.ground(vehicleRoot,height,bodyFeedback);
 debrisDebug?.update(dt,vehicleRoot,bodyFeedback);
 if(model)model.update(dt);
 environmentWorld?.update();
 
-document.querySelector('#status').textContent=flight?'BOUNDARY BOOST · Returning to the middle!':bodyFeedback.landingSeconds>0?'Soft landing · Settling…':emergencyBrake?'EMERGENCY BRAKE · ENGAGED':'Keyboard or gamepad supported';
+document.querySelector('#status').textContent=flight?'BOUNDARY CANNON · Flying!':bodyFeedback.landingSeconds>0?'Soft landing · Settling…':emergencyBrake?'EMERGENCY BRAKE · ENGAGED':'Keyboard or gamepad supported';
 
 if(cameraOrbit.pointer===null){const decay=cameraReturnDecay(cameraSettings.cameraReturnSpeedPercent,dt);cameraOrbit.yaw*=decay;cameraOrbit.pitch*=decay;}
 const orbitHeading=heading+cameraOrbit.yaw,elevation=chaseElevation+cameraOrbit.pitch;

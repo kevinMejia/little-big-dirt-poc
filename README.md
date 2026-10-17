@@ -186,18 +186,37 @@ VehicleFeedback.js is a small math/feedback helper, not a rigidbody suspension e
   no larger than 1/120 second. The visual parent receives feedback after terrain
   alignment; wheels compensate through their own parent transforms. Hydraulic
   updates run afterward. Logical position/heading and the chase target do not bounce.
-- Reaching the boundary launches the vehicle back toward the central 20% of the
-  map, preserving the original 3-second flight and 20%-of-map-width arc height.
-  Flight progress eases at departure and arrival instead of hitting the ground
-  with an abrupt vertical velocity change. Tree/rock ground collisions are bypassed
-  while airborne; parked/grounded collisions remain unchanged.
-- Landing adds a short chassis compression, rebound and rocking reaction on the
-  visual parent. Wheels fit the ground as the sprung body settles. Boundary bounce
-  percent scales the landing compression impulse: min(3, 6 * percent/100) units/s.
-  Boundary body rock percent scales up to .8 rad/s pitch impulse. Vertical damping
-  is reduced briefly for 1.8 seconds to allow a visible rebound before normal settling.
-  These impulses never move the logical collider or restart a parked vehicle.
-  Setting each percentage to zero disables its landing contribution.
+- Reaching the existing boundary triggers `BoundaryCannon.js`: a velocity-based
+  projectile, not a target position or timed animation. `SoftBoundary.resolve`
+  retains the original vehicle-footprint boundary detection. The cannon owns
+  logical position only while airborne; grounded driving, hills, braking and
+  obstacle response are skipped until touchdown. Tree/rock updates continue.
+- Each vehicle has its own `boundaryCannon` object in `VehicleConfig.js`:
+  `enabled`, `horizontalLaunchSpeed` (Dirty 45, Stinky 45),
+  `verticalLaunchSpeed` (28 / 29), `launchSpinPercent` (20 / 15),
+  `airControlPercent` (15 / 15), `landingBouncePercent` (30 / 38).
+  Speeds use world units/second. Horizontal speed is bounded to 8–65 and vertical
+  speed to 8–40; percentages are bounded to 0–100. Disabled cannon retains the wall.
+- Gravity is 12 units/s², with substeps <=1/120 second and exact constant-gravity
+  position integration within each substep. On level ground Dirty's default arc
+  lasts about 4.67 seconds, rises 32.7 units and travels 210 units. Actual landing
+  depends on terrain height. There is no center target or interpolation.
+- Air steering rotates horizontal velocity at up to .7 * airControlPercent/100
+  radians/second. Heading eases toward velocity for chase-camera comfort. Spin
+  scales slow bounded visual pitch/roll, not collision orientation. Wheels keep
+  spinning and extend .12 units unloaded; equipment/hydraulics continue updating.
+- Terrain crossing is located within the landing substep. Touchdown retains 72%
+  of horizontal speed, aligned with travel, then resumes existing hill overspeed
+  settling and normal release braking. It never forces a normal landing to zero.
+  `landingImpact` receives actual downward impact speed: heave impulse is
+  `-min(3.4, impact * .32 * landingBouncePercent/100)`. Existing chassis springs
+  provide compression and rebound, with reduced heave damping for 1.8 seconds.
+  Landing uses the existing pooled dust and a quiet Web Audio thud.
+- One latch prevents repeated launch while airborne/at the wall; it rearms only
+  grounded at least 12 units inside the boundary. Extreme settings redirect an
+  outward airborne velocity near the edge without teleporting. A 15-second or
+  non-finite-state emergency guard is the only automatic reset. Vehicle switching
+  retains the active flight; manual reset cancels it. No new dependencies/assets.
 
 Visual front-wheel steering uses the same turn sign as the heading update for both
 vehicles; reverse preserves the normal reversed yaw response. Model/asset files and

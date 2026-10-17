@@ -1,8 +1,8 @@
 // Hill effects are maximum percentages, reached at the steepness below.
 // Set an individual percentage to 0 to disable that effect for that vehicle.
 export const vehicleConfig = {
-  backhoe: {speedAdjustmentPercent: 80, bodyRollPercent: 25, bodyPitchPercent: 20, suspensionBouncePercent: 20, boundaryBouncePercent: 25, boundaryBodyRockPercent: 30, downhillBoostPercent: 120, uphillPenaltyPercent: 30, treeKnockdownSpeedPercent: 90, releaseDeceleration: 8.0, stopThreshold: .1, autoBrakeOnRelease: true, rockCrackSpeedPercent: 25, rockBreakSpeedPercent: 55},
-  garbageTruck: {speedAdjustmentPercent: 0, bodyRollPercent: 25, bodyPitchPercent: 20, suspensionBouncePercent: 20, boundaryBouncePercent: 25, boundaryBodyRockPercent: 30, downhillBoostPercent: 35, uphillPenaltyPercent: 45, treeKnockdownSpeedPercent: 95, releaseDeceleration: 3.5, stopThreshold: .1, autoBrakeOnRelease: true, rockCrackSpeedPercent: 35, rockBreakSpeedPercent: 75},
+  backhoe: {boundaryCannon: {enabled:true,horizontalLaunchSpeed:45,verticalLaunchSpeed:28,launchSpinPercent:20,airControlPercent:15,landingBouncePercent:30}, speedAdjustmentPercent: 80, bodyRollPercent: 25, bodyPitchPercent: 20, suspensionBouncePercent: 20, boundaryBouncePercent: 25, boundaryBodyRockPercent: 30, downhillBoostPercent: 120, uphillPenaltyPercent: 30, treeKnockdownSpeedPercent: 90, releaseDeceleration: 8.0, stopThreshold: .1, autoBrakeOnRelease: true, rockCrackSpeedPercent: 25, rockBreakSpeedPercent: 55},
+  garbageTruck: {boundaryCannon: {enabled:true,horizontalLaunchSpeed:45,verticalLaunchSpeed:29,launchSpinPercent:15,airControlPercent:15,landingBouncePercent:38}, speedAdjustmentPercent: 0, bodyRollPercent: 25, bodyPitchPercent: 20, suspensionBouncePercent: 20, boundaryBouncePercent: 25, boundaryBodyRockPercent: 30, downhillBoostPercent: 35, uphillPenaltyPercent: 45, treeKnockdownSpeedPercent: 95, releaseDeceleration: 3.5, stopThreshold: .1, autoBrakeOnRelease: true, rockCrackSpeedPercent: 35, rockBreakSpeedPercent: 75},
 };
 
 export const hillSettings = {
@@ -43,8 +43,8 @@ export const rockConfig = {
 // 100% density = at most 1,000 fixed details; distribution weights are normalized.
 // Heights are world units, capped at 0.5; effect scales existing visual springs only.
 export const groundDebrisConfig = {
-  enabled:true, densityPercent:50, interactivePercent:30,
-  minBumpHeight:0.05, maxBumpHeight:0.25, suspensionEffectPercent:60,
+  enabled:true, densityPercent:70, interactivePercent:450,
+  minBumpHeight:0.5, maxBumpHeight:0.25, suspensionEffectPercent:60,
   maxInteractiveDistance:35,
   dirtClumpPercent:35, smallRockPercent:35, twigPercent:20, earthClumpPercent:10
 };
