@@ -13,6 +13,7 @@ assert(surface.indices.length/3<300000,'bounded shared terrain mesh');
 for(let i=0;i<surface.vertices.length;i+=3)assert(Math.abs(surface.vertices[i+1]-jumps.sample(surface.vertices[i],surface.vertices[i+2]))<1e-4);
 const scene=new THREE.Scene(),trees=new TreeCollisionSystem(scene),rocks=new RockInteractionSystem(scene),debris={revision:0,objects:[],group:new THREE.Group()};
 const flat=new DirtJumpSystem().createSurface(220,2);
+assert.throws(()=>new RapierWorldVehicle(R,{surface:flat,height:()=>0,groundDebris:debris,trees:{},rocks}),/current tree\/rock collision adapters/,'reject stale modules before activation');
 function vehicle(index){const group=new THREE.Group(),wheels=index===0?[[-1.31,-1.12,.92],[-1.24,1.36,.66],[1.31,-1.12,.92],[1.24,1.36,.66]]:[-1.43,1.43].flatMap(x=>[-2.15,-.8,2.25].map(z=>[x,z,.72]));for(const [x,z,r] of wheels){const p=new THREE.Group();p.userData.wheel={x,z,r};p.userData.roll=new THREE.Group();p.add(p.userData.roll);group.add(p);}return group;}
 const cfg=index=>({max:index?17:21,reverse:index?7:9,hill:{...vehicleConfig[index?'garbageTruck':'backhoe'],speedAdjustmentPercent:0,downhillBoostPercent:35,uphillPenaltyPercent:40},collision:{radius:1.2,rear:-2.4,front:2.75}});
 for(const index of [0,1]){

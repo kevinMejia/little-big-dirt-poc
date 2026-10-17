@@ -1,9 +1,80 @@
 // Hill effects are maximum percentages, reached at the steepness below.
 // Set an individual percentage to 0 to disable that effect for that vehicle.
+
 export const vehicleConfig = {
-  backhoe: {boundaryCannon: {enabled:true,horizontalLaunchSpeed:45,verticalLaunchSpeed:28,launchSpinPercent:20,airControlPercent:15,landingBouncePercent:30}, speedAdjustmentPercent: 80, bodyRollPercent: 25, bodyPitchPercent: 20, suspensionBouncePercent: 20, boundaryBouncePercent: 25, boundaryBodyRockPercent: 30, downhillBoostPercent: 120, uphillPenaltyPercent: 30, treeKnockdownSpeedPercent: 90, releaseDeceleration: 8.0, stopThreshold: .1, autoBrakeOnRelease: true, rockCrackSpeedPercent: 25, rockBreakSpeedPercent: 55},
-  garbageTruck: {boundaryCannon: {enabled:true,horizontalLaunchSpeed:45,verticalLaunchSpeed:29,launchSpinPercent:15,airControlPercent:15,landingBouncePercent:38}, speedAdjustmentPercent: 200, bodyRollPercent: 25, bodyPitchPercent: 20, suspensionBouncePercent: 20, boundaryBouncePercent: 25, boundaryBodyRockPercent: 30, downhillBoostPercent: 35, uphillPenaltyPercent: 45, treeKnockdownSpeedPercent: 95, releaseDeceleration: 3.5, stopThreshold: .1, autoBrakeOnRelease: true, rockCrackSpeedPercent: 35, rockBreakSpeedPercent: 75},
+  backhoe: {
+    // Speed and hill physics
+    speedAdjustmentPercent: 80,
+    downhillBoostPercent: 120,
+    uphillPenaltyPercent: 30,
+
+    // Braking
+    releaseDeceleration: 8.0,
+    stopThreshold: 0.1,
+    autoBrakeOnRelease: true,
+
+    // Suspension and body movement
+    bodyRollPercent: 25,
+    bodyPitchPercent: 20,
+    suspensionBouncePercent: 20,
+
+    // Boundary collision effects
+    boundaryBouncePercent: 25,
+    boundaryBodyRockPercent: 30,
+
+    // Boundary cannon (Motocross Madness style)
+    boundaryCannon: {
+      enabled: true,
+      horizontalLaunchSpeed: 45,
+      verticalLaunchSpeed: 28,
+      launchSpinPercent: 20,
+      airControlPercent: 15,
+      landingBouncePercent: 30,
+    },
+
+    // Tree and rock interactions
+    treeKnockdownSpeedPercent: 90,
+    rockCrackSpeedPercent: 25,
+    rockBreakSpeedPercent: 55,
+  },
+
+  garbageTruck: {
+    // Speed and hill physics
+    speedAdjustmentPercent: 200,
+    downhillBoostPercent: 35,
+    uphillPenaltyPercent: 45,
+
+    // Braking
+    releaseDeceleration: 3.5,
+    stopThreshold: 0.1,
+    autoBrakeOnRelease: true,
+
+    // Suspension and body movement
+    bodyRollPercent: 25,
+    bodyPitchPercent: 20,
+    suspensionBouncePercent: 20,
+
+    // Boundary collision effects
+    boundaryBouncePercent: 25,
+    boundaryBodyRockPercent: 30,
+
+    // Boundary cannon (Motocross Madness style)
+    boundaryCannon: {
+      enabled: true,
+      horizontalLaunchSpeed: 45,
+      verticalLaunchSpeed: 29,
+      launchSpinPercent: 15,
+      airControlPercent: 15,
+      landingBouncePercent: 38,
+    },
+
+    // Tree and rock interactions
+    treeKnockdownSpeedPercent: 95,
+    rockCrackSpeedPercent: 35,
+    rockBreakSpeedPercent: 75,
+  },
 };
+
 
 export const hillSettings = {
   fullEffectGrade: .35, // rise/run: 35% grade (~19 degrees) gives the full effect

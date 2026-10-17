@@ -100,7 +100,7 @@ import { StinkyGLB } from './assets/stinky/StinkyGLB.js';
 import { stinkyCollision, sanitizeStinkyPose, applyStinkyPose, stinkyActions } from './StinkyEquipment.js';
 import { bindVehicleGarage } from './VehicleGarage.js';
 
-import { TreeCollisionSystem } from './TreeCollisionSystem.js';
+import { TreeCollisionSystem } from './TreeCollisionSystem.js?v=rapier-world-2';
 import { RockInteractionSystem } from './RockInteractionSystem.js';
 import { EnvironmentAssets } from './EnvironmentAssets.js';
 import { EnvironmentWorld } from './EnvironmentWorld.js';
@@ -116,7 +116,7 @@ import { createDebrisDebug } from './GroundDebrisDebug.js';
 import { addGroundTextures } from './GroundTextures.js';
 import { createPolishedLighting, ContactShading, polishTerrain, VehicleSurfaceEffects } from './VisualPolish.js';
 import { DirtJumpSystem, playgroundFeatures } from './DirtJumpSystem.js';
-import { RapierWorldVehicle, loadWorldPhysics } from './RapierWorldVehicle.js';
+import { RapierWorldVehicle, loadWorldPhysics } from './RapierWorldVehicle.js?v=rapier-world-4';
 import { BoundaryCannon } from './BoundaryCannon.js';
 import { VehicleFeedback, SoftBoundary, cameraReturnDecay } from './VehicleFeedback.js';
 
@@ -307,6 +307,27 @@ function configureVehicleActions(){
  ):[]);
 }
 
+let stinkyQA;
+if(new URLSearchParams(location.search).get('qa')==='stinky'){
+ const {installStinkyQA}=await import('./viewer/stinky-world-qa.js');
+ stinkyQA=installStinkyQA({trees:treeCollisions,rocks:rockInteractions,ramps:worldJumps.features,
+  place(site){if(garage.open)closeGarage();choose(1);reset();keys.clear();controls.clear();position.set(site.x,surfaceHeight(site.x,site.z)-.09,site.z);heading=site.heading;vehicleRoot.position.copy(position);vehicleRoot.rotation.set(0,heading,0);if(physicsMode==='rapier')rapierController.resetAt(position,heading);configureVehicleActions();applyEquipmentPose(vehicle.userData.controller,equipmentPoses.get(1));},
+  read(site){vehicleRoot.updateMatrixWorld(true);let error=0;for(const c of debrisContacts.wheels){const w=c.pivot.userData.wheel,p=c.pivot.getWorldPosition(new THREE.Vector3());error=Math.max(error,Math.abs(p.y-(surfaceHeight(p.x,p.z)+c.bump-.035+w.r)));}const model=vehicle.userData.controller;return [
+   'Asset: '+(model?.setHopper?'stinky.glb':index===1?'procedural fallback':'Dirty'),
+   'Physics: '+physicsMode+' | wheels: '+debrisContacts.wheels.length,
+   'Position: '+position.x.toFixed(1)+', '+position.z.toFixed(1),
+   'Speed: '+speed.toFixed(2)+' | airborne: '+!!flight,
+   'Wheel contact error: '+error.toFixed(4)+' m'+(physicsMode==='rapier'?' (ray suspension)':''),
+   'Wheel angle: '+(model?.wheelAngle??0).toFixed(2),
+   'Front steer: '+(model?.wheels?.find(w=>w.front)?.steering.rotation.y??0).toFixed(3),
+   'Body roll: '+vehicleVisual.rotation.z.toFixed(4),
+   'Equipment: '+JSON.stringify(equipmentPoses.get(1)??{hopper:0,compactor:0}),
+   'Target state: '+(site.target?.state??'terrain'),
+   'Tree hits: '+treeCollisions.trees.filter(t=>Number.isFinite(t.lastHit)).length+' | Rock hits: '+rockInteractions.rocks.filter(r=>Number.isFinite(r.lastHit)).length,
+  ].join('\n');}
+ });
+}
+
 let audio;
 
 function unlockAudio(){try{audio??=new (window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume().catch(()=>{})}catch(e){}}
@@ -461,6 +482,7 @@ if(model)model.update(dt);
  debrisDebug?.update(dt,vehicleRoot,bodyFeedback);
 }
 
+stinkyQA?.update(performance.now());
 environmentWorld?.update();
 polishedLighting.update(position);
 contactShading.update(vehicleRoot,debrisContacts,!!flight);

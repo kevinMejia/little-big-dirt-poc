@@ -46,7 +46,7 @@ def verify():
             gltf=json.loads(raw[20:20+length])
             for item in gltf.get('images',[])+gltf.get('buffers',[]):
                 if item.get('uri'):local(item['uri'],built)
-    required=['assets/dirty/dirty.glb','assets/dirty/manifest.json','assets/dirty/backups/pre-reference-sheet/dirty.glb','assets/dirty/backups/pre-reference-sheet/manifest.json','viewer/dirty.html','viewer/dirty-viewer.js','viewer/environment.html','assets/models/trees/cartoon_tree.glb','assets/models/rocks/cartoon_boulder.glb','assets/models/rocks/cartoon_boulder_fractured.glb']
+    required=['assets/stinky/stinky.glb','assets/stinky/manifest.json','assets/stinky/StinkyGLB.js','StinkyEquipment.js','viewer/stinky.html','viewer/stinky-viewer.js','assets/dirty/dirty.glb','assets/dirty/manifest.json','assets/dirty/backups/pre-reference-sheet/dirty.glb','assets/dirty/backups/pre-reference-sheet/manifest.json','viewer/dirty.html','viewer/dirty-viewer.js','viewer/environment.html','assets/models/trees/cartoon_tree.glb','assets/models/rocks/cartoon_boulder.glb','assets/models/rocks/cartoon_boulder_fractured.glb']
     for prefix in ['assets/dirty/','assets/dirty/candidate/']:
         required += [prefix+'comparison/'+view+'.png' for view in ['front','side','rear','top','front-three-quarter','rear-three-quarter']]
         required += [prefix+'dirty.glb',prefix+'manifest.json']
@@ -65,7 +65,7 @@ def verify():
     finally:server.shutdown();server.server_close();thread.join()
     for test in ['hill-speed.mjs','release-deceleration.mjs','speed-adjustment.mjs','driving-input.mjs','vehicle-garage.mjs','gameplay-feedback.mjs','boundary-cannon.mjs','jump-prototype.mjs']:
         subprocess.run(['node',str(ROOT/'tests'/test)],cwd=ROOT,check=True)
-    for test in ['run_tree_tests.py','run_rapier_world_tests.py','run_environment_tests.py','run_world_appearance_tests.py','run_ground_debris_tests.py','run_visual_polish_tests.py','dirty-asset.py','run_dirty_tests.py']:
+    for test in ['run_tree_tests.py','run_rapier_world_tests.py','run_environment_tests.py','run_world_appearance_tests.py','run_ground_debris_tests.py','run_visual_polish_tests.py','dirty-asset.py','run_dirty_tests.py','run_stinky_tests.py','run_steering_probe.py']:
         subprocess.run([sys.executable,str(ROOT/'tests'/test)],cwd=ROOT,check=True)
 
 if __name__=='__main__':verify()

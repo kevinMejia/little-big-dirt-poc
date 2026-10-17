@@ -3,11 +3,12 @@ import {JumpVehiclePrototype,rotateVector} from './JumpVehiclePrototype.js';
 import {jumpConfig,groundDebrisConfig} from './VehicleConfig.js';
 import {HillSpeedPhysics} from './HillSpeedPhysics.js';
 import {getSpeedMultiplier} from './VehicleMotion.js';
+import {updateRapierTireGrip} from './RapierHandling.js';
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 let rapierPromise;
 export async function loadWorldPhysics(){rapierPromise??=import('./viewer/vendor/rapier/rapier.mjs').then(async module=>{await module.default.init();return module.default;});return rapierPromise;}
 export class RapierWorldVehicle {
- constructor(RAPIER,{surface,height,groundDebris,trees,rocks,limit=205}){Object.assign(this,{RAPIER,surface,height,groundDebris,trees,rocks,limit});this.hills=new HillSpeedPhysics(height);this.point=new THREE.Vector3();this.rotation=new THREE.Quaternion();this.normal=new THREE.Vector3();this.cannonArmed=true;this.cannonFlight=false;this.cameraHeading=null;}
+ constructor(RAPIER,{surface,height,groundDebris,trees,rocks,limit=205}){if(typeof trees?.resolveMovement!=='function'||typeof rocks?.resolveMovement!=='function')throw new Error('Rapier requires current tree/rock collision adapters. Reload the game to refresh cached modules.');Object.assign(this,{RAPIER,surface,height,groundDebris,trees,rocks,limit});this.hills=new HillSpeedPhysics(height);this.point=new THREE.Vector3();this.rotation=new THREE.Quaternion();this.normal=new THREE.Vector3();this.cannonArmed=true;this.cannonFlight=false;this.cameraHeading=null;}
  setVehicle(vehicle,cfg,index,position,heading){
   this.physics?.dispose();this.vehicle=vehicle;this.cfg=cfg;this.index=index;
   const model=vehicle.userData.controller,pivots=(model?.wheels?model.wheels.map(w=>w.steering||w):vehicle.children).filter(w=>w.userData.wheel);
@@ -54,7 +55,7 @@ export class RapierWorldVehicle {
  update(dt,input){
   this.input=input;if(this.debrisRevision!==this.groundDebris.revision||this.debrisEffect!==groundDebrisConfig.suspensionEffectPercent)this.buildDebrisCollider();
   const p=this.physics,cfg=this.cfg,scale=getSpeedMultiplier(cfg.hill.speedAdjustmentPercent);let grade=0;
-  p.update(dt,h=>{const root=this.rootPose({position:p.body.translation(),rotation:p.body.rotation()}),f=rotateVector(p.body.rotation(),{x:0,y:0,z:1}),heading=Math.atan2(f.x,f.z),throttle=input.throttle;
+  p.update(dt,h=>{updateRapierTireGrip(p,input.steering??0);const root=this.rootPose({position:p.body.translation(),rotation:p.body.rotation()}),f=rotateVector(p.body.rotation(),{x:0,y:0,z:1}),heading=Math.atan2(f.x,f.z),throttle=input.throttle;
    const hill=p.state.airborne?{modifier:0,grade:0}:this.hills.update({x:root.x,z:root.z,heading,speed:p.state.speed,thrust:throttle,config:cfg.hill,dt:h});grade=hill.grade;
    this.hills.recordTravel(p.currentPose.position.x-p.previousPose.position.x,p.currentPose.position.z-p.previousPose.position.z);
    return {...input,driveScale:scale*Math.max(.05,1+hill.modifier),speedLimit:p.tuning.maxSpeed*scale*(1+hill.modifier),reverseLimit:cfg.reverse*scale*(1+hill.modifier),releaseDeceleration:cfg.hill.releaseDeceleration??p.tuning.releaseDeceleration,stopThreshold:cfg.hill.stopThreshold??.1,brakeRate:input.emergencyBrake?38:24};
