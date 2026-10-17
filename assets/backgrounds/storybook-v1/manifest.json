@@ -1,0 +1,24 @@
+{
+  "name": "Painted countryside / visual study 01",
+  "approved": false,
+  "defaultEnabled": false,
+  "previewRoute": "index.html?storybook=1",
+  "galleryRoute": "viewer/storybook-review.html",
+  "generator": "OpenAI built-in image_gen",
+  "reference": "Written art direction; referenced countryside image was not attached in the accessible conversation.",
+  "prompts": "art-direction.md",
+  "textures": {
+    "countryside-panorama.png": {
+      "width": 1774,
+      "height": 887,
+      "bytes": 2213634
+    },
+    "painted-meadow.png": {
+      "width": 1254,
+      "height": 1254,
+      "bytes": 3273098
+    }
+  },
+  "backgroundTriangles": 13184,
+  "colliders": 0
+}

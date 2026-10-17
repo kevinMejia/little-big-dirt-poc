@@ -15,8 +15,8 @@ export const navigationItems = [
 ];
 export const navigationDestinations=navigationItems.flatMap(item=>item.children??[item]);
 // These existing review/handling URLs retain their pages and local entry links.
-const relatedPages=[{id:'dirty-comparison',path:'viewer/comparison.html'}, {id:'stinky-comparison',path:'viewer/stinky-comparison.html'}];
-export function navigationItemActive(item,active){return item.id===active||item.id==='play'&&active==='handling'||item.id==='dirty'&&active==='dirty-comparison'||item.id==='stinky'&&active==='stinky-comparison';}
+const relatedPages=[{id:'dirty-comparison',path:'viewer/comparison.html'}, {id:'stinky-comparison',path:'viewer/stinky-comparison.html'},{id:'environment-review',path:'viewer/storybook-review.html'}];
+export function navigationItemActive(item,active){return item.id===active||item.id==='play'&&active==='handling'||item.id==='dirty'&&active==='dirty-comparison'||item.id==='stinky'&&active==='stinky-comparison'||item.id==='environment'&&active==='environment-review';}
 export function navigationGroupActive(item,active){return item.children?.some(child=>navigationItemActive(child,active))??false;}
 
 export function navigationURL(item,base=import.meta.url){return new URL(item.path,base);}

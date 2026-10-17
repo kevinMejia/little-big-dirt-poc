@@ -1,6 +1,7 @@
-import {tuningFields,fieldPath,tuningValue,defaultTuningValue,setTuning,resetTuning,exportTuning,exportEnvironmentTuning} from './TuningStore.js';
+import {tuningFields,fieldPath,tuningValue,defaultTuningValue,setTuning,resetTuning,exportTuning,exportEnvironmentTuning,exportStorybookTuning} from './TuningStore.js';
 import {readGamePreferences,saveGamePreference,resetGamePreference,gamePreferenceStorage} from './GamePreferences.js?v=central-settings-3';
 import {settingsPlacement} from './SettingsPlacement.js';
+import {isStorybookPreview} from './StorybookPreviewMode.js';
 
 let panel;
 export function openSettingsPanel(){
@@ -29,7 +30,7 @@ function createSettingsPanel(){
   $('#context').textContent=`${mode()==='hybrid'?'Main-game hybrid':'Original controller'} tuning. ${isPlay()||isLab()?'Vehicle selection edits tuning; it does not switch or reset the car.':'Preview area: saved driving changes apply when you enter Play or Dirt Jump Lab.'} Shared values are labeled “Both vehicles”.`;
   const main=$('main');main.replaceChildren();
   for(const group of [...new Set(tuningFields.map(field=>field.group))]){
-   const fields=tuningFields.filter(field=>field.group===group&&(field.mode==='both'||field.mode===mode()));
+   const fields=tuningFields.filter(field=>field.group===group&&(field.mode==='both'||field.mode===mode())&&(field.scope!=='storybook'||isStorybookPreview(location.search)));
    if(!fields.length)continue;
    const details=document.createElement('details');details.dataset.group=group;details.open=expanded.has(group)||(first&&group==='Driving');
    const summary=document.createElement('summary');summary.textContent=group;
@@ -42,13 +43,21 @@ function createSettingsPanel(){
     if(isPlay()){const apply=document.createElement('button');apply.textContent='Reload Play to apply environment';apply.onclick=()=>location.reload();section.append(apply);}
     const exportButton=document.createElement('button');exportButton.textContent='Export environment settings';exportButton.onclick=()=>downloadConfiguration('WorldEnvironmentConfig.tuned.js',exportEnvironmentTuning());section.append(exportButton);
    }
+   if(group==='Storybook Preview'){
+    const note=document.createElement('p');note.textContent='Live visual prototype only. Normal Play keeps the original background. Use the review toolbar to compare the same view with the original. These values affect the painted background, not vehicles or lighting on the driving terrain.';section.append(note);
+    const exportButton=document.createElement('button');exportButton.textContent='Export storybook preview settings';exportButton.onclick=()=>downloadConfiguration('StorybookBackgroundConfig.tuned.js',exportStorybookTuning());section.append(exportButton);
+   }
    const paths=[];
    for(const field of fields){
     const path=fieldPath(field,vehicle.value,mode());paths.push(path);
+    if(field.type==='color'){
+     const row=document.createElement('div');row.className='field';const label=document.createElement('label');label.textContent=field.label;const input=document.createElement('input');input.type='color';input.style.cssText='width:100%;height:44px';input.setAttribute('aria-label',field.label);input.value=tuningValue(path);label.append(input);
+     const note=document.createElement('p');note.textContent=field.description;const reset=document.createElement('button');reset.textContent='Reset';reset.setAttribute('aria-label','Reset '+field.label);input.oninput=()=>report(setTuning(path,input.value));reset.onclick=()=>{report(resetTuning([path]));input.value=tuningValue(path);};row.append(label,note,reset);section.append(row);continue;
+    }
     if(field.type==='boolean'){
      const row=document.createElement('div');row.className='field';const label=document.createElement('label');label.className='check';const input=document.createElement('input');input.type='checkbox';input.setAttribute('aria-label',field.label);input.checked=tuningValue(path);label.append(input,document.createTextNode(field.label));
      const description=document.createElement('p');description.textContent=field.description;const reset=document.createElement('button');reset.textContent='Reset';reset.setAttribute('aria-label','Reset '+field.label);
-     input.onchange=()=>{const saved=setTuning(path,input.checked);report(saved);if(saved)$('#status').textContent='Environment saved · reload Play to apply.';};reset.onclick=()=>{report(resetTuning([path]));input.checked=tuningValue(path);};row.append(label,description,reset);section.append(row);continue;
+     input.onchange=()=>{const saved=setTuning(path,input.checked);report(saved);if(saved&&field.scope==='environment')$('#status').textContent='Environment saved · reload Play to apply.';};reset.onclick=()=>{report(resetTuning([path]));input.checked=tuningValue(path);};row.append(label,description,reset);section.append(row);continue;
     }
     const row=document.createElement('div');row.className='field';
     const label=document.createElement('label');const id='tune-'+field.id.replaceAll('.','-');label.htmlFor=id;label.textContent=field.label;

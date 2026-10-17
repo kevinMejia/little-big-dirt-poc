@@ -1,6 +1,7 @@
 import * as vehicleDefaults from './VehicleConfig.js';
 import {worldAppearance} from './WorldEnvironmentConfig.js';
-const config={...vehicleDefaults,worldAppearance};
+import {storybookBackgroundConfig} from './StorybookBackgroundConfig.js';
+const config={...vehicleDefaults,worldAppearance,storybookBackgroundConfig};
 
 // VehicleConfig.js owns defaults. This module stores only explicit user overrides.
 export const tuningConfig=config;
@@ -116,6 +117,22 @@ for(const [key,label,description] of [
  ['fogEnabled','Distant fog','Play: enable distant haze; Haze strength controls its intensity. Requires reload.'],
  ['distantHillsEnabled','Distant hills','Play: decorative horizon hills, without colliders. Requires reload.'],
 ])tuningFields.push({id:'worldAppearance.'+key,root:'worldAppearance',key,label,description,group:'Environment',type:'boolean',mode:'both',scope:'environment',vehicle:false});
+add('Storybook Preview','storybookBackgroundConfig',[
+ ['brightness','Background brightness',.4,1.6,.05,'×','Live: exposure of painted scenery only; foreground lighting stays unchanged.'],
+ ['saturation','Background saturation',0,1.6,.05,'×','Live: 0 is grayscale; 1 preserves the artwork colors.'],
+ ['sunAzimuth','Sun bearing',0,360,1,'°','Live: position of the background sun halo. 0 = +Z, 90 = +X; does not move gameplay lights.'],
+ ['sunElevation','Sun elevation',0,80,1,'°','Live: background halo height above horizon.'],
+ ['sunGlow','Sun glow',0,2,.05,'×','Live: warm background sun halo strength; 0 disables it.'],
+ ['hazePercent','Background atmosphere',0,100,1,'%','Live: softens distant scenery only; no fog over the driving area.'],
+ ['cloudSpeed','Cloud movement',0,.03,.001,'°/s','Live: very slow sky-layer drift; painted mountain landforms remain fixed.'],
+ ['backgroundScale','Background scale',.75,1.5,.05,'×','Live: distant terrain extent; the inner edge remains attached to the existing terrain.'],
+ ['horizonAlignment','Horizon alignment',-20,20,.5,'°','Live: raises/lowers the panoramic countryside relative to the 3D world.'],
+ ['panoramaRotation','Panorama direction',0,360,1,'°','Live: rotates the original painted landscape around the driving world.'],
+],{scope:'storybook'});
+for(const [key,label,type,description] of [
+ ['mountainsVisible','Painted mountains visible','boolean','Live: distant mountain band and transition hills. Does not hide playable terrain.'],
+ ['skyTint','Sky color tint','color','Live: multiplies the painted background palette; white preserves the original artwork.'],
+])tuningFields.push({id:'storybookBackgroundConfig.'+key,root:'storybookBackgroundConfig',key,label,type,description,group:'Storybook Preview',scope:'storybook',mode:'both',vehicle:false});
 export function fieldPath(field,vehicle='dirty',mode='hybrid'){
  const name=vehicle==='dirty'?'backhoe':'garbageTruck';
  if(field.root==='drive')return `${mode==='original'?'originalDriveConfig':'arcadeHandlingConfig'}.${vehicle}.${field.key}`;
@@ -132,6 +149,7 @@ function persist(storage=tuningStorage()){try{storage.setItem(tuningKey(),JSON.s
 export function setTuning(path,value,storage=tuningStorage()){
  const field=allowed.get(path);if(!field)return false;
  if(field.type==='boolean'){if(typeof value!=='boolean')return false;}
+ else if(field.type==='color'){if(typeof value!=='string'||!/^#[0-9a-f]{6}$/i.test(value))return false;}
  else{if(typeof value!=='number'||!Number.isFinite(value))return false;if(field.hardMin!==null)value=Math.max(field.hardMin,value);if(field.hardMax!==null)value=Math.min(field.hardMax,value);}
  assign(path,value);
  if(value===defaultTuningValue(path))delete overrides[path];else overrides[path]=value;
@@ -148,6 +166,7 @@ export function loadTuning(storage=tuningStorage()){
  try{const saved=JSON.parse(storage.getItem(tuningKey()));if(saved?.version===1)for(const [path,value] of Object.entries(saved.overrides??{})){
   const field=allowed.get(path);if(!field)continue;
   if(field.type==='boolean'){if(typeof value!=='boolean')continue;assign(path,value);overrides[path]=value;continue;}
+  if(field.type==='color'){if(typeof value!=='string'||!/^#[0-9a-f]{6}$/i.test(value))continue;assign(path,value);overrides[path]=value;continue;}
   if(typeof value!=='number'||!Number.isFinite(value))continue;
   const bounded=Math.max(field.hardMin??-Infinity,Math.min(field.hardMax??Infinity,value));assign(path,bounded);overrides[path]=bounded;
  }}catch{/* Unavailable or corrupt storage leaves file defaults intact. */}
@@ -155,6 +174,7 @@ export function loadTuning(storage=tuningStorage()){
 }
 export function exportTuning(){return '// Exported current configuration. Review before replacing VehicleConfig.js.\n'+Object.entries(vehicleDefaults).map(([key,value])=>`export const ${key} = ${JSON.stringify(value,null,2)};`).join('\n\n')+'\n';}
 export function exportEnvironmentTuning(){return '// Global environment values. Review before replacing WorldEnvironmentConfig.js.\nexport const worldAppearance = '+JSON.stringify(worldAppearance,null,2)+';\n';}
+export function exportStorybookTuning(){return '// Visual preview values only; does not enable the background in default Play.\nexport const storybookBackgroundConfig = '+JSON.stringify(storybookBackgroundConfig,null,2)+';\n';}
 export function snapshotTuning(){return clone(config);}
 if(typeof window!=='undefined'){
  loadTuning();

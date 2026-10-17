@@ -14,6 +14,11 @@ for(const prefix of ['http://localhost:8000/','https://example.com/little-big-di
   const page=url.pathname.slice(new URL(prefix).pathname.length);
   const html=fs.readFileSync(new URL('../dist/'+page,import.meta.url),'utf8');
   assert(html.includes('SharedNavigation.js'),page+' has navigation installed');
+  const imports=JSON.parse(html.match(/<script type="importmap">([\s\S]*?)<\/script>/)[1]).imports;
+  const mapped=name=>Object.entries(imports).find(([key])=>new URL(key,url).pathname===new URL(name,prefix).pathname)?.[1];
+  const storeURL=new URL(mapped('TuningStore.js'),url),panelURL=new URL(mapped('SettingsPanel.js'),url);
+  assert.equal(storeURL.pathname,new URL('TuningStore.js',prefix).pathname,'all pages share the same store module base');
+  assert(storeURL.search&&storeURL.search===panelURL.search,'Settings and store use a consistent cache version');
  }
  assert.equal(currentArea(prefix+'viewer/dirty.html?asset=candidate',base),'dirty');
  assert.equal(currentArea(prefix+'index.html?handling=1&debug=1',base),'handling');

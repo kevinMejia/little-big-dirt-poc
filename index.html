@@ -76,7 +76,7 @@ body[data-lbd-driving-hud="true"] #hud{display:block!important}
 body[data-lbd-controls-guide="true"] #help{display:block!important;max-width:calc(100vw - 32px);white-space:normal;pointer-events:none}
 </style>
 
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/"}}</script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/","./TuningStore.js":"./TuningStore.js?v=storybook-preview-2","./SettingsPanel.js":"./SettingsPanel.js?v=storybook-preview-2"}}</script>
 <script type="module" src="./SharedNavigation.js"></script></head>
 
 <body>
@@ -111,6 +111,7 @@ import { EnvironmentAssets } from './EnvironmentAssets.js';
 import { EnvironmentWorld } from './EnvironmentWorld.js';
 // Apply shared saved overrides before constructing any environment objects.
 import './TuningStore.js';
+import {isStorybookPreview} from './StorybookPreviewMode.js';
 import { worldAppearance, createWorldAtmosphere, createTerrainPainter, createSceneryLayout, createGroundDetails } from './WorldAppearance.js?v=environment-settings-1';
 
 import { cameraSettings, groundDebrisConfig, jumpConfig } from './VehicleConfig.js';
@@ -174,6 +175,17 @@ geo.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));geo.compute
 
 const worldAtmosphere=createWorldAtmosphere(scene,surfaceHeight,world,worldAppearance,terrainPainter);
 addEventListener('pagehide',event=>{if(!event.persisted)worldAtmosphere.dispose();});
+// Explicit review route only. Default Play continues using the original atmosphere.
+let storybookBackground=null,storybookReview=null;
+if(isStorybookPreview(location.search)){
+ try{
+  const [{createStorybookBackground},{installStorybookReview}]=await Promise.all([import('./StorybookBackground.js?v=painted-2'),import('./StorybookReview.js?v=compact-review-1')]);
+  storybookBackground=await createStorybookBackground(scene,{height:surfaceHeight,painter:terrainPainter,halfSize:world,camera,original:worldAtmosphere});
+  storybookReview=installStorybookReview(storybookBackground,{height:surfaceHeight,halfSize:world});
+ }catch(error){console.error('Painted background preview unavailable',error);const warning=document.createElement('p');warning.setAttribute('role','alert');warning.style.cssText='position:fixed;z-index:30;top:12px;left:76px;background:#633a28;color:white;padding:12px';warning.textContent='Painted preview could not load. Original background remains active. '+error.message;document.body.append(warning);}
+}
+addEventListener('pagehide',event=>{if(!event.persisted){storybookReview?.dispose();storybookBackground?.dispose();}});
+
 
 function box(parent,w,h,d,x,y,z,m){const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);return mesh}
 
@@ -532,7 +544,7 @@ document.querySelector('#speed').innerHTML=Math.round(Math.abs(speed)*2.237)+' <
 physicsSelector.value=preferences.physicsMode;physicsSelector.dispatchEvent(new Event('change'));
 
 let diagnosticFrames=0,diagnosticStart=performance.now();
-function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);if(!garage.open){update(dt);renderer.render(scene,camera);diagnosticFrames++;const now=performance.now();if(now-diagnosticStart>1000){if(document.body.classList.contains('show-debug'))document.querySelector('#renderTuning').textContent=Math.round(diagnosticFrames*1000/(now-diagnosticStart))+' FPS · '+renderer.info.render.calls+' draws · '+Math.round(renderer.info.render.triangles/1000)+'k triangles';diagnosticFrames=0;diagnosticStart=now;}}}animate();
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);if(!garage.open){update(dt);storybookReview?.update(camera,vehicleRoot.position);storybookBackground?.update(dt);renderer.render(scene,camera);diagnosticFrames++;const now=performance.now();if(now-diagnosticStart>1000){if(document.body.classList.contains('show-debug'))document.querySelector('#renderTuning').textContent=Math.round(diagnosticFrames*1000/(now-diagnosticStart))+' FPS · '+renderer.info.render.calls+' draws · '+Math.round(renderer.info.render.triangles/1000)+'k triangles';diagnosticFrames=0;diagnosticStart=now;}}}animate();
 
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 

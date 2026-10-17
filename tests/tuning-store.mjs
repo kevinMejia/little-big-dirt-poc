@@ -23,7 +23,7 @@ loadTuning(storage);assert.equal(tuningValue(dirty),22);assert.equal({}.polluted
 map.set(tuningKey(),'{broken');loadTuning(storage);assert.deepEqual(snapshotTuning(),initial,'invalid storage returns to defaults');
 setTuning(dirty,24,null);assert.equal(tuningValue(dirty),24,'blocked persistence does not block live tuning');
 resetTuning(undefined,storage);assert.deepEqual(snapshotTuning(),initial);
-for(const field of tuningFields)for(const vehicle of ['dirty','stinky'])for(const mode of ['hybrid','original'])assert.equal(typeof tuningValue(fieldPath(field,vehicle,mode)),field.type==='boolean'?'boolean':'number',field.id+' exists in defaults');
+for(const field of tuningFields)for(const vehicle of ['dirty','stinky'])for(const mode of ['hybrid','original'])assert.equal(typeof tuningValue(fieldPath(field,vehicle,mode)),field.type==='boolean'?'boolean':field.type==='color'?'string':'number',field.id+' exists in defaults');
 console.log('PASS: tuning defaults unchanged; independent live overrides, persistence, reset, real bounds, blocked/corrupt storage, safe whitelist and executable config export.');
 
 setTuning('worldAppearance.treeDensityPercent',50,storage);
@@ -37,3 +37,8 @@ assert.equal(environment.worldAppearance.treeDensityPercent,50);assert.equal(env
 assert(!exportTuning().includes('export const worldAppearance'),'vehicle export stays compatible with the existing vehicle config');
 resetTuning(undefined,storage);assert.deepEqual(snapshotTuning(),initial,'environment reset restores file defaults without changing vehicle defaults');
 console.log('PASS: environment numeric/boolean overrides use the shared store, survive reload, reset to file defaults and export separately from vehicle tuning.');
+assert.equal(setTuning('storybookBackgroundConfig.skyTint','not-a-color',storage),false);
+assert.equal(setTuning('storybookBackgroundConfig.skyTint','#abc123',storage),true);
+assert.equal(tuningValue('storybookBackgroundConfig.skyTint'),'#abc123');
+loadTuning(storage);assert.equal(tuningValue('storybookBackgroundConfig.skyTint'),'#abc123');
+resetTuning(undefined,storage);assert.deepEqual(snapshotTuning(),initial,'preview settings reset without changing defaults');

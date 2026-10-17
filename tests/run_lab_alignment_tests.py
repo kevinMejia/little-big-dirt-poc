@@ -8,7 +8,7 @@ with tempfile.TemporaryDirectory(prefix='dirt-lab-alignment-') as folder:
     cached=Path(tempfile.gettempdir())/'three-backhoe.mjs'
     if cached.exists():shutil.copyfile(cached,work/'three-test.mjs')
     else:urllib.request.urlretrieve('https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js',work/'three-test.mjs')
-    for name in ['WorldEnvironmentConfig.js','TuningStore.js','ArcadeGroundDrive.js','RapierWorldVehicle.js','JumpVehiclePrototype.js','DirtJumpSystem.js','HillSpeedPhysics.js','VehicleMotion.js','VehicleConfig.js','VehicleFeedback.js','PlayableVehicleSetup.js','DrivingInput.js','StinkyEquipment.js','TreeCollisionSystem.js','RockInteractionSystem.js','GroundDebrisSystem.js','viewer/JumpLabVehicle.js']:
+    for name in ['StorybookBackgroundConfig.js','WorldEnvironmentConfig.js','TuningStore.js','ArcadeGroundDrive.js','RapierWorldVehicle.js','JumpVehiclePrototype.js','DirtJumpSystem.js','HillSpeedPhysics.js','VehicleMotion.js','VehicleConfig.js','VehicleFeedback.js','PlayableVehicleSetup.js','DrivingInput.js','StinkyEquipment.js','TreeCollisionSystem.js','RockInteractionSystem.js','GroundDebrisSystem.js','viewer/JumpLabVehicle.js']:
         source=(root/name).read_text(encoding='utf-8').replace("'three'", "'../three-test.mjs'" if name.startswith('viewer/') else "'./three-test.mjs'")
         source=source.replace("'https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js'", "'./three-test.mjs'")
         (work/name).write_text(source,encoding='utf-8')
