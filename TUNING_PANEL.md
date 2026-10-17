@@ -104,3 +104,16 @@ lighting, bloom and model controls remain local visual controls.
 Screenshots: [portrait](docs/screenshots/settings-portrait.png),
 [landscape](docs/screenshots/settings-landscape.png),
 [desktop](docs/screenshots/settings-desktop.png).
+
+## Navigation grouping
+
+The shared menu now has exactly four top-level entries: Play, Dirt Jump Lab,
+Asset Showroom and Settings. Asset Showroom expands to Turbo & Collectibles,
+Environment Workshop, Dirty Garage and Stinky Garage. Native details/summary
+provides mouse, touch, Enter/Space and Tab behavior. Each current child is
+highlighted; the parent automatically expands whenever the menu opens on an asset
+page. Reference-comparison pages remain linked from their existing garages and
+highlight their garage's area. Existing direct routes, including the handling
+course, remain unchanged. Settings continues opening the live floating window.
+
+[Mobile grouped navigation](docs/screenshots/navigation-assets-mobile.png).

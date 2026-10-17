@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {navigationItems,navigationURL,currentArea} from '../SharedNavigation.js';
+import {navigationItems,navigationDestinations,navigationURL,currentArea,navigationGroupActive,navigationItemActive} from '../SharedNavigation.js';
 import {readGamePreferences,saveGamePreference,resetGamePreference,preferenceKey} from '../GamePreferences.js';
 
 for(const prefix of ['http://localhost:8000/','https://example.com/little-big-dirt-poc/']){
  const base=prefix+'SharedNavigation.js';
  assert.equal(currentArea(prefix,base),'play');
- for(const item of navigationItems.filter(item=>item.path)){
+ for(const item of navigationDestinations.filter(item=>item.path)){
   const url=navigationURL(item,base);
   assert(url.href.startsWith(prefix),'all destinations stay within deployment base');
   assert.equal(currentArea(url.href,base),item.id,'destination highlights itself');
@@ -18,10 +18,18 @@ for(const prefix of ['http://localhost:8000/','https://example.com/little-big-di
  assert.equal(currentArea(prefix+'viewer/dirty.html?asset=candidate',base),'dirty');
  assert.equal(currentArea(prefix+'index.html?handling=1&debug=1',base),'handling');
 }
-assert.equal(navigationItems.find(item=>item.id==='showroom').path,'viewer/showroom.html','showroom is reachable from every area');
+assert.equal(navigationDestinations.find(item=>item.id==='showroom').path,'viewer/showroom.html','showroom is reachable from every area');
 assert.equal(navigationItems.find(item=>item.id==='settings').action,'settings','Settings opens the shared overlay without navigation');
 assert.equal(navigationItems.find(item=>item.id==='settings').path,undefined);
-assert.equal(new Set(navigationItems.map(item=>item.id)).size,navigationItems.length);
+assert.deepEqual(navigationItems.map(item=>item.id),['play','jumps','assets','settings'],'only four top-level choices');
+const assets=navigationItems.find(item=>item.id==='assets');
+assert.deepEqual(assets.children.map(item=>item.id),['showroom','environment','dirty','stinky']);
+for(const child of assets.children)assert(navigationGroupActive(assets,child.id),'active asset page opens group');
+assert(navigationGroupActive(assets,'dirty-comparison'));assert(navigationGroupActive(assets,'stinky-comparison'));
+assert(!navigationGroupActive(assets,'play'));assert(!navigationGroupActive(assets,'jumps'));
+assert(navigationItemActive(assets.children.find(item=>item.id==='dirty'),'dirty-comparison'));
+assert(navigationItemActive(navigationItems[0],'handling'));
+assert.equal(new Set(navigationDestinations.map(item=>item.id)).size,navigationDestinations.length);
 const records=new Map(),storage={getItem:key=>records.get(key)??null,setItem:(key,value)=>records.set(key,value)};
 const base='https://example.com/game/GamePreferences.js';
 saveGamePreference(storage,'physicsMode','original',base);
@@ -36,4 +44,4 @@ resetGamePreference(storage,'showDrivingHud',base);assert.equal(readGamePreferen
 resetGamePreference(storage,'touchControls',base);assert.equal(readGamePreferences(storage,base).touchControls,undefined,'touch reset restores automatic detection');
 records.set(preferenceKey(base),'malformed JSON');assert.equal(readGamePreferences(storage,base).physicsMode,'rapier');
 assert.equal(readGamePreferences(null,base).physicsMode,'rapier','blocked storage preserves default controls');
-console.log('PASS: every navigation destination exists and includes the shared menu; current areas, candidate/query URLs, disabled future pages, and root/project Pages bases.');
+console.log('PASS: every navigation destination exists and includes the shared menu; four top-level entries, nested assets/current areas, comparison/query URLs, persistent HUD/touch preferences, and root/project Pages bases.');

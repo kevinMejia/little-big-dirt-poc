@@ -5,21 +5,25 @@ import {readGamePreferences,gamePreferenceStorage} from './GamePreferences.js?v=
 export const navigationItems = [
  {id:'play',label:'Play',path:'index.html'},
  {id:'jumps',label:'Dirt Jump Lab',path:'viewer/jumps.html'},
- {id:'showroom',label:'Asset Showroom',path:'viewer/showroom.html'},
+ {id:'assets',label:'Asset Showroom',children:[
+  {id:'showroom',label:'Turbo & Collectibles',path:'viewer/showroom.html'},
+  {id:'environment',label:'Environment Workshop',path:'viewer/environment.html'},
+  {id:'dirty',label:'Dirty Garage',path:'viewer/dirty.html'},
+  {id:'stinky',label:'Stinky Garage',path:'viewer/stinky.html'},
+ ]},
  {id:'settings',label:'Settings',action:'settings',note:'Live tuning & controls'},
- {id:'handling',label:'Handling Course',path:'index.html?handling=1'},
- {id:'environment',label:'Environment Workshop',path:'viewer/environment.html'},
- {id:'dirty',label:'Dirty Garage',path:'viewer/dirty.html'},
- {id:'stinky',label:'Stinky Garage',path:'viewer/stinky.html'},
- {id:'dirty-comparison',label:'Dirty Reference Comparison',path:'viewer/comparison.html'},
- {id:'stinky-comparison',label:'Stinky Reference Comparison',path:'viewer/stinky-comparison.html'},
 ];
+export const navigationDestinations=navigationItems.flatMap(item=>item.children??[item]);
+// These existing review/handling URLs retain their pages and local entry links.
+const relatedPages=[{id:'dirty-comparison',path:'viewer/comparison.html'}, {id:'stinky-comparison',path:'viewer/stinky-comparison.html'}];
+export function navigationItemActive(item,active){return item.id===active||item.id==='play'&&active==='handling'||item.id==='dirty'&&active==='dirty-comparison'||item.id==='stinky'&&active==='stinky-comparison';}
+export function navigationGroupActive(item,active){return item.children?.some(child=>navigationItemActive(child,active))??false;}
 
 export function navigationURL(item,base=import.meta.url){return new URL(item.path,base);}
 export function currentArea(location,base=import.meta.url){
  const url=new URL(location),root=new URL('.',base);
  if(url.pathname===root.pathname||url.pathname===new URL('index.html',root).pathname)return url.searchParams.has('handling')?'handling':'play';
- return navigationItems.find(item=>item.path&&navigationURL(item,base).pathname===url.pathname)?.id;
+ return [...navigationDestinations,...relatedPages].find(item=>item.path&&navigationURL(item,base).pathname===url.pathname)?.id;
 }
 
 const styles=`
@@ -34,6 +38,7 @@ h2{font-size:20px;margin:0}.eyebrow{font-size:10px;font-weight:750;letter-spacin
 .close{min-width:48px;min-height:48px;border:1px solid #d2dbc9;border-radius:12px;background:white;color:#243b32;font-size:15px;touch-action:manipulation}
 nav{display:grid;gap:8px;padding:14px}a,.settings,.unavailable{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:52px;padding:13px 14px;border:1px solid #d9e1d1;border-radius:12px;text-decoration:none;background:white;color:#243b32;text-align:left;font-weight:650;touch-action:manipulation}
 a:hover{background:#f7efcf}a[aria-current=page]{background:#f8d66c;border-color:#d0aa38}.note{font-size:11px;font-weight:500;color:#596953;white-space:nowrap}.unavailable{background:#edf0e8;color:#62705b;cursor:default}button:focus-visible,a:focus-visible{outline:3px solid #b47b00;outline-offset:2px}
+.group{border:1px solid #d9e1d1;border-radius:12px;overflow:hidden;background:white}.group[data-current]{border-color:#d0aa38}.group summary{display:flex;align-items:center;gap:10px;min-height:52px;padding:13px 14px;font-weight:650;cursor:pointer;list-style:none;touch-action:manipulation}.group summary::-webkit-details-marker{display:none}.group summary::after{content:'›';font-size:23px;margin-left:auto;transition:transform .12s}.group[open] summary::after{transform:rotate(90deg)}.group summary:focus-visible{outline:3px solid #b47b00;outline-offset:-3px}.group[data-current] summary{background:#fff5d5}.submenu{padding:0 8px 8px 18px;display:grid;gap:6px}.submenu a{font-size:14px;min-height:48px}.submenu a[aria-current]{background:#f8d66c;border-color:#d0aa38}a[aria-current=location]{background:#f8d66c;border-color:#d0aa38}
 @media(prefers-reduced-motion:no-preference){dialog[open]{animation:appear .12s ease-out}@keyframes appear{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}}
 `;
 
@@ -52,15 +57,24 @@ export function installNavigation(){
  const close=document.createElement('button');close.className='close';close.type='button';close.textContent='Close';close.setAttribute('aria-label','Close navigation menu');heading.append(title,close);
  const nav=document.createElement('nav');nav.setAttribute('aria-label','Game and labs');
  const active=currentArea(location.href);
- for(const item of navigationItems){
+ function destination(item){
   const row=document.createElement(item.action?'button':item.path?'a':'div');row.textContent=item.label;
-  if(item.path){row.href=navigationURL(item).href;if(item.id===active)row.setAttribute('aria-current','page');
+  if(item.path){row.href=navigationURL(item).href;if(navigationItemActive(item,active))row.setAttribute('aria-current',item.id===active?'page':'location');
 
   }
   else if(item.action){row.type='button';row.className='settings';row.addEventListener('click',()=>{dialog.addEventListener('close',openSettingsPanel,{once:true});dialog.close();});}
   else{row.className='unavailable';row.setAttribute('aria-disabled','true');}
-  if(item.note||item.id===active){const note=document.createElement('span');note.className='note';note.textContent=item.note??'You are here';row.append(note);}
-  nav.append(row);
+  if(item.note||navigationItemActive(item,active)){const note=document.createElement('span');note.className='note';note.textContent=item.note??'You are here';row.append(note);}
+  return row;
+ }
+ const groups=[];
+ for(const item of navigationItems){
+  if(!item.children){nav.append(destination(item));continue;}
+  const group=document.createElement('details');group.className='group';group.open=navigationGroupActive(item,active);group.toggleAttribute('data-current',group.open);
+  const summary=document.createElement('summary');summary.textContent=item.label;summary.setAttribute('aria-controls','lbd-'+item.id);summary.setAttribute('aria-expanded',String(group.open));
+  const children=document.createElement('div');children.className='submenu';children.id='lbd-'+item.id;children.setAttribute('role','group');children.setAttribute('aria-label',item.label+' destinations');
+  for(const child of item.children)children.append(destination(child));
+  group.append(summary,children);group.addEventListener('toggle',()=>summary.setAttribute('aria-expanded',String(group.open)));groups.push({item,group});nav.append(group);
  }
  dialog.append(heading,nav);shadow.append(style,toggle,dialog);document.body.append(host);
  document.body.dataset.lbdNavigation=active??'other';
@@ -85,6 +99,7 @@ export function installNavigation(){
   // Existing blur handlers release keyboard/touch/camera captures. No game
   // controller changes and no held throttle after closing or changing pages.
   window.dispatchEvent(new Event('blur'));
+  for(const {item,group} of groups)if(navigationGroupActive(item,active))group.open=true;
   dialog.showModal();toggle.setAttribute('aria-expanded','true');close.focus();
  });
  close.addEventListener('click',()=>dialog.close());
