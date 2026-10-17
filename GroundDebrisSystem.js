@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {visualPolishConfig} from './VehicleConfig.js';
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const pct=v=>clamp(Number(v)||0,0,100)/100;
@@ -42,12 +43,12 @@ export class GroundDebrisSystem {
     }
     for(const kind of kinds){
       const list=this.objects.filter(o=>o.kind===kind);if(!list.length)continue;
-      const geometry=new THREE.SphereGeometry(1,kind==='smallRock'?7:12,6);geometry.scale(1,1,1);
+      const geometry=new THREE.SphereGeometry(1,kind==='smallRock'?9:16,10);geometry.scale(1,1,1);
       // Custom upper surface matches the smooth sampling profile; lower half embeds in soil.
-      const p=geometry.attributes.position;for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i),y=p.getY(i);p.setY(i,y>=0?Math.max(0,1-x*x-z*z)**2:-.08);}
+      const p=geometry.attributes.position;for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i),y=p.getY(i);const r=Math.hypot(x,z),a=Math.atan2(z,x),warp=1+.055*Math.sin(a*3+.8)*(1-r);p.setX(i,x*warp);p.setZ(i,z*warp);p.setY(i,y>=0?Math.max(0,1-(x*x+z*z)*warp*warp)**2*(1+.045*Math.sin(a*5)*r):-.08);}
       geometry.computeVertexNormals();
       const material=new THREE.MeshStandardMaterial({roughness:1,flatShading:kind==='smallRock'}),batch=new THREE.InstancedMesh(geometry,material,list.length);batch.name=kind;batch.receiveShadow=true;
-      list.forEach((o,i)=>{dummy.position.set(o.x,this.height(o.x,o.z)+.006,o.z);dummy.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),new THREE.Vector3(this.height(o.x-.2,o.z)-this.height(o.x+.2,o.z),.4,this.height(o.x,o.z-.2)-this.height(o.x,o.z+.2)).normalize());dummy.rotateY(-o.angle);dummy.scale.set(o.rx,o.height,o.rz);dummy.updateMatrix();batch.setMatrixAt(i,dummy.matrix);color.set(kind==='smallRock'?0x939085:kind==='twig'?0x725035:kind==='earthClump'?0x9a7950:0x9f7544).multiplyScalar(.88+random()*.24);batch.setColorAt(i,color);});batch.computeBoundingSphere();this.group.add(batch);
+      list.forEach((o,i)=>{dummy.position.set(o.x,this.height(o.x,o.z)+.006,o.z);dummy.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),new THREE.Vector3(this.height(o.x-.2,o.z)-this.height(o.x+.2,o.z),.4,this.height(o.x,o.z-.2)-this.height(o.x,o.z+.2)).normalize());dummy.rotateY(-o.angle);dummy.scale.set(o.rx,o.height,o.rz);dummy.updateMatrix();batch.setMatrixAt(i,dummy.matrix);color.set(kind==='smallRock'?0x939085:kind==='twig'?0x725035:kind==='earthClump'?0x9a7950:0x9f7544).multiplyScalar(.88+random()*.24);if(kind==='dirtClump'||kind==='earthClump'){const ground=this.painter.sampleColor?.(o.x,o.z);if(ground)color.lerp(ground,.35);}const variation=clamp(visualPolishConfig.debrisColorVariationPercent,0,100)/100;color.multiplyScalar(1+Math.sin(o.x*13.1+o.z*7.9)*variation*.3);batch.setColorAt(i,color);});batch.computeBoundingSphere();this.group.add(batch);
     }
     if(this.footprints)this.showFootprints(true);
   }

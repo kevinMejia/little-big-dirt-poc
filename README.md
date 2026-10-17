@@ -313,3 +313,67 @@ contact averaging are intentional approximations. No debris can push or launch a
 vehicle. Production regressions and controlled wheel scenarios are tested by
 `python tools/check_project.py`, including `tests/run_ground_debris_tests.py`.
 Actual iPhone Safari performance still requires device testing.
+
+### Visual polish settings
+
+`visualPolishConfig` is exported from `VehicleConfig.js`; reload after editing.
+The implementation lives in `VisualPolish.js` and never changes terrain heights,
+vehicle movement, collision state, model resources, camera input or object placement.
+
+| Setting | Mapping |
+| --- | --- |
+| `shadowQuality` | `low`: 1024 map / 100-unit width; `medium`: 2048 / 130; `high`: 2048 / 96. High prioritizes nearby detail, not extra render passes. |
+| `contactShadowStrengthPercent` | 0–100 scales radial terrain contact opacity from 0 to .6. One shared instanced batch follows wheel contacts and moving rocks, hidden for airborne wheels and broken rocks. |
+| `terrainColorVariationPercent` | 0–100 scales subtle, deterministic vertex-color variation (up to about 26% at 100). Terrain geometry and height stay unchanged. |
+| `dirtBlendSoftnessPercent` | 0–100 softens road-edge color coverage using the existing dirt mask; does not change placement or gameplay surface classification. |
+| `dustIntensityPercent` | Scales pooled dust size and opacity; zero hides driving and landing dust. Only grounded travel on dirt emits driving dust, with acceleration, turn rate and lateral slip increasing volume. |
+| `tireTrackOpacityPercent` | 0–100 maps to opacity 0–.5; rear wheel marks only appear on dirt and fade over 9 seconds. A 192-mark ring buffer prevents unbounded geometry. |
+| `debrisColorVariationPercent` | 0–100 adds deterministic instance brightness variation of ±30%; soil-colored debris also blends toward its ground palette. |
+
+Warm sunlight, sky/earth ambient fill and a cool unshadowed fill use ACES/sRGB.
+The single directional shadow map follows the selected vehicle, snapped in light
+space to reduce shimmer. Small debris does not cast new shadows. Dust has a fixed
+48-particle pool, and tracks/contact shading use shared geometry. These add three
+render draws total, without screen-space effects, new dependencies or textures.
+Debris density and interactive height profiles are preserved. Landing adds 8%
+more visual compression to the existing spring impulse; launch velocities and
+landing momentum are unchanged.
+
+The HUD's **i** button toggles driving diagnostics and measured FPS/draw/triangle
+counts (`?debug=1` starts with them visible). Existing `?debrisDebug=1` still opens
+wheel/debris tuning. Touch controls retain their bindings, sizes and safe-area
+insets. Idle status and prototype text are hidden in ordinary play.
+
+Validation: production path/assets, gameplay regressions, surface effect gating,
+pool limits/fade/cleanup and unchanged terrain positions are covered by
+`python tools/check_project.py`. Browser review includes same reset-camera captures
+for the baseline and each phase, dirt tracks, flight/landing and portrait layout.
+Phone-sized desktop browser checks are emulation, not an actual iPhone Safari
+performance measurement. Desktop diagnostics varied with browser load; use the
+on-screen counter for the target device before increasing quality or density.
+
+Ground textures (`GroundTextures.js`) add visible, seamless grass blades, soil
+grains/pebbles and rocky detail using a generated 512px packed texture and a 256px
+surface-blend mask. The existing Standard material retains lighting and shadows;
+small derivative-based bump shading adds relief without moving any vertices.
+`visualPolishConfig.groundTextureStrengthPercent` defaults to **75**; 0 disables
+texture contrast/relief and 100 gives full detail. Two rotated sampling scales
+break up repetition; mipmaps, up to 4x anisotropy and fading from 65–180 world units
+limit distant shimmer. No extra draw calls or downloads; approximately 1.6 MiB
+of texture storage including mipmaps. Physics height and surface classification
+remain unchanged. Reload the served game after changing the setting.
+
+### Dirt jump review prototype
+
+Open `viewer/jumps.html` for the isolated Rapier jump lab: one-ramp physics test,
+four-ramp playground, and rolling-terrain geometry review. The normal playable
+world is unchanged. `DirtJumpSystem.js` provides the shared ramp-aware mesh;
+`JumpVehiclePrototype.js` owns real rigid-body motion in the lab at fixed 120 Hz.
+`jumpConfig`, `rampConfig`, and `jumpVehicleConfig` in `VehicleConfig.js` expose
+ramp, gravity, air-control, spring, mass and cartoon-response tuning.
+
+See [JUMP_DEVELOPMENT.md](JUMP_DEVELOPMENT.md) for review controls, Rapier evaluation,
+known limits and the integration plan. Do not enable this in normal gameplay until
+ramp feel and the actual tree/rock/six-wheel-truck adapters have been reviewed.
+The existing custom driving controller remains the fallback. Rapier is loaded only
+by the lab, with its vendored license/source metadata under `viewer/vendor/rapier`.

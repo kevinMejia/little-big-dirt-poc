@@ -4,7 +4,7 @@ import hashlib, json, shutil
 
 ROOT=Path(__file__).resolve().parents[1]
 DIST=ROOT/'dist'
-ASSET_TYPES={'.js','.json','.glb','.gltf','.bin','.blend','.png','.jpg','.jpeg','.webp','.svg','.wav','.ogg','.mp3','.m4a','.md'}
+ASSET_TYPES={'.mjs','.js','.json','.glb','.gltf','.bin','.blend','.png','.jpg','.jpeg','.webp','.svg','.wav','.ogg','.mp3','.m4a','.md'}
 
 def build():
     # Clean only our fixed generated directory; never follow a linked output path.
@@ -15,7 +15,7 @@ def build():
         for p in sorted((ROOT/folder).rglob('*')):
             if p.is_symlink():raise RuntimeError('Symlinks are not deployment assets: '+str(p))
             if p.name=='environment-browser-preview.png' or p.name.startswith(('credentials','service-account','.')):continue
-            if p.is_file() and (p.suffix.lower() in ASSET_TYPES or (folder=='viewer' and p.suffix=='.html')):
+            if p.is_file() and (p.suffix.lower() in ASSET_TYPES or (folder=='viewer' and (p.suffix=='.html' or p.name=='LICENSE'))):
                 files.append(p)
     if DIST.exists():shutil.rmtree(DIST)
     DIST.mkdir()

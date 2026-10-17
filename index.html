@@ -54,6 +54,20 @@ body.touch-enabled #mobile{display:flex}body.touch-enabled #help{display:none}
 @media(max-height:480px){#mobile{--control-size:72px;bottom:max(12px,env(safe-area-inset-bottom))}#hud{padding:8px 12px}#vehicleName{margin-top:5px}#hud h1{font-size:15px}#speed{font-size:22px}#status{display:none}#switcher{gap:5px}#switcher button{padding:7px 9px}.touch{border-radius:20px}}
 
 #vehicleGarage{position:fixed;inset:0;width:100vw;max-width:none;height:100dvh;max-height:none;border:0;padding:0;background:#e7e9e4}#vehicleGarage iframe{width:100%;height:100%;border:0;display:block}#garageClose{position:absolute;right:18px;top:18px;z-index:2;background:#243b32;color:white}.holding{outline:3px solid #f6d258;animation:garageHold .65s linear}@keyframes garageHold{from{filter:brightness(1)}to{filter:brightness(1.5)}}
+
+/* Quiet HUD chrome; driving controls retain their original events and hit areas. */
+#hud{min-width:200px;padding:15px 18px;background:#193b3de8;border-color:#f5fff02b;border-radius:16px;box-shadow:0 8px 24px #173b301a}
+#hud .subtitle{font-size:9px;letter-spacing:1.8px;color:#ceddbb}#hud h1{font-size:14px;letter-spacing:.7px;margin-top:4px;color:#eff4e7}
+#vehicleName{font-size:15px;font-weight:650;margin-top:14px;color:#e4eade}#speed{font-size:42px;letter-spacing:-1.5px;font-variant-numeric:tabular-nums;font-weight:780;margin-top:2px}#speed small{font-size:10px;letter-spacing:1px;margin-left:3px;color:#c2cdbf}
+#renderTuning{display:none}body.show-debug #renderTuning{display:block}
+#treeTuning{display:none;max-width:225px;line-height:1.5}body.show-debug #treeTuning{display:block}
+#debugToggle{position:absolute;top:9px;right:9px;padding:0;width:28px;height:28px;border:0;border-radius:50%;background:transparent;color:#d1ddcc99;font-size:13px;font-family:serif;pointer-events:auto}#debugToggle[aria-pressed=true]{background:#ffffff20;color:white}
+#switcher{gap:9px}#switcher button{min-height:44px;box-shadow:0 3px 12px #1d3c2520;border-color:#eaf5df55;font-weight:650}#switcher button.active{background:#f3c94f;border-color:#ffe6a0;color:#354039}
+#help{padding:8px 14px;font-size:11px;background:#23423cdb;border:1px solid #ffffff20;box-shadow:0 4px 15px #173b3015}
+#status[data-idle=true]{display:none}#status{background:#23423cde;color:#fff0c2;top:max(76px,calc(env(safe-area-inset-top) + 64px));font-weight:650}
+@media(max-width:800px){#hud{min-width:155px;max-width:calc(100vw - 142px);padding:11px 13px}#hud h1{font-size:11px}#hud .subtitle{font-size:8px}#vehicleName{font-size:13px;margin-top:10px}#speed{font-size:34px}#debugToggle{top:5px;right:4px;width:26px;height:26px}#switcher{gap:7px}#switcher button{min-height:40px;padding:8px 12px;font-size:11px}}
+@media(max-height:480px){#hud{padding:9px 12px}#hud .subtitle{display:none}#vehicleName{margin-top:6px}#speed{font-size:28px}#switcher button{min-height:34px}#switcher{gap:5px}}
+
 </style>
 
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/"}}</script>
@@ -61,7 +75,7 @@ body.touch-enabled #mobile{display:flex}body.touch-enabled #help{display:none}
 
 <body>
 
-<div id="hud"><div class="subtitle">FREE DRIVE • PROTOTYPE 01</div><h1>LITTLE BIG DIRT</h1><div id="vehicleName">Backhoe Loader</div><div id="speed">0 <small>MPH</small></div><div id="treeTuning" style="font-size:11px;color:#ffe5a0;margin-top:6px"></div><div id="terrainInfo" style="font-size:11px;color:#c6e3d5;margin-top:6px">Explore the hills!</div></div>
+<div id="hud"><div class="subtitle">FREE DRIVE</div><h1>LITTLE BIG DIRT</h1><div id="vehicleName">Backhoe Loader</div><div id="speed">0 <small>MPH</small></div><button id="debugToggle" type="button" aria-label="Toggle driving diagnostics" aria-pressed="false" title="Driving diagnostics">i</button><div id="treeTuning" style="font-size:11px;color:#ffe5a0;margin-top:6px"></div><div id="renderTuning" style="font-size:10px;color:#c6e3d5;margin-top:4px"></div><div id="terrainInfo" style="font-size:11px;color:#c6e3d5;margin-top:6px">Explore the hills!</div></div>
 
 <div id="switcher"><button id="backhoeBtn" class="active">1 · Backhoe</button><button id="garbageBtn">2 · Garbage truck</button><button id="resetBtn">↻ Reset</button><button id="touchToggle" type="button" aria-label="Toggle touch controls" aria-pressed="false">Touch controls</button></div>
 
@@ -96,9 +110,15 @@ import { DrivingInput } from './DrivingInput.js';
 import { applyReleaseDeceleration, getSpeedMultiplier } from './VehicleMotion.js';
 import { GroundDebrisSystem, DebrisWheelContacts } from './GroundDebrisSystem.js';
 import { createDebrisDebug } from './GroundDebrisDebug.js';
+import { addGroundTextures } from './GroundTextures.js';
+import { createPolishedLighting, ContactShading, polishTerrain, VehicleSurfaceEffects } from './VisualPolish.js';
 import { BoundaryCannon } from './BoundaryCannon.js';
 import { VehicleFeedback, SoftBoundary, cameraReturnDecay } from './VehicleFeedback.js';
 
+const debugToggle=document.querySelector('#debugToggle');
+function toggleDiagnostics(enabled){document.body.classList.toggle('show-debug',enabled);debugToggle.setAttribute('aria-pressed',String(enabled));}
+debugToggle.onclick=()=>toggleDiagnostics(!document.body.classList.contains('show-debug'));
+toggleDiagnostics(new URLSearchParams(location.search).has('debug'));
 const hillPhysics=new HillSpeedPhysics(height);
 
 const scene=new THREE.Scene();scene.background=new THREE.Color(0xb5e1ee);
@@ -107,9 +127,8 @@ const camera=new THREE.PerspectiveCamera(66,innerWidth/innerHeight,.1,600);
 
 const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;document.body.prepend(renderer.domElement);
 
-scene.add(new THREE.HemisphereLight(0xe9f9ff,0x738b53,2.15));
-
-const sun=new THREE.DirectionalLight(0xfff4cf,2.6);sun.position.set(-65,105,40);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-120;sun.shadow.camera.right=120;sun.shadow.camera.top=120;sun.shadow.camera.bottom=-120;sun.shadow.normalBias=.035;scene.add(sun);
+const polishedLighting=createPolishedLighting(scene,renderer);
+addEventListener('pagehide',event=>{if(!event.persisted)polishedLighting.dispose();});
 
 const mat=(c,roughness=1)=>new THREE.MeshStandardMaterial({color:c,roughness,flatShading:true});
 
@@ -144,6 +163,9 @@ function makeTree(x,z,scale=1){const g=new THREE.Group();g.position.set(x,height
 let seed=3184;function rand(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
 
 const sceneryLayout=createSceneryLayout(terrainPainter,world);
+polishTerrain(terrain,terrainPainter,sceneryLayout,world);
+const groundTextures=addGroundTextures(terrain,terrainPainter,world,renderer);
+addEventListener('pagehide',event=>{if(!event.persisted)groundTextures.dispose();});
 for(const {x,z,scale} of sceneryLayout.trees)makeTree(x,z,scale);
 
 const rockInteractions=new RockInteractionSystem(scene,{groundHeight:height,onImpact:rockImpactSound});
@@ -152,6 +174,10 @@ function makeRock(x,z,s){rockInteractions.addRock(x,z,s);rand();rand();rand()}
 for(const {x,z,radius} of sceneryLayout.rocks)makeRock(x,z,radius);
 const groundDebris=new GroundDebrisSystem(scene,height,world,terrainPainter,sceneryLayout,groundDebrisConfig);
 const debrisContacts=new DebrisWheelContacts();
+const surfaceEffects=new VehicleSurfaceEffects(scene,height,terrainPainter);
+addEventListener('pagehide',event=>{if(!event.persisted)surfaceEffects.dispose();});
+const contactShading=new ContactShading(scene,height,sceneryLayout,rockInteractions);
+addEventListener('pagehide',event=>{if(!event.persisted)contactShading.dispose();});
 const debrisDebug=createDebrisDebug(scene,groundDebris,debrisContacts);
 addEventListener('pagehide',event=>{if(!event.persisted){debrisDebug?.dispose();groundDebris.dispose();}});
 const groundDetails=createGroundDetails(scene,height,world,terrainPainter,sceneryLayout);
@@ -198,9 +224,9 @@ renderer.domElement.addEventListener('pointermove',event=>{if(event.pointerId!==
 for(const type of ['pointerup','pointercancel','lostpointercapture'])renderer.domElement.addEventListener(type,event=>{if(event.pointerId===cameraOrbit.pointer)releaseOrbit();});
 addEventListener('blur',releaseOrbit);addEventListener('resize',releaseOrbit);addEventListener('orientationchange',releaseOrbit);document.addEventListener('visibilitychange',()=>{if(document.hidden)releaseOrbit();});
 
-function choose(i){hillPhysics.reset();bodyFeedback.reset();boundaryMotion.reset();vehicleVisual.position.set(0,0,0);vehicleVisual.rotation.set(0,0,0);index=i; if(vehicle){if(vehicle.userData.controller)vehicle.userData.controller.dispose();else{vehicleVisual.remove(vehicle);vehicle.traverse(o=>{if(o.isMesh)o.geometry.dispose()})}}vehicle=configs[i].build();vehicleVisual.add(vehicle);if(i===1){for(const x of [-.8,.8]){box(vehicle,.35,.22,.12,x,index===0?1.7:1.85,index===0?2.38:3.43,white);box(vehicle,.3,.18,.12,x,1.35,index===0?-2.4:-3.13,red)}box(vehicle,.16,.85,.16,.7,3.7,-.5,metal);}document.querySelector('#vehicleName').textContent=configs[i].name;document.querySelector('#backhoeBtn').classList.toggle('active',i===0);document.querySelector('#garbageBtn').classList.toggle('active',i===1);speed=0}
+function choose(i){surfaceEffects.reset();hillPhysics.reset();bodyFeedback.reset();boundaryMotion.reset();vehicleVisual.position.set(0,0,0);vehicleVisual.rotation.set(0,0,0);index=i; if(vehicle){if(vehicle.userData.controller)vehicle.userData.controller.dispose();else{vehicleVisual.remove(vehicle);vehicle.traverse(o=>{if(o.isMesh)o.geometry.dispose()})}}vehicle=configs[i].build();vehicleVisual.add(vehicle);if(i===1){for(const x of [-.8,.8]){box(vehicle,.35,.22,.12,x,index===0?1.7:1.85,index===0?2.38:3.43,white);box(vehicle,.3,.18,.12,x,1.35,index===0?-2.4:-3.13,red)}box(vehicle,.16,.85,.16,.7,3.7,-.5,metal);}document.querySelector('#vehicleName').textContent=configs[i].name;document.querySelector('#backhoeBtn').classList.toggle('active',i===0);document.querySelector('#garbageBtn').classList.toggle('active',i===1);speed=0}
 
-function reset(){flight=null;boundaryCannon.reset();hillPhysics.reset();bodyFeedback.reset();boundaryMotion.reset();releaseOrbit();cameraOrbit.yaw=cameraOrbit.pitch=0;position.set(0,height(0,0),0);heading=0;speed=0;steer=0}
+function reset(){surfaceEffects.reset();flight=null;boundaryCannon.reset();hillPhysics.reset();bodyFeedback.reset();boundaryMotion.reset();releaseOrbit();cameraOrbit.yaw=cameraOrbit.pitch=0;position.set(0,height(0,0),0);heading=0;speed=0;steer=0}
 
 choose(0);reset();
 
@@ -337,8 +363,8 @@ if(flight){
  flight=boundaryCannon.flight;
  if(state.unrecoverable){reset();}
  else if(state.landed){
-   speed=state.speed;heading=state.heading;hillPhysics.reset();bodyFeedback.reset();bodyFeedback.landingImpact(cfg.hill,state.impact,state.bounce);
-   rockInteractions.puff(position.x,position.y+.25,position.z,Math.min(24,8+Math.round(state.impact*.4)));
+   speed=state.speed;heading=state.heading;hillPhysics.reset();bodyFeedback.reset();bodyFeedback.landingImpact(cfg.hill,state.impact,state.bounce);bodyFeedback.heave.velocity*=1.08;
+   surfaceEffects.puff(position.x,position.y+.25,position.z,state.impact);
    landingSound(state.impact);
  }else{
    speed=state.speed;const delta=Math.atan2(Math.sin(state.heading-heading),Math.cos(state.heading-heading));heading+=delta*(1-Math.exp(-1.8*dt));
@@ -374,7 +400,11 @@ if(!flight)debrisContacts.ground(vehicleRoot,height,bodyFeedback);
 debrisDebug?.update(dt,vehicleRoot,bodyFeedback);
 if(model)model.update(dt);
 environmentWorld?.update();
+polishedLighting.update(position);
+contactShading.update(vehicleRoot,debrisContacts,!!flight);
+surfaceEffects.update(dt,{position,speed,heading,airborne:!!flight,contacts:debrisContacts,camera});
 
+document.querySelector('#status').dataset.idle=String(!flight&&bodyFeedback.landingSeconds<=0&&!emergencyBrake);
 document.querySelector('#status').textContent=flight?'BOUNDARY CANNON · Flying!':bodyFeedback.landingSeconds>0?'Soft landing · Settling…':emergencyBrake?'EMERGENCY BRAKE · ENGAGED':'Keyboard or gamepad supported';
 
 if(cameraOrbit.pointer===null){const decay=cameraReturnDecay(cameraSettings.cameraReturnSpeedPercent,dt);cameraOrbit.yaw*=decay;cameraOrbit.pitch*=decay;}
@@ -387,7 +417,8 @@ document.querySelector('#speed').innerHTML=Math.round(Math.abs(speed)*2.237)+' <
 
 }
 
-function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);if(!garage.open){update(dt);renderer.render(scene,camera)}}animate();
+let diagnosticFrames=0,diagnosticStart=performance.now();
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);if(!garage.open){update(dt);renderer.render(scene,camera);diagnosticFrames++;const now=performance.now();if(now-diagnosticStart>1000){if(document.body.classList.contains('show-debug'))document.querySelector('#renderTuning').textContent=Math.round(diagnosticFrames*1000/(now-diagnosticStart))+' FPS · '+renderer.info.render.calls+' draws · '+Math.round(renderer.info.render.triangles/1000)+'k triangles';diagnosticFrames=0;diagnosticStart=now;}}}animate();
 
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 

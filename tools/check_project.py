@@ -30,13 +30,13 @@ def verify():
         source=ROOT/relative;built=DIST/relative
         assert hashlib.sha256(source.read_bytes()).hexdigest()==expected,relative+' source/build mismatch'
         assert hashlib.sha256(built.read_bytes()).hexdigest()==expected,relative+' output mismatch'
-        if built.suffix in ('.html','.js'):
+        if built.suffix in ('.html','.js','.mjs'):
             text=built.read_text(encoding='utf-8');parser=Links()
             if built.suffix=='.html':parser.feed(text)
             for url in parser.urls:local(url,built)
             for url in re.findall(r'''(?:from\s*|import\s*)['"]([^'"]+)['"]''',text):
                 if url.startswith('.'):local(url,built)
-            scripts=[text] if built.suffix=='.js' else re.findall(r'<script\s+type="module"[^>]*>([\s\S]*?)</script>',text)
+            scripts=[text] if built.suffix in ('.js','.mjs') else re.findall(r'<script\s+type="module"[^>]*>([\s\S]*?)</script>',text)
             for script in scripts:
                 subprocess.run(['node','--input-type=module','--check'],input=script,text=True,check=True,capture_output=True)
         if built.suffix=='.glb':
@@ -60,12 +60,12 @@ def verify():
             with urlopen(base+relative) as response:
                 assert response.status==200
                 assert hashlib.sha256(response.read()).hexdigest()==expected,relative+' HTTP mismatch'
-                if relative.endswith('.js'):assert 'javascript' in response.headers['Content-Type']
+                if relative.endswith(('.js','.mjs')):assert 'javascript' in response.headers['Content-Type']
         print(f'PASS: {len(manifest["files"])} production files served unchanged under /dirty-sandbox-game/; local links and GLB resources verified',flush=True)
     finally:server.shutdown();server.server_close();thread.join()
-    for test in ['hill-speed.mjs','release-deceleration.mjs','speed-adjustment.mjs','driving-input.mjs','vehicle-garage.mjs','gameplay-feedback.mjs','boundary-cannon.mjs']:
+    for test in ['hill-speed.mjs','release-deceleration.mjs','speed-adjustment.mjs','driving-input.mjs','vehicle-garage.mjs','gameplay-feedback.mjs','boundary-cannon.mjs','jump-prototype.mjs']:
         subprocess.run(['node',str(ROOT/'tests'/test)],cwd=ROOT,check=True)
-    for test in ['run_tree_tests.py','run_environment_tests.py','run_world_appearance_tests.py','run_ground_debris_tests.py','dirty-asset.py','run_dirty_tests.py']:
+    for test in ['run_tree_tests.py','run_environment_tests.py','run_world_appearance_tests.py','run_ground_debris_tests.py','run_visual_polish_tests.py','dirty-asset.py','run_dirty_tests.py']:
         subprocess.run([sys.executable,str(ROOT/'tests'/test)],cwd=ROOT,check=True)
 
 if __name__=='__main__':verify()

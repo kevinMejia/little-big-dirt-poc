@@ -11,6 +11,7 @@
     "test": "python tools/check_project.py"
   },
   "config": {
+    "rapierPrototypeVersion": "0.21.0",
     "threeCdnVersion": "0.168.0",
     "pagesBase": "/dirty-sandbox-game/"
   }

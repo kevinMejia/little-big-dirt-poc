@@ -2,7 +2,7 @@
 // Set an individual percentage to 0 to disable that effect for that vehicle.
 export const vehicleConfig = {
   backhoe: {boundaryCannon: {enabled:true,horizontalLaunchSpeed:45,verticalLaunchSpeed:28,launchSpinPercent:20,airControlPercent:15,landingBouncePercent:30}, speedAdjustmentPercent: 80, bodyRollPercent: 25, bodyPitchPercent: 20, suspensionBouncePercent: 20, boundaryBouncePercent: 25, boundaryBodyRockPercent: 30, downhillBoostPercent: 120, uphillPenaltyPercent: 30, treeKnockdownSpeedPercent: 90, releaseDeceleration: 8.0, stopThreshold: .1, autoBrakeOnRelease: true, rockCrackSpeedPercent: 25, rockBreakSpeedPercent: 55},
-  garbageTruck: {boundaryCannon: {enabled:true,horizontalLaunchSpeed:45,verticalLaunchSpeed:29,launchSpinPercent:15,airControlPercent:15,landingBouncePercent:38}, speedAdjustmentPercent: 0, bodyRollPercent: 25, bodyPitchPercent: 20, suspensionBouncePercent: 20, boundaryBouncePercent: 25, boundaryBodyRockPercent: 30, downhillBoostPercent: 35, uphillPenaltyPercent: 45, treeKnockdownSpeedPercent: 95, releaseDeceleration: 3.5, stopThreshold: .1, autoBrakeOnRelease: true, rockCrackSpeedPercent: 35, rockBreakSpeedPercent: 75},
+  garbageTruck: {boundaryCannon: {enabled:true,horizontalLaunchSpeed:45,verticalLaunchSpeed:29,launchSpinPercent:15,airControlPercent:15,landingBouncePercent:38}, speedAdjustmentPercent: 200, bodyRollPercent: 25, bodyPitchPercent: 20, suspensionBouncePercent: 20, boundaryBouncePercent: 25, boundaryBodyRockPercent: 30, downhillBoostPercent: 35, uphillPenaltyPercent: 45, treeKnockdownSpeedPercent: 95, releaseDeceleration: 3.5, stopThreshold: .1, autoBrakeOnRelease: true, rockCrackSpeedPercent: 35, rockBreakSpeedPercent: 75},
 };
 
 export const hillSettings = {
@@ -47,4 +47,27 @@ export const groundDebrisConfig = {
   minBumpHeight:0.5, maxBumpHeight:0.25, suspensionEffectPercent:60,
   maxInteractiveDistance:35,
   dirtClumpPercent:35, smallRockPercent:35, twigPercent:20, earthClumpPercent:10
+};
+
+// Rendering-only tuning; none of these values change driving or collision surfaces.
+export const visualPolishConfig = {
+  shadowQuality:'medium', contactShadowStrengthPercent:35, groundTextureStrengthPercent:75,
+  terrainColorVariationPercent:20, dirtBlendSoftnessPercent:65,
+  dustIntensityPercent:35, tireTrackOpacityPercent:25, debrisColorVariationPercent:20
+};
+
+// Review prototype only: not consumed by the playable movement controller yet.
+export const jumpConfig = {
+  enabled:true, gravityScalePercent:100, airbornePitchControlPercent:20,
+  landingBouncePercent:25, landingBodyRockPercent:35, landingDustPercent:40
+};
+export const rampConfig = {
+  gentleRampHeight:1.5, tabletopHeight:2.5, gapRampHeight:3,
+  bigKickerHeight:4, dirtBlendPercent:70
+};
+
+// Isolated Rapier lab tuning; these do not modify the playable vehicles.
+export const jumpVehicleConfig = {
+  dirty:{mass:1200,acceleration:8,maxSpeed:18,releaseDeceleration:5,restLength:.45,suspensionStiffness:75,suspensionCompression:5,suspensionRelaxation:4.5,bodyRollPercent:20,bodyPitchPercent:18,landingBounceScalePercent:100},
+  stinky:{mass:1900,acceleration:6,maxSpeed:18,releaseDeceleration:5,restLength:.52,suspensionStiffness:58,suspensionCompression:5,suspensionRelaxation:3.5,bodyRollPercent:25,bodyPitchPercent:22,landingBounceScalePercent:125}
 };

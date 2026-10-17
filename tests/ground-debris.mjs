@@ -3,7 +3,7 @@ import * as THREE from '../three-test.mjs';
 import {GroundDebrisSystem,DebrisWheelContacts,debrisHeight} from '../GroundDebrisSystem.js';
 import {VehicleFeedback} from '../VehicleFeedback.js';
 import {groundDebrisConfig} from '../VehicleConfig.js';
-const scene=new THREE.Scene(),config={...groundDebrisConfig},flat=()=>0,painter={surface:()=>({slope:0,dirtMask:.5,path:.2})},layout={trees:[{x:30,z:30,scale:1}],rocks:[{x:-30,z:-30,radius:1}]};
+const scene=new THREE.Scene(),config={...groundDebrisConfig,densityPercent:50,interactivePercent:30,minBumpHeight:.05,maxBumpHeight:.25},flat=()=>0,painter={surface:()=>({slope:0,dirtMask:.5,path:.2})},layout={trees:[{x:30,z:30,scale:1}],rocks:[{x:-30,z:-30,radius:1}]};
 const debris=new GroundDebrisSystem(scene,flat,220,painter,layout,config);
 const snapshot=JSON.stringify(debris.objects);debris.regenerate();assert.equal(JSON.stringify(debris.objects),snapshot);assert.equal(debris.objects.length,500);assert.equal(debris.group.children.length,4);assert(debris.objects.every(o=>Math.hypot(o.x,o.z)>=14));
 assert(debris.objects.some(o=>o.interactive)&&debris.objects.some(o=>!o.interactive));
