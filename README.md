@@ -379,14 +379,16 @@ The existing custom driving controller remains the fallback. Rapier is loaded on
 by the lab, with its vendored license/source metadata under `viewer/vendor/rapier`.
 
 
-### Optional Rapier comparison in the main world
+### Main-world hybrid driving
 
-The **Physics Mode** selector defaults to **Original**. Choose **Rapier** to use
-the approved jump-lab controller with Dirty or the current Stinky. Switching clears
-velocity/input and preserves position/heading. The four jump lanes are centered
-at x=-66, -22, 22, 66 and z=30, approached toward +Z from z=-13.
+The **Physics Mode** selector defaults to **Rapier**: Original-style grounded
+acceleration, turning and hills with Rapier gravity and controls in flight.
+**Original** remains available as a fallback. A loading failure retains Original.
+No models or input devices were replaced. Use the **Handling course** link for
+an open comparison area with a long straight, circles, hills, bumps and ramps.
 
-See [JUMP_DEVELOPMENT.md](JUMP_DEVELOPMENT.md) for controller ownership, terrain,
-interaction adapters, tuning and remaining iPhone hardware validation. No models
-were replaced. Rapier loads only when selected. Both modes use the existing input,
-garage and camera. `npm test` includes actual WASM world-integration scenarios.
+`VehicleConfig.js` is the main tuning file, with verified property-level mode,
+units, limits, examples and related settings. Read [VEHICLE_TUNING.md](VEHICLE_TUNING.md)
+for the short cheat sheet and [HANDLING_REVIEW.md](HANDLING_REVIEW.md) for findings
+and gameplay test steps. `npm test` includes actual WASM integration scenarios
+and checks Original-equation parity at the normal boosted vehicle speeds.

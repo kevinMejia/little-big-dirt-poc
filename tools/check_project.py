@@ -63,7 +63,7 @@ def verify():
                 if relative.endswith(('.js','.mjs')):assert 'javascript' in response.headers['Content-Type']
         print(f'PASS: {len(manifest["files"])} production files served unchanged under /dirty-sandbox-game/; local links and GLB resources verified',flush=True)
     finally:server.shutdown();server.server_close();thread.join()
-    for test in ['hill-speed.mjs','release-deceleration.mjs','speed-adjustment.mjs','driving-input.mjs','vehicle-garage.mjs','gameplay-feedback.mjs','boundary-cannon.mjs','jump-prototype.mjs']:
+    for test in ['vehicle-config.mjs','hill-speed.mjs','release-deceleration.mjs','speed-adjustment.mjs','driving-input.mjs','vehicle-garage.mjs','gameplay-feedback.mjs','boundary-cannon.mjs','jump-prototype.mjs']:
         subprocess.run(['node',str(ROOT/'tests'/test)],cwd=ROOT,check=True)
     for test in ['run_tree_tests.py','run_rapier_world_tests.py','run_environment_tests.py','run_world_appearance_tests.py','run_ground_debris_tests.py','run_visual_polish_tests.py','dirty-asset.py','run_dirty_tests.py','run_stinky_tests.py','run_steering_probe.py']:
         subprocess.run([sys.executable,str(ROOT/'tests'/test)],cwd=ROOT,check=True)

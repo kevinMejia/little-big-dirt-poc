@@ -63,7 +63,7 @@ export class VehicleFeedback {
     for(const key of ['pitch','roll','heave'])targets[key]+=debris[key]||0;
     const steps=Math.max(1,Math.ceil(dt/(1/120))),h=dt/steps;
     for(let i=0;i<steps;i++)for(const key of ['pitch','roll','heave']){
-      const spring=this[key],damping=key==='heave'&&this.landingSeconds>0?6:10;spring.velocity+=((targets[key]-spring.value)*65-spring.velocity*damping)*h;spring.value+=spring.velocity*h;
+      const spring=this[key],damping=key==='heave'&&this.landingSeconds>0?(config.landingDamping??6):(config.bodyDamping??10);spring.velocity+=((targets[key]-spring.value)*(config.bodySpringStiffness??65)-spring.velocity*damping)*h;spring.value+=spring.velocity*h;
       const limit=key==='heave'?.3:radians(16);spring.value=clamp(spring.value,-limit,limit);
     }
     this.previous={speed,groundY,groundPitch,groundRoll,verticalSpeed};
