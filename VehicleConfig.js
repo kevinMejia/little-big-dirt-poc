@@ -1,7 +1,7 @@
 // Hill effects are maximum percentages, reached at the steepness below.
 // Set an individual percentage to 0 to disable that effect for that vehicle.
 export const vehicleConfig = {
-  backhoe: {speedAdjustmentPercent: 0, bodyRollPercent: 25, bodyPitchPercent: 20, suspensionBouncePercent: 20, boundaryBouncePercent: 25, boundaryBodyRockPercent: 30, downhillBoostPercent: 120, uphillPenaltyPercent: 30, treeKnockdownSpeedPercent: 90, releaseDeceleration: 8.0, stopThreshold: .1, autoBrakeOnRelease: true, rockCrackSpeedPercent: 25, rockBreakSpeedPercent: 55},
+  backhoe: {speedAdjustmentPercent: 80, bodyRollPercent: 25, bodyPitchPercent: 20, suspensionBouncePercent: 20, boundaryBouncePercent: 25, boundaryBodyRockPercent: 30, downhillBoostPercent: 120, uphillPenaltyPercent: 30, treeKnockdownSpeedPercent: 90, releaseDeceleration: 8.0, stopThreshold: .1, autoBrakeOnRelease: true, rockCrackSpeedPercent: 25, rockBreakSpeedPercent: 55},
   garbageTruck: {speedAdjustmentPercent: 0, bodyRollPercent: 25, bodyPitchPercent: 20, suspensionBouncePercent: 20, boundaryBouncePercent: 25, boundaryBodyRockPercent: 30, downhillBoostPercent: 35, uphillPenaltyPercent: 45, treeKnockdownSpeedPercent: 95, releaseDeceleration: 3.5, stopThreshold: .1, autoBrakeOnRelease: true, rockCrackSpeedPercent: 35, rockBreakSpeedPercent: 75},
 };
 
@@ -18,9 +18,13 @@ export const hillSettings = {
 export const cameraSettings = {cameraReturnSpeedPercent: 50};
 
 export const treeConfig = {
+  fallDurationSeconds: .8, // Required by the current tree animation.
   recoveryDelaySeconds: 8,
-  fallDurationSeconds: .8,
   recoveryDurationSeconds: 1.5,
+
+  minFallDurationSeconds: 0.5,
+  maxFallDurationSeconds: 1.8,
+  fallSpeedExponent: 1.5
 };
 
 export const rockConfig = {

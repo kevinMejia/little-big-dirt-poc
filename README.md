@@ -122,6 +122,8 @@ until you choose to perform the publication steps.
   viewer/environment.html remains their standalone preview. EnvironmentWorld.js
   connects the same imported assets to the playable world's existing interactions.
 - EnvironmentAssets.js: shared loading and optional static instancing for those assets.
+- WorldAppearance.js: centralized visual settings, decorative horizon, terrain
+  vertex colors, deterministic clustered placement and static instanced ground details.
 - viewer/dirty.html and viewer/comparison.html: vehicle inspection and reference views.
 - tools/blender/: authoring/validation scripts. Blender is needed only to rebuild models.
 - tests/: existing regression scripts and local collision preview fixtures.
@@ -202,3 +204,52 @@ vehicles; reverse preserves the normal reversed yaw response. Model/asset files 
 the existing hill, release-stop and obstacle thresholds are unchanged. Regression
 coverage includes frame-rate-independent return/feedback, every wall/corner, reverse,
 rebound caps, held-wall input, settling, and ground contact using the real GLB pivots.
+
+## World appearance
+
+Edit the exported `worldAppearance` object in `WorldAppearance.js`, then reload:
+
+```js
+export const worldAppearance = {
+  fogEnabled: false,
+  distantHillsEnabled: true,
+  terrainColorVariation: 25,
+  dirtPatchPercent: 15,
+  rockyGroundPercent: 8,
+  grassDetailDensity: 40,
+  vegetationClusteringPercent: 60,
+  hazeStrengthPercent: 8
+};
+```
+
+All numeric appearance percentages clamp to 0–100. These are rendering/placement
+settings; they do not change the analytic terrain height, terrain grid, vehicle
+physics, camera, map bounds or obstacle collision thresholds.
+
+| Setting | Mapping |
+| --- | --- |
+| fogEnabled | False removes scene fog entirely. True enables only the optional distant haze. |
+| distantHillsEnabled | Adds/removes one decorative landscape mesh beyond the original 220-unit terrain edge; never registered for collision. |
+| terrainColorVariation | Grass palette blend is min(1, percent/50), plus fine brightness variation up to ±9% at 100. At 0 the grass uses the original base green; dirt/rock/path remain separately controlled. |
+| dirtPatchPercent | Selects approximately this percentage of a calibrated broad noise field for dirt patch regions. A .06-wide noise transition softens edges. Steep-slope earth exposure also scales with this percentage. The existing winding path is retained independently. |
+| rockyGroundPercent | Selects approximately this percentage of another noise field for muted stone-colored regions, strengthened on slopes. These are vertex colors, not additional colliders. |
+| grassDetailDensity | Instance budgets scale linearly from zero to 10,000 grass tufts, 700 flowers and 450 tiny pebbles at 100. Default 40 caps these at 4,000 / 280 / 180. Road/trunk/boulder avoidance and surface masks may reduce actual counts. |
+| vegetationClusteringPercent | Fraction of tree/rock position proposals drawn from small cluster neighborhoods rather than uniform positions. The same percentage scales woodland/meadow placement bias. At 0 proposals are uniform; fixed spawn/path clearings and minimum spacing still apply. |
+| hazeStrengthPercent | Only used when fogEnabled is true. Linear haze starts at 350 units; far distance is 350 + 1000/(percent/100). Default 8 gives far=12,850, about 2% haze at 600 units. Zero disables haze. |
+
+Terrain uses vertex colors without repeating image textures. Distant hills share
+all 880 playable perimeter vertices and their colors, then roll into a continuous
+outer landscape skirt. This hides terrain edges without changing the playable map.
+The sky remains clear blue. Decorative hills, grass, flowers and pebbles have no
+colliders. The existing Blender tree/rock assets remain unchanged; placement still
+registers the same interaction systems with the same scale ranges, using a stable
+local seed (175 trees, 80 rocks). The spawn clearing and winding path stay open.
+
+Ground details use three static InstancedMesh draws; the horizon adds one mesh.
+Details receive shadows but do not cast them, and nothing in this appearance module
+updates each animation frame. Lower grassDetailDensity first on slower phones.
+Actual iPhone Safari frame rate has not been hardware-benchmarked here.
+
+Run `python tests/run_world_appearance_tests.py` for horizon seam geometry/colors,
+fog toggles, deterministic clustering, clearings, color/patch controls, instance
+budgets and terrain seating tests. These checks also run in the production verifier.

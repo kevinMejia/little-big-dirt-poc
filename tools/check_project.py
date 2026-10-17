@@ -65,7 +65,7 @@ def verify():
     finally:server.shutdown();server.server_close();thread.join()
     for test in ['hill-speed.mjs','release-deceleration.mjs','speed-adjustment.mjs','driving-input.mjs','vehicle-garage.mjs','gameplay-feedback.mjs']:
         subprocess.run(['node',str(ROOT/'tests'/test)],cwd=ROOT,check=True)
-    for test in ['run_tree_tests.py','run_environment_tests.py','dirty-asset.py','run_dirty_tests.py']:
+    for test in ['run_tree_tests.py','run_environment_tests.py','run_world_appearance_tests.py','dirty-asset.py','run_dirty_tests.py']:
         subprocess.run([sys.executable,str(ROOT/'tests'/test)],cwd=ROOT,check=True)
 
 if __name__=='__main__':verify()
