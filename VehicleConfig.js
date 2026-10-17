@@ -1,7 +1,7 @@
 // MAIN TUNING FILE - change a value, save, refresh the game (restart lab setup if open).
 // Dirty = backhoe; Stinky = garbage truck. Main-game "Rapier" is the HYBRID.
-// ORIGINAL = legacy terrain-following controller. RAPIER = standalone raycast lab.
-// HYBRID = arcade grounded driving + Rapier flight. Both playable modes remain available.
+// ORIGINAL = legacy terrain-following controller. RAPIER = legacy raycast tests.
+// HYBRID = arcade grounded driving + Rapier flight in the main game AND Dirt Jump Lab.
 // "No clamp" means the implementation does not enforce a safe numeric bound:
 // use finite values in the stated intended domain. Suggested ranges are starting
 // points around current tuning, not engine limits or promises of tested feel.
@@ -17,7 +17,7 @@ export const vehicleConfig = {
   // Dirty / backhoe.
   backhoe: {
     // Controls: Scales acceleration and forward/reverse speed together; multiplier = 1 + value/100.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: percent; finite numbers; values <= -100 give zero drive; no upper cap.
     // Increase/decrease: higher = quicker and faster; lower = slower.
     // Examples: -50 = half; 0 = baseline; 100 = double.
@@ -25,7 +25,7 @@ export const vehicleConfig = {
     speedAdjustmentPercent: 80,
 
     // Controls: Maximum downhill increase to drive acceleration and speed limit.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: percent; negative becomes 0; no upper cap.
     // Increase/decrease: higher = stronger downhill boost; lower = flatter speed.
     // Examples: 0 = none; 35 = up to +35%; 120 = up to +120%.
@@ -33,7 +33,7 @@ export const vehicleConfig = {
     downhillBoostPercent: 120,
 
     // Controls: Maximum uphill reduction to drive acceleration and speed limit.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: percent; clamped 0..95.
     // Increase/decrease: higher = slower climbs; lower = easier climbs.
     // Examples: 0 = none; 30 = up to -30%; 60 = up to -60%.
@@ -41,7 +41,7 @@ export const vehicleConfig = {
     uphillPenaltyPercent: 30,
 
     // Controls: Subtracts speed while neither accelerate nor reverse is held, after drag.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: m/s^2; negative becomes 0; no upper cap.
     // Increase/decrease: higher = shorter coast; lower = longer coast.
     // Examples: 0 = drag only; 3.5 = truck coast; 8 = brisk stop.
@@ -49,7 +49,7 @@ export const vehicleConfig = {
     releaseDeceleration: 8,
 
     // Controls: Snaps remaining release speed to exactly zero.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: m/s; negative becomes 0 in release helper; no upper cap.
     // Increase/decrease: higher = earlier final stop; lower = longer low-speed tail.
     // Examples: 0 = no positive snap band; .1 = current; .5 = earlier snap.
@@ -57,7 +57,7 @@ export const vehicleConfig = {
     stopThreshold: 0.1,
 
     // Controls: Enables constant release deceleration; threshold snap and drag still apply when disabled.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: boolean true/false.
     // Increase/decrease: true = release braking; false = coast with drag.
     // Examples: true = automatic slowing; false = drag-only coast.
@@ -65,7 +65,7 @@ export const vehicleConfig = {
     autoBrakeOnRelease: true,
 
     // Controls: Visual outward body lean during turns and debris roll; cannot flip the collider.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: percent; clamped 0..100.
     // Increase/decrease: higher = more visible lean; lower = flatter body.
     // Examples: 0 = no turn lean; 25 = subtle; 100 = up to 12 degrees from turns.
@@ -73,7 +73,7 @@ export const vehicleConfig = {
     bodyRollPercent: 25,
 
     // Controls: Visual body tilt under acceleration/braking and debris pitch.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: percent; clamped 0..100.
     // Increase/decrease: higher = more nodding; lower = flatter body.
     // Examples: 0 = none; 20 = subtle; 100 = up to 10 degrees from acceleration.
@@ -81,7 +81,7 @@ export const vehicleConfig = {
     bodyPitchPercent: 20,
 
     // Controls: Visual response to changes in terrain pitch/roll/heave; Original also uses it for debris heave. HYBRID currently passes zero terrain motion to body feedback, so terrain bounce here is INACTIVE there; hybrid wheel rates still work.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: percent; clamped 0..100.
     // Increase/decrease: higher = more terrain body movement in Original; lower = calmer.
     // Examples: 0 = no terrain feedback; 20 = current; 60 = exaggerated.
@@ -89,7 +89,7 @@ export const vehicleConfig = {
     suspensionBouncePercent: 20,
 
     // Controls: Visual feedback spring restoring acceleration applied to body pitch/roll/heave.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: 1/s^2 coefficient; no clamp; use finite >0.
     // Increase/decrease: higher = faster/snappier body return; lower = softer/slower.
     // Examples: 35 = soft; 65 = current; 90 = firm.
@@ -97,7 +97,7 @@ export const vehicleConfig = {
     bodySpringStiffness: 65,
 
     // Controls: Visual body spring velocity damping outside landing heave.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: 1/s; no clamp; use finite >=0.
     // Increase/decrease: higher = less oscillation; lower = more wobble.
     // Examples: 6 = lively; 10 = current; 16 = calmer.
@@ -105,7 +105,7 @@ export const vehicleConfig = {
     bodyDamping: 10,
 
     // Controls: Visual heave velocity damping for 1.8 seconds after landing.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: 1/s; no clamp; use finite >=0.
     // Increase/decrease: higher = less repeated visual rebound; lower = springier landing.
     // Examples: 6 = current bounce; 10 = calmer; 16 = heavily damped.
@@ -121,7 +121,7 @@ export const vehicleConfig = {
     boundaryBouncePercent: 25,
 
     // Controls: Visual body pitch kick at landings; Original also uses it for border impacts. HYBRID landings use this rather than jumpConfig.landingBodyRockPercent.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: percent; clamped 0..100.
     // Increase/decrease: higher = stronger landing nod/impact rocking; lower = quieter body.
     // Examples: 0 = no pitch kick; 30 = current; 70 = pronounced.
@@ -131,7 +131,7 @@ export const vehicleConfig = {
     // Boundary cannon settings.
     boundaryCannon: {
       // Controls: Enables boundary cannon for this vehicle. When disabled, Original uses soft-boundary response and HYBRID uses small velocity redirect.
-      // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+      // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
       // Units / actual limits: boolean true/false.
       // Increase/decrease: true = cannon launches; false = border redirect.
       // Examples: true = launch; false = no launch.
@@ -139,7 +139,7 @@ export const vehicleConfig = {
       enabled: true,
 
       // Controls: Boundary cannon inward horizontal launch speed.
-      // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+      // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
       // Units / actual limits: m/s; clamped 8..65 in both playable modes.
       // Increase/decrease: higher = longer travel; lower = shorter travel.
       // Examples: 20 = short; 45 = current; 60 = long.
@@ -147,7 +147,7 @@ export const vehicleConfig = {
       horizontalLaunchSpeed: 45,
 
       // Controls: Boundary cannon initial upward speed.
-      // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+      // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
       // Units / actual limits: m/s; clamped 8..40.
       // Increase/decrease: higher = higher/longer flight; lower = low/short flight.
       // Examples: 12 = low; 28 = current Dirty; 38 = very high.
@@ -155,7 +155,7 @@ export const vehicleConfig = {
       verticalLaunchSpeed: 28,
 
       // Controls: Cannon wobble in Original; initial physical angular velocity in HYBRID.
-      // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+      // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
       // Units / actual limits: percent; clamped 0..100.
       // Increase/decrease: higher = more rotation; lower = steadier launch.
       // Examples: 0 = no added spin; 20 = mild; 80 = stronger.
@@ -163,7 +163,7 @@ export const vehicleConfig = {
       launchSpinPercent: 20,
 
       // Controls: Steering rotates the cannon horizontal velocity; HYBRID also turns body toward flight heading.
-      // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+      // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
       // Units / actual limits: percent; clamped 0..100.
       // Increase/decrease: higher = more flight-path steering; lower = straighter trajectory.
       // Examples: 0 = no path steering; 15 = current; 50 = stronger.
@@ -171,7 +171,7 @@ export const vehicleConfig = {
       airControlPercent: 15,
 
       // Controls: Impact-scaled visual heave at landing; lab additionally changes chassis restitution and suspension relaxation. HYBRID absorbs vertical speed on contact; this does not cause physical repeat bounce.
-      // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+      // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
       // Units / actual limits: percent; feedback/lab clamps 0..100; lab per-vehicle multiplier applies before feedback clamp.
       // Increase/decrease: higher = springier visible landing (and bouncier lab); lower = softer.
       // Examples: 0 = no heave kick; 25 = gentle; 60 = lively.
@@ -180,7 +180,7 @@ export const vehicleConfig = {
 
     },
     // Controls: Normal impact speed threshold for knocking down a tree, relative to UNSCALED base topSpeed.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: percent; clamped 0..100.
     // Increase/decrease: higher = harder to topple; lower = easier.
     // Examples: 25 = quarter base speed; 90 = current Dirty; 100 = full base speed.
@@ -188,7 +188,7 @@ export const vehicleConfig = {
     treeKnockdownSpeedPercent: 90,
 
     // Controls: Normal impact threshold for first crack or breaking an already cracked rock.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: percent; clamped 0..100; multiplied by base topSpeed and rock resistance.
     // Increase/decrease: higher = harder to crack; lower = easier.
     // Examples: 15 = easy; 25 = Dirty current; 50 = harder.
@@ -196,7 +196,7 @@ export const vehicleConfig = {
     rockCrackSpeedPercent: 25,
 
     // Controls: Normal impact threshold for breaking an intact rock; never below crack threshold.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: percent; clamped 0..100 then threshold raised to at least crack threshold.
     // Increase/decrease: higher = harder one-hit breaks; lower = easier.
     // Examples: 35 = easy; 55 = Dirty current; 75 = Stinky current.
@@ -207,7 +207,7 @@ export const vehicleConfig = {
   // Stinky / garbage truck.
   garbageTruck: {
     // Controls: Scales acceleration and forward/reverse speed together; multiplier = 1 + value/100.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: percent; finite numbers; values <= -100 give zero drive; no upper cap.
     // Increase/decrease: higher = quicker and faster; lower = slower.
     // Examples: -50 = half; 0 = baseline; 100 = double.
@@ -215,7 +215,7 @@ export const vehicleConfig = {
     speedAdjustmentPercent: 200,
 
     // Controls: Maximum downhill increase to drive acceleration and speed limit.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: percent; negative becomes 0; no upper cap.
     // Increase/decrease: higher = stronger downhill boost; lower = flatter speed.
     // Examples: 0 = none; 35 = up to +35%; 120 = up to +120%.
@@ -223,7 +223,7 @@ export const vehicleConfig = {
     downhillBoostPercent: 35,
 
     // Controls: Maximum uphill reduction to drive acceleration and speed limit.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: percent; clamped 0..95.
     // Increase/decrease: higher = slower climbs; lower = easier climbs.
     // Examples: 0 = none; 30 = up to -30%; 60 = up to -60%.
@@ -231,7 +231,7 @@ export const vehicleConfig = {
     uphillPenaltyPercent: 45,
 
     // Controls: Subtracts speed while neither accelerate nor reverse is held, after drag.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: m/s^2; negative becomes 0; no upper cap.
     // Increase/decrease: higher = shorter coast; lower = longer coast.
     // Examples: 0 = drag only; 3.5 = truck coast; 8 = brisk stop.
@@ -239,7 +239,7 @@ export const vehicleConfig = {
     releaseDeceleration: 3.5,
 
     // Controls: Snaps remaining release speed to exactly zero.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: m/s; negative becomes 0 in release helper; no upper cap.
     // Increase/decrease: higher = earlier final stop; lower = longer low-speed tail.
     // Examples: 0 = no positive snap band; .1 = current; .5 = earlier snap.
@@ -247,7 +247,7 @@ export const vehicleConfig = {
     stopThreshold: 0.1,
 
     // Controls: Enables constant release deceleration; threshold snap and drag still apply when disabled.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: boolean true/false.
     // Increase/decrease: true = release braking; false = coast with drag.
     // Examples: true = automatic slowing; false = drag-only coast.
@@ -255,7 +255,7 @@ export const vehicleConfig = {
     autoBrakeOnRelease: true,
 
     // Controls: Visual outward body lean during turns and debris roll; cannot flip the collider.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: percent; clamped 0..100.
     // Increase/decrease: higher = more visible lean; lower = flatter body.
     // Examples: 0 = no turn lean; 25 = subtle; 100 = up to 12 degrees from turns.
@@ -263,7 +263,7 @@ export const vehicleConfig = {
     bodyRollPercent: 25,
 
     // Controls: Visual body tilt under acceleration/braking and debris pitch.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: percent; clamped 0..100.
     // Increase/decrease: higher = more nodding; lower = flatter body.
     // Examples: 0 = none; 20 = subtle; 100 = up to 10 degrees from acceleration.
@@ -271,7 +271,7 @@ export const vehicleConfig = {
     bodyPitchPercent: 20,
 
     // Controls: Visual response to changes in terrain pitch/roll/heave; Original also uses it for debris heave. HYBRID currently passes zero terrain motion to body feedback, so terrain bounce here is INACTIVE there; hybrid wheel rates still work.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: percent; clamped 0..100.
     // Increase/decrease: higher = more terrain body movement in Original; lower = calmer.
     // Examples: 0 = no terrain feedback; 20 = current; 60 = exaggerated.
@@ -279,7 +279,7 @@ export const vehicleConfig = {
     suspensionBouncePercent: 20,
 
     // Controls: Visual feedback spring restoring acceleration applied to body pitch/roll/heave.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: 1/s^2 coefficient; no clamp; use finite >0.
     // Increase/decrease: higher = faster/snappier body return; lower = softer/slower.
     // Examples: 35 = soft; 65 = current; 90 = firm.
@@ -287,7 +287,7 @@ export const vehicleConfig = {
     bodySpringStiffness: 65,
 
     // Controls: Visual body spring velocity damping outside landing heave.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: 1/s; no clamp; use finite >=0.
     // Increase/decrease: higher = less oscillation; lower = more wobble.
     // Examples: 6 = lively; 10 = current; 16 = calmer.
@@ -295,7 +295,7 @@ export const vehicleConfig = {
     bodyDamping: 10,
 
     // Controls: Visual heave velocity damping for 1.8 seconds after landing.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: 1/s; no clamp; use finite >=0.
     // Increase/decrease: higher = less repeated visual rebound; lower = springier landing.
     // Examples: 6 = current bounce; 10 = calmer; 16 = heavily damped.
@@ -311,7 +311,7 @@ export const vehicleConfig = {
     boundaryBouncePercent: 25,
 
     // Controls: Visual body pitch kick at landings; Original also uses it for border impacts. HYBRID landings use this rather than jumpConfig.landingBodyRockPercent.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: percent; clamped 0..100.
     // Increase/decrease: higher = stronger landing nod/impact rocking; lower = quieter body.
     // Examples: 0 = no pitch kick; 30 = current; 70 = pronounced.
@@ -321,7 +321,7 @@ export const vehicleConfig = {
     // Boundary cannon settings.
     boundaryCannon: {
       // Controls: Enables boundary cannon for this vehicle. When disabled, Original uses soft-boundary response and HYBRID uses small velocity redirect.
-      // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+      // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
       // Units / actual limits: boolean true/false.
       // Increase/decrease: true = cannon launches; false = border redirect.
       // Examples: true = launch; false = no launch.
@@ -329,7 +329,7 @@ export const vehicleConfig = {
       enabled: true,
 
       // Controls: Boundary cannon inward horizontal launch speed.
-      // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+      // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
       // Units / actual limits: m/s; clamped 8..65 in both playable modes.
       // Increase/decrease: higher = longer travel; lower = shorter travel.
       // Examples: 20 = short; 45 = current; 60 = long.
@@ -337,7 +337,7 @@ export const vehicleConfig = {
       horizontalLaunchSpeed: 45,
 
       // Controls: Boundary cannon initial upward speed.
-      // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+      // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
       // Units / actual limits: m/s; clamped 8..40.
       // Increase/decrease: higher = higher/longer flight; lower = low/short flight.
       // Examples: 12 = low; 28 = current Dirty; 38 = very high.
@@ -345,7 +345,7 @@ export const vehicleConfig = {
       verticalLaunchSpeed: 29,
 
       // Controls: Cannon wobble in Original; initial physical angular velocity in HYBRID.
-      // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+      // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
       // Units / actual limits: percent; clamped 0..100.
       // Increase/decrease: higher = more rotation; lower = steadier launch.
       // Examples: 0 = no added spin; 20 = mild; 80 = stronger.
@@ -353,7 +353,7 @@ export const vehicleConfig = {
       launchSpinPercent: 15,
 
       // Controls: Steering rotates the cannon horizontal velocity; HYBRID also turns body toward flight heading.
-      // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+      // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
       // Units / actual limits: percent; clamped 0..100.
       // Increase/decrease: higher = more flight-path steering; lower = straighter trajectory.
       // Examples: 0 = no path steering; 15 = current; 50 = stronger.
@@ -361,7 +361,7 @@ export const vehicleConfig = {
       airControlPercent: 15,
 
       // Controls: Impact-scaled visual heave at landing; lab additionally changes chassis restitution and suspension relaxation. HYBRID absorbs vertical speed on contact; this does not cause physical repeat bounce.
-      // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+      // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
       // Units / actual limits: percent; feedback/lab clamps 0..100; lab per-vehicle multiplier applies before feedback clamp.
       // Increase/decrease: higher = springier visible landing (and bouncier lab); lower = softer.
       // Examples: 0 = no heave kick; 25 = gentle; 60 = lively.
@@ -370,7 +370,7 @@ export const vehicleConfig = {
 
     },
     // Controls: Normal impact speed threshold for knocking down a tree, relative to UNSCALED base topSpeed.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: percent; clamped 0..100.
     // Increase/decrease: higher = harder to topple; lower = easier.
     // Examples: 25 = quarter base speed; 90 = current Dirty; 100 = full base speed.
@@ -378,7 +378,7 @@ export const vehicleConfig = {
     treeKnockdownSpeedPercent: 95,
 
     // Controls: Normal impact threshold for first crack or breaking an already cracked rock.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: percent; clamped 0..100; multiplied by base topSpeed and rock resistance.
     // Increase/decrease: higher = harder to crack; lower = easier.
     // Examples: 15 = easy; 25 = Dirty current; 50 = harder.
@@ -386,7 +386,7 @@ export const vehicleConfig = {
     rockCrackSpeedPercent: 35,
 
     // Controls: Normal impact threshold for breaking an intact rock; never below crack threshold.
-    // Modes: ORIGINAL + HYBRID (main-game Rapier option).
+    // Modes: ORIGINAL + HYBRID (main-game Rapier option + Dirt Jump Lab).
     // Units / actual limits: percent; clamped 0..100 then threshold raised to at least crack threshold.
     // Increase/decrease: higher = harder one-hit breaks; lower = easier.
     // Examples: 35 = easy; 55 = Dirty current; 75 = Stinky current.
@@ -555,7 +555,7 @@ export const arcadeHandlingConfig = {
   // Dirty / backhoe.
   dirty: {
     // Controls: Baseline forward/reverse drive acceleration, before speed adjustment in playable modes. Lab has its own engine acceleration.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: m/s^2; no clamp; finite >=0 intended.
     // Increase/decrease: higher = quicker speed gain; lower = slower.
     // Examples: 6 = gentle; 8 = moderate; 11 = Dirty playable baseline.
@@ -563,7 +563,7 @@ export const arcadeHandlingConfig = {
     acceleration: 11,
 
     // Controls: Forward speed cap before speedAdjustmentPercent and hill modifier.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: m/s; no clamp; finite >=0 intended.
     // Increase/decrease: higher = faster maximum; lower = slower.
     // Examples: 17 = Stinky baseline; 21 = Dirty baseline; 25 = faster.
@@ -571,7 +571,7 @@ export const arcadeHandlingConfig = {
     topSpeed: 21,
 
     // Controls: Reverse speed cap before speedAdjustmentPercent and hill modifier.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: m/s magnitude; no clamp; finite >=0 intended.
     // Increase/decrease: higher = faster reverse; lower = slower.
     // Examples: 4 = slow; 7 = Stinky current; 9 = Dirty current.
@@ -579,7 +579,7 @@ export const arcadeHandlingConfig = {
     reverseSpeed: 9,
 
     // Controls: Grounded heading change rate at full steer above steeringFullSpeed.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: rad/s; no clamp; finite >=0 intended.
     // Increase/decrease: higher = tighter turns; lower = wider turns.
     // Examples: .8 = gentle; 1.05 = Stinky current; 1.42 = Dirty current.
@@ -587,7 +587,7 @@ export const arcadeHandlingConfig = {
     turn: 1.42,
 
     // Controls: Grounded proportional speed loss: speed -= speed * drag * dt * .08.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: coefficient (effective decay .08*value per second); no clamp; nonnegative intended.
     // Increase/decrease: higher = more slowing/lower equilibrium speed; lower = longer coast.
     // Examples: .3 = light; .52 = Dirty current; .8 = Stinky current.
@@ -595,7 +595,7 @@ export const arcadeHandlingConfig = {
     drag: 0.52,
 
     // Controls: Multiplier on grounded yaw rate; input smoothing is controlled separately by steeringInputRate.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: unitless; no clamp; finite >=0 intended.
     // Increase/decrease: higher = tighter/faster turns; lower = wider turns.
     // Examples: .7 = softer; 1 = Original parity; 1.2 = quicker.
@@ -603,7 +603,7 @@ export const arcadeHandlingConfig = {
     steeringResponse: 1,
 
     // Controls: Horizontal speed where full grounded yaw rate is reached.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: m/s; no clamp; finite >0 required.
     // Increase/decrease: higher = wider slow turns; lower = tighter slow turns.
     // Examples: 5 = early full turn; 9 = current; 15 = later full turn.
@@ -611,7 +611,7 @@ export const arcadeHandlingConfig = {
     steeringFullSpeed: 9,
 
     // Controls: Reduces yaw multiplier to 1/(1 + value*absoluteSpeed) at speed.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: s/m; no clamp; finite >=0 required to avoid zero/negative denominator.
     // Increase/decrease: higher = wider high-speed turns; lower = more direct.
     // Examples: .0 = Original parity; .01 = 2/3 yaw at 50 m/s; .02 = half yaw at 50.
@@ -619,7 +619,7 @@ export const arcadeHandlingConfig = {
     speedSteeringReduction: 0,
 
     // Controls: Visual wheel compression approach rate; wheels apply no chassis force.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: 1/s; no clamp; finite >=0 intended.
     // Increase/decrease: higher = quicker wheel reaction; lower = slower.
     // Examples: 8 = soft/slow; 24 = Dirty current; 35 = quick.
@@ -627,7 +627,7 @@ export const arcadeHandlingConfig = {
     suspensionStiffness: 24,
 
     // Controls: Visual wheel compression return rate; not chassis force or body spring damping.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: 1/s; no clamp; finite >=0 intended.
     // Increase/decrease: higher = faster wheel settling; lower = lingering wheel compression.
     // Examples: 8 = slow; 16 = Dirty current; 24 = fast.
@@ -635,7 +635,7 @@ export const arcadeHandlingConfig = {
     suspensionDamping: 16,
 
     // Controls: Minimum upward tangent speed needed for natural ramp release.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: m/s upward; no clamp; finite >=0 intended.
     // Increase/decrease: higher = fewer small-bump launches; lower = easier takeoff.
     // Examples: .5 = sensitive; 1.5 = current; 3 = more selective.
@@ -643,7 +643,7 @@ export const arcadeHandlingConfig = {
     minimumLaunchSpeed: 1.5,
 
     // Controls: Gap between projected ballistic root height and next terrain support needed to leave ground.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: meters; no clamp; finite >=0 intended; evaluated at fixed 1/120 s.
     // Increase/decrease: higher = suppresses small convex bumps; lower = more sensitive lips.
     // Examples: .005 = sensitive; .012 = current; .03 = selective.
@@ -651,7 +651,7 @@ export const arcadeHandlingConfig = {
     takeoffClearance: 0.012,
 
     // Controls: Physical roll torque from steering during HYBRID flight; does not change grounded stability.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: percent; clamped 0..100.
     // Increase/decrease: higher = quicker air roll; lower = calmer air attitude.
     // Examples: 0 = no roll input; 12 = Dirty current; 30 = stronger.
@@ -659,7 +659,7 @@ export const arcadeHandlingConfig = {
     airborneRollControlPercent: 12,
 
     // Controls: Rapier angular velocity damping during HYBRID flight. Ground orientation is always terrain-aligned.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: 1/s damping coefficient; negative becomes 0; no upper cap.
     // Increase/decrease: higher = suppresses spin; lower = longer spin.
     // Examples: 0 = free spin; 1.5 = previous hardcoded/current; 3 = stronger damping.
@@ -667,7 +667,7 @@ export const arcadeHandlingConfig = {
     airborneAngularDamping: 1.5,
 
     // Controls: Visual wheel compression per m/s of downward landing impact; final compression capped at .25 m.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: seconds (meters compression per m/s); no clamp on scale; nonnegative intended.
     // Increase/decrease: higher = deeper visible wheel dip; lower = shallower.
     // Examples: .01 = .1 m at 10 m/s; .025 = .25 m at 10; .04 = reaches cap earlier.
@@ -675,7 +675,7 @@ export const arcadeHandlingConfig = {
     landingCompressionScale: 0.025,
 
     // Controls: Fraction of heading-projected horizontal speed kept when flight returns to ground.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: ratio; clamped 0..1.
     // Increase/decrease: higher = keeps momentum; lower = slows on touchdown.
     // Examples: 0 = stops; .7 = loses 30%; 1 = current momentum retained.
@@ -686,7 +686,7 @@ export const arcadeHandlingConfig = {
   // Stinky / garbage truck.
   stinky: {
     // Controls: Baseline forward/reverse drive acceleration, before speed adjustment in playable modes. Lab has its own engine acceleration.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: m/s^2; no clamp; finite >=0 intended.
     // Increase/decrease: higher = quicker speed gain; lower = slower.
     // Examples: 6 = gentle; 8 = moderate; 11 = Dirty playable baseline.
@@ -694,7 +694,7 @@ export const arcadeHandlingConfig = {
     acceleration: 7,
 
     // Controls: Forward speed cap before speedAdjustmentPercent and hill modifier.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: m/s; no clamp; finite >=0 intended.
     // Increase/decrease: higher = faster maximum; lower = slower.
     // Examples: 17 = Stinky baseline; 21 = Dirty baseline; 25 = faster.
@@ -702,7 +702,7 @@ export const arcadeHandlingConfig = {
     topSpeed: 17,
 
     // Controls: Reverse speed cap before speedAdjustmentPercent and hill modifier.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: m/s magnitude; no clamp; finite >=0 intended.
     // Increase/decrease: higher = faster reverse; lower = slower.
     // Examples: 4 = slow; 7 = Stinky current; 9 = Dirty current.
@@ -710,7 +710,7 @@ export const arcadeHandlingConfig = {
     reverseSpeed: 7,
 
     // Controls: Grounded heading change rate at full steer above steeringFullSpeed.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: rad/s; no clamp; finite >=0 intended.
     // Increase/decrease: higher = tighter turns; lower = wider turns.
     // Examples: .8 = gentle; 1.05 = Stinky current; 1.42 = Dirty current.
@@ -718,7 +718,7 @@ export const arcadeHandlingConfig = {
     turn: 1.05,
 
     // Controls: Grounded proportional speed loss: speed -= speed * drag * dt * .08.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: coefficient (effective decay .08*value per second); no clamp; nonnegative intended.
     // Increase/decrease: higher = more slowing/lower equilibrium speed; lower = longer coast.
     // Examples: .3 = light; .52 = Dirty current; .8 = Stinky current.
@@ -726,7 +726,7 @@ export const arcadeHandlingConfig = {
     drag: 0.8,
 
     // Controls: Multiplier on grounded yaw rate; input smoothing is controlled separately by steeringInputRate.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: unitless; no clamp; finite >=0 intended.
     // Increase/decrease: higher = tighter/faster turns; lower = wider turns.
     // Examples: .7 = softer; 1 = Original parity; 1.2 = quicker.
@@ -734,7 +734,7 @@ export const arcadeHandlingConfig = {
     steeringResponse: 1,
 
     // Controls: Horizontal speed where full grounded yaw rate is reached.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: m/s; no clamp; finite >0 required.
     // Increase/decrease: higher = wider slow turns; lower = tighter slow turns.
     // Examples: 5 = early full turn; 9 = current; 15 = later full turn.
@@ -742,7 +742,7 @@ export const arcadeHandlingConfig = {
     steeringFullSpeed: 9,
 
     // Controls: Reduces yaw multiplier to 1/(1 + value*absoluteSpeed) at speed.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: s/m; no clamp; finite >=0 required to avoid zero/negative denominator.
     // Increase/decrease: higher = wider high-speed turns; lower = more direct.
     // Examples: .0 = Original parity; .01 = 2/3 yaw at 50 m/s; .02 = half yaw at 50.
@@ -750,7 +750,7 @@ export const arcadeHandlingConfig = {
     speedSteeringReduction: 0,
 
     // Controls: Visual wheel compression approach rate; wheels apply no chassis force.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: 1/s; no clamp; finite >=0 intended.
     // Increase/decrease: higher = quicker wheel reaction; lower = slower.
     // Examples: 8 = soft/slow; 24 = Dirty current; 35 = quick.
@@ -758,7 +758,7 @@ export const arcadeHandlingConfig = {
     suspensionStiffness: 20,
 
     // Controls: Visual wheel compression return rate; not chassis force or body spring damping.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: 1/s; no clamp; finite >=0 intended.
     // Increase/decrease: higher = faster wheel settling; lower = lingering wheel compression.
     // Examples: 8 = slow; 16 = Dirty current; 24 = fast.
@@ -766,7 +766,7 @@ export const arcadeHandlingConfig = {
     suspensionDamping: 14,
 
     // Controls: Minimum upward tangent speed needed for natural ramp release.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: m/s upward; no clamp; finite >=0 intended.
     // Increase/decrease: higher = fewer small-bump launches; lower = easier takeoff.
     // Examples: .5 = sensitive; 1.5 = current; 3 = more selective.
@@ -774,7 +774,7 @@ export const arcadeHandlingConfig = {
     minimumLaunchSpeed: 1.5,
 
     // Controls: Gap between projected ballistic root height and next terrain support needed to leave ground.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: meters; no clamp; finite >=0 intended; evaluated at fixed 1/120 s.
     // Increase/decrease: higher = suppresses small convex bumps; lower = more sensitive lips.
     // Examples: .005 = sensitive; .012 = current; .03 = selective.
@@ -782,7 +782,7 @@ export const arcadeHandlingConfig = {
     takeoffClearance: 0.012,
 
     // Controls: Physical roll torque from steering during HYBRID flight; does not change grounded stability.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: percent; clamped 0..100.
     // Increase/decrease: higher = quicker air roll; lower = calmer air attitude.
     // Examples: 0 = no roll input; 12 = Dirty current; 30 = stronger.
@@ -790,7 +790,7 @@ export const arcadeHandlingConfig = {
     airborneRollControlPercent: 10,
 
     // Controls: Rapier angular velocity damping during HYBRID flight. Ground orientation is always terrain-aligned.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: 1/s damping coefficient; negative becomes 0; no upper cap.
     // Increase/decrease: higher = suppresses spin; lower = longer spin.
     // Examples: 0 = free spin; 1.5 = previous hardcoded/current; 3 = stronger damping.
@@ -798,7 +798,7 @@ export const arcadeHandlingConfig = {
     airborneAngularDamping: 1.5,
 
     // Controls: Visual wheel compression per m/s of downward landing impact; final compression capped at .25 m.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: seconds (meters compression per m/s); no clamp on scale; nonnegative intended.
     // Increase/decrease: higher = deeper visible wheel dip; lower = shallower.
     // Examples: .01 = .1 m at 10 m/s; .025 = .25 m at 10; .04 = reaches cap earlier.
@@ -806,7 +806,7 @@ export const arcadeHandlingConfig = {
     landingCompressionScale: 0.025,
 
     // Controls: Fraction of heading-projected horizontal speed kept when flight returns to ground.
-    // Modes: HYBRID only (main-game Rapier option); INACTIVE in raycast lab and ORIGINAL.
+    // Modes: HYBRID only (main-game Rapier option + Dirt Jump Lab); INACTIVE in legacy raycast tests and ORIGINAL.
     // Units / actual limits: ratio; clamped 0..1.
     // Increase/decrease: higher = keeps momentum; lower = slows on touchdown.
     // Examples: 0 = stops; .7 = loses 30%; 1 = current momentum retained.
@@ -819,7 +819,7 @@ export const arcadeHandlingConfig = {
 // Shared hill sampling and smoothing; keep fullEffectGrade > flatGrade.
 export const hillSettings = {
   // Controls: Terrain rise/run that gives full uphill/downhill percentage effect.
-  // Modes: ORIGINAL + HYBRID; INACTIVE in raycast lab.
+  // Modes: ORIGINAL + HYBRID; INACTIVE in legacy raycast tests.
   // Units / actual limits: rise/run ratio; no clamp; must be finite and > flatGrade.
   // Increase/decrease: higher = gentler slope effects; lower = stronger effects on mild hills.
   // Examples: .2 = full at 20% grade; .35 = current; .5 = full at 50%.
@@ -827,7 +827,7 @@ export const hillSettings = {
   fullEffectGrade: 0.35,
 
   // Controls: Dead band below which terrain grade has no hill effect.
-  // Modes: ORIGINAL + HYBRID; INACTIVE in raycast lab.
+  // Modes: ORIGINAL + HYBRID; INACTIVE in legacy raycast tests.
   // Units / actual limits: rise/run ratio; no clamp; use 0 <= value < fullEffectGrade.
   // Increase/decrease: higher = more slopes treated as flat; lower = more sensitive.
   // Examples: .0 = no dead band; .015 = 1.5%; .05 = 5%.
@@ -835,7 +835,7 @@ export const hillSettings = {
   flatGrade: 0.015,
 
   // Controls: Exponential time constant smoothing hill grade and speed modifier.
-  // Modes: ORIGINAL + HYBRID; INACTIVE in raycast lab.
+  // Modes: ORIGINAL + HYBRID; INACTIVE in legacy raycast tests.
   // Units / actual limits: seconds; no clamp; finite >0 required.
   // Increase/decrease: higher = slower hill response; lower = quicker response.
   // Examples: .2 = quick; .6 = current; 1.2 = gradual.
@@ -843,7 +843,7 @@ export const hillSettings = {
   responseSeconds: 0.6,
 
   // Controls: Forward/back terrain sample offset for measuring slope.
-  // Modes: ORIGINAL + HYBRID; INACTIVE in raycast lab.
+  // Modes: ORIGINAL + HYBRID; INACTIVE in legacy raycast tests.
   // Units / actual limits: meters each side; no clamp; finite >0 required.
   // Increase/decrease: higher = smoother broad slope estimate; lower = more local variation.
   // Examples: .5 = local; 1 = current; 2 = broad.
@@ -851,7 +851,7 @@ export const hillSettings = {
   sampleDistance: 1,
 
   // Controls: Exponential removal of existing overspeed when hill speed limit drops.
-  // Modes: ORIGINAL + HYBRID; INACTIVE in raycast lab.
+  // Modes: ORIGINAL + HYBRID; INACTIVE in legacy raycast tests.
   // Units / actual limits: 1/s; no clamp; use finite >=0.
   // Increase/decrease: higher = faster return to cap; lower = longer overspeed tail.
   // Examples: 0 = retains prior overspeed; 2.5 = current; 5 = faster.
@@ -875,7 +875,7 @@ export const cameraSettings = {
 // Tree interaction lifecycle and retained inactive legacy fields.
 export const treeConfig = {
   // Controls: Time taken by a knocked-down tree to fall.
-  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in standalone raycast lab.
+  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in legacy raycast tests.
   // Units / actual limits: seconds; effective minimum .01; no upper cap.
   // Increase/decrease: higher = slower fall; lower = quicker fall.
   // Examples: .5 = quick; .8 = current; 1.5 = slow.
@@ -883,7 +883,7 @@ export const treeConfig = {
   fallDurationSeconds: 0.8,
 
   // Controls: Time a fallen tree waits before recovery, unless vehicle occupies it.
-  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in standalone raycast lab.
+  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in legacy raycast tests.
   // Units / actual limits: seconds; no clamp; nonnegative intended.
   // Increase/decrease: higher = longer fallen state; lower = earlier recovery.
   // Examples: 2 = brief; 8 = current; 15 = long.
@@ -891,7 +891,7 @@ export const treeConfig = {
   recoveryDelaySeconds: 8,
 
   // Controls: Time for a tree to stand back up once unoccupied.
-  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in standalone raycast lab.
+  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in legacy raycast tests.
   // Units / actual limits: seconds; effective minimum .01; no upper cap.
   // Increase/decrease: higher = slower recovery; lower = quicker recovery.
   // Examples: .5 = quick; 1.5 = current; 3 = slow.
@@ -899,7 +899,7 @@ export const treeConfig = {
   recoveryDurationSeconds: 1.5,
 
   // Controls: INACTIVE legacy tree tuning: no runtime consumer; fallDurationSeconds is the only active fall-time setting.
-  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in standalone raycast lab.
+  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in legacy raycast tests.
   // Units / actual limits: stored numeric value; no supported active range.
   // Increase/decrease: increasing/decreasing has no effect.
   // Examples: 0.5 = no effect; 1 = no effect; 2 = no effect.
@@ -907,7 +907,7 @@ export const treeConfig = {
   minFallDurationSeconds: 0.5,
 
   // Controls: INACTIVE legacy tree tuning: no runtime consumer; fallDurationSeconds is the only active fall-time setting.
-  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in standalone raycast lab.
+  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in legacy raycast tests.
   // Units / actual limits: stored numeric value; no supported active range.
   // Increase/decrease: increasing/decreasing has no effect.
   // Examples: 0.5 = no effect; 1 = no effect; 2 = no effect.
@@ -915,7 +915,7 @@ export const treeConfig = {
   maxFallDurationSeconds: 1.8,
 
   // Controls: INACTIVE legacy tree tuning: no runtime consumer; fallDurationSeconds is the only active fall-time setting.
-  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in standalone raycast lab.
+  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in legacy raycast tests.
   // Units / actual limits: stored numeric value; no supported active range.
   // Increase/decrease: increasing/decreasing has no effect.
   // Examples: 0.5 = no effect; 1 = no effect; 2 = no effect.
@@ -927,7 +927,7 @@ export const treeConfig = {
 // Rock interaction lifecycle and procedural fragment settings.
 export const rockConfig = {
   // Controls: Broken rock respawn delay and fragment lifetime; occupied spawn waits.
-  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in standalone raycast lab.
+  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in legacy raycast tests.
   // Units / actual limits: seconds; no clamp; use finite >0.
   // Increase/decrease: higher = longer debris/absence; lower = faster return.
   // Examples: 5 = quick; 15 = current; 30 = long.
@@ -935,7 +935,7 @@ export const rockConfig = {
   respawnSeconds: 15,
 
   // Controls: Rock reappearance growth animation duration.
-  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in standalone raycast lab.
+  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in legacy raycast tests.
   // Units / actual limits: seconds; effective minimum .01; no upper cap.
   // Increase/decrease: higher = slower growth; lower = faster.
   // Examples: .3 = fast; .9 = current; 2 = slow.
@@ -943,7 +943,7 @@ export const rockConfig = {
   reformSeconds: 0.9,
 
   // Controls: Procedural fragments activated per broken rock. Imported Blender model fragments use their own five chunks.
-  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in standalone raycast lab.
+  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in legacy raycast tests.
   // Units / actual limits: count; rounded then clamped 3..6.
   // Increase/decrease: higher = more procedural chunks; lower = fewer.
   // Examples: 3 = few; 5 = current; 6 = maximum.
@@ -951,7 +951,7 @@ export const rockConfig = {
   fragmentCount: 5,
 
   // Controls: Preallocated procedural fragment pool, reused when full; imported model fragments have separate lifecycle.
-  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in standalone raycast lab.
+  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in legacy raycast tests.
   // Units / actual limits: count; floored with minimum 6; no upper cap.
   // Increase/decrease: higher = more simultaneous chunks/memory; lower = earlier reuse.
   // Examples: 12 = small pool; 48 = current; 72 = larger pool.
@@ -959,7 +959,7 @@ export const rockConfig = {
   maxFragments: 48,
 
   // Controls: Procedural rock fragment vertical restitution; does not control vehicle landing or imported model fragment bounce.
-  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in standalone raycast lab.
+  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in legacy raycast tests.
   // Units / actual limits: ratio; clamped 0..0.7.
   // Increase/decrease: higher = bouncier fragments; lower = less bounce.
   // Examples: 0 = no bounce; .35 = current; .7 = max.
@@ -967,7 +967,7 @@ export const rockConfig = {
   bounceStrength: 0.35,
 
   // Controls: Scales crack/break impact thresholds for blocking rocks.
-  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in standalone raycast lab.
+  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in legacy raycast tests.
   // Units / actual limits: unitless multiplier; no clamp; use finite >=0.
   // Increase/decrease: higher = harder rocks; lower = easier breaks.
   // Examples: .5 = half thresholds; 1 = current; 1.5 = harder.
@@ -975,7 +975,7 @@ export const rockConfig = {
   resistanceMultiplier: 1,
 
   // Controls: Rocks at or below this collision radius yield/push aside instead of blocking.
-  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in standalone raycast lab.
+  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in legacy raycast tests.
   // Units / actual limits: meters; no clamp; nonnegative intended.
   // Increase/decrease: higher = more rocks become pushable; lower = more block.
   // Examples: .4 = fewer pushable; .7 = current; 1 = more pushable.
@@ -983,7 +983,7 @@ export const rockConfig = {
   smallRockRadius: 0.7,
 
   // Controls: Radius at/above which extra large-rock resistance applies.
-  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in standalone raycast lab.
+  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in legacy raycast tests.
   // Units / actual limits: meters; no clamp; nonnegative intended.
   // Increase/decrease: higher = fewer extra-resistant rocks; lower = more.
   // Examples: .9 = many; 1.25 = current; 1.6 = fewer.
@@ -991,7 +991,7 @@ export const rockConfig = {
   largeRockRadius: 1.25,
 
   // Controls: Extra threshold multiplier for rocks meeting largeRockRadius.
-  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in standalone raycast lab.
+  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in legacy raycast tests.
   // Units / actual limits: unitless; no clamp; nonnegative intended.
   // Increase/decrease: higher = tougher large rocks; lower = softer.
   // Examples: 1 = no extra; 1.3 = current; 2 = double.
@@ -999,7 +999,7 @@ export const rockConfig = {
   largeRockResistance: 1.3,
 
   // Controls: Minimum interval between accepted hit reactions on one rock.
-  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in standalone raycast lab.
+  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in legacy raycast tests.
   // Units / actual limits: seconds; no clamp; nonnegative intended.
   // Increase/decrease: higher = fewer repeated hits; lower = quicker follow-up.
   // Examples: 0 = every eligible frame; .65 = current; 1 = slower.
@@ -1011,7 +1011,7 @@ export const rockConfig = {
 // Stationary detail generation and visual wheel/body feedback.
 export const groundDebrisConfig = {
   // Controls: Creates stationary ground debris and enables its wheel queries.
-  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in standalone raycast lab.
+  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in legacy raycast tests.
   // Units / actual limits: boolean true/false.
   // Increase/decrease: true = debris shown/queried; false = absent on reload.
   // Examples: true = debris; false = none.
@@ -1019,7 +1019,7 @@ export const groundDebrisConfig = {
   enabled: true,
 
   // Controls: Budget for stationary ground details; placement filters can reduce actual count.
-  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in standalone raycast lab.
+  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in legacy raycast tests.
   // Units / actual limits: percent; clamped 0..100; budget round(1000*percent/100).
   // Increase/decrease: higher = more details; lower = fewer.
   // Examples: 0 = none; 70 = up to 700; 100 = up to 1000.
@@ -1027,7 +1027,7 @@ export const groundDebrisConfig = {
   densityPercent: 70,
 
   // Controls: Fraction of ground details that create wheel/body feedback rather than decoration only.
-  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in standalone raycast lab.
+  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in legacy raycast tests.
   // Units / actual limits: percent; clamped 0..100; existing 450 is effectively 100.
   // Increase/decrease: higher = more interactive bumps; lower = more decorative only.
   // Examples: 0 = decorative; 50 = half; 100 = all (450 is the same).
@@ -1035,7 +1035,7 @@ export const groundDebrisConfig = {
   interactivePercent: 450,
 
   // Controls: Minimum height of interactive debris; decorative debris stays .025.. .06 m.
-  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in standalone raycast lab.
+  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in legacy raycast tests.
   // Units / actual limits: meters; clamped 0..0.5.
   // Increase/decrease: higher = all interactive bumps taller; lower = smaller possible bumps.
   // Examples: .03 = small; .1 = visible; .5 = maximum/current.
@@ -1043,7 +1043,7 @@ export const groundDebrisConfig = {
   minBumpHeight: 0.5,
 
   // Controls: Maximum interactive debris height. Current .25 is raised to .5 because minBumpHeight is .5.
-  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in standalone raycast lab.
+  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in legacy raycast tests.
   // Units / actual limits: meters; clamped between effective minBumpHeight and .5.
   // Increase/decrease: higher = taller possible bumps; lower = shorter only until minimum reached.
   // Examples: .1 = small with min <=.1; .25 = medium with min <=.25; .5 = tallest.
@@ -1051,7 +1051,7 @@ export const groundDebrisConfig = {
   maxBumpHeight: 0.25,
 
   // Controls: Debris wheel/body feedback strength; HYBRID wheel compression only, Original body and wheel effects.
-  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in standalone raycast lab.
+  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in legacy raycast tests.
   // Units / actual limits: percent; clamped 0..100.
   // Increase/decrease: higher = stronger feedback; lower = less; visual debris remains.
   // Examples: 0 = no feedback; 30 = mild; 60 = current.
@@ -1059,7 +1059,7 @@ export const groundDebrisConfig = {
   suspensionEffectPercent: 60,
 
   // Controls: Distance from vehicle focus within which debris contributes to wheel sampling.
-  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in standalone raycast lab.
+  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in legacy raycast tests.
   // Units / actual limits: meters; negative becomes 0; no upper cap.
   // Increase/decrease: higher = larger active sampling radius; lower = smaller.
   // Examples: 10 = close; 35 = current; 60 = wide.
@@ -1067,7 +1067,7 @@ export const groundDebrisConfig = {
   maxInteractiveDistance: 35,
 
   // Controls: Relative distribution weight for dirt clumps in stationary debris.
-  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in standalone raycast lab.
+  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in legacy raycast tests.
   // Units / actual limits: weight, NOT a clamped percent; negative becomes 0; normalized with other three weights.
   // Increase/decrease: higher = larger share; lower = smaller share.
   // Examples: 0 = exclude kind; 20 = low share; 70 = higher share.
@@ -1075,7 +1075,7 @@ export const groundDebrisConfig = {
   dirtClumpPercent: 35,
 
   // Controls: Relative distribution weight for small rocks in stationary debris.
-  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in standalone raycast lab.
+  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in legacy raycast tests.
   // Units / actual limits: weight, NOT a clamped percent; negative becomes 0; normalized with other three weights.
   // Increase/decrease: higher = larger share; lower = smaller share.
   // Examples: 0 = exclude kind; 20 = low share; 70 = higher share.
@@ -1083,7 +1083,7 @@ export const groundDebrisConfig = {
   smallRockPercent: 35,
 
   // Controls: Relative distribution weight for twigs in stationary debris.
-  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in standalone raycast lab.
+  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in legacy raycast tests.
   // Units / actual limits: weight, NOT a clamped percent; negative becomes 0; normalized with other three weights.
   // Increase/decrease: higher = larger share; lower = smaller share.
   // Examples: 0 = exclude kind; 20 = low share; 70 = higher share.
@@ -1091,7 +1091,7 @@ export const groundDebrisConfig = {
   twigPercent: 20,
 
   // Controls: Relative distribution weight for earth clumps in stationary debris.
-  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in standalone raycast lab.
+  // Modes: ORIGINAL + HYBRID main-world environment; INACTIVE in legacy raycast tests.
   // Units / actual limits: weight, NOT a clamped percent; negative becomes 0; normalized with other three weights.
   // Increase/decrease: higher = larger share; lower = smaller share.
   // Examples: 0 = exclude kind; 20 = low share; 70 = higher share.
@@ -1103,7 +1103,7 @@ export const groundDebrisConfig = {
 // Rendering only; reload to refresh setup-time settings.
 export const visualPolishConfig = {
   // Controls: Shadow map resolution and camera coverage.
-  // Modes: ORIGINAL + HYBRID + RAPIER lab.
+  // Modes: ORIGINAL + HYBRID + LEGACY raycast tests.
   // Units / actual limits: enum low/medium/high; unknown values fall back to medium.
   // Increase/decrease: low = cheaper/coarser; high = tighter, sharper coverage.
   // Examples: low = 1024px/100m span; medium = 2048px/130m; high = 2048px/96m.
@@ -1119,7 +1119,7 @@ export const visualPolishConfig = {
   contactShadowStrengthPercent: 35,
 
   // Controls: Strength of terrain detail texture shading; rendering only, no handling forces.
-  // Modes: ORIGINAL + HYBRID + RAPIER lab.
+  // Modes: ORIGINAL + HYBRID + LEGACY raycast tests.
   // Units / actual limits: percent; clamped 0..100.
   // Increase/decrease: higher = stronger/more visible effect; lower = weaker.
   // Examples: 0 = disabled effect; 35 = subtle; 75 = stronger.
@@ -1143,7 +1143,7 @@ export const visualPolishConfig = {
   dirtBlendSoftnessPercent: 65,
 
   // Controls: Moving dust emission/opacity and landing dust visibility; rendering only, no handling forces.
-  // Modes: ORIGINAL + HYBRID + RAPIER lab.
+  // Modes: ORIGINAL + HYBRID + LEGACY raycast tests.
   // Units / actual limits: percent; clamped 0..100.
   // Increase/decrease: higher = stronger/more visible effect; lower = weaker.
   // Examples: 0 = disabled effect; 35 = subtle; 75 = stronger.
@@ -1151,7 +1151,7 @@ export const visualPolishConfig = {
   dustIntensityPercent: 35,
 
   // Controls: Tire-track opacity and enable gate; rendering only, no handling forces.
-  // Modes: ORIGINAL + HYBRID + RAPIER lab.
+  // Modes: ORIGINAL + HYBRID + LEGACY raycast tests.
   // Units / actual limits: percent; clamped 0..100.
   // Increase/decrease: higher = stronger/more visible effect; lower = weaker.
   // Examples: 0 = disabled effect; 35 = subtle; 75 = stronger.
@@ -1171,7 +1171,7 @@ export const visualPolishConfig = {
 // Shared lab/HYBRID jump settings; per-mode exceptions are documented.
 export const jumpConfig = {
   // Controls: Creates dirt ramp features on reload and enables natural HYBRID takeoff. Does not disable boundary cannon or lab physics.
-  // Modes: ORIGINAL + HYBRID + RAPIER lab terrain; HYBRID natural takeoff gate.
+  // Modes: ORIGINAL + HYBRID + LEGACY raycast tests terrain; HYBRID natural takeoff gate.
   // Units / actual limits: boolean true/false.
   // Increase/decrease: true = ramps/natural jumps; false = no generated ramps or HYBRID ramp release.
   // Examples: true = jumps enabled; false = flat base terrain.
@@ -1179,15 +1179,15 @@ export const jumpConfig = {
   enabled: true,
 
   // Controls: Rapier flight gravity relative to 12 m/s^2. Original cannon gravity stays fixed at 12.
-  // Modes: RAPIER lab + HYBRID; INACTIVE in ORIGINAL (cannon has separate per-vehicle settings).
-  // Units / actual limits: percent; clamped 25..200 in RAPIER lab and HYBRID.
+  // Modes: LEGACY raycast tests + HYBRID; INACTIVE in ORIGINAL (cannon has separate per-vehicle settings).
+  // Units / actual limits: percent; clamped 25..200 in LEGACY raycast tests and HYBRID.
   // Increase/decrease: higher = faster fall/shorter flight; lower = floatier/longer flight.
   // Examples: 50 = 6 m/s^2; 100 = 12; 150 = 18.
   // Suggested start: 75..125 around current tested 100. Together with: verticalLaunchSpeed, ramp heights, minimumLaunchSpeed.
   gravityScalePercent: 250,
 
-  // Controls: Forward/reverse pitch torque in flight, in RAPIER lab and HYBRID; inactive in Original.
-  // Modes: RAPIER lab + HYBRID; INACTIVE in ORIGINAL (cannon has separate per-vehicle settings).
+  // Controls: Forward/reverse pitch torque in flight, in LEGACY raycast tests and HYBRID; inactive in Original.
+  // Modes: LEGACY raycast tests + HYBRID; INACTIVE in ORIGINAL (cannon has separate per-vehicle settings).
   // Units / actual limits: percent; clamped 0..100.
   // Increase/decrease: higher = faster pitch response; lower = steadier air attitude.
   // Examples: 0 = no pitch input; 20 = current; 50 = stronger.
@@ -1195,7 +1195,7 @@ export const jumpConfig = {
   airbornePitchControlPercent: 20,
 
   // Controls: Impact-scaled visual heave at landing; lab additionally changes chassis restitution and suspension relaxation. HYBRID absorbs vertical speed on contact; this does not cause physical repeat bounce.
-  // Modes: RAPIER lab + HYBRID; INACTIVE in ORIGINAL (cannon has separate per-vehicle settings).
+  // Modes: LEGACY raycast tests + HYBRID; INACTIVE in ORIGINAL (cannon has separate per-vehicle settings).
   // Units / actual limits: percent; feedback/lab clamps 0..100; lab per-vehicle multiplier applies before feedback clamp.
   // Increase/decrease: higher = springier visible landing (and bouncier lab); lower = softer.
   // Examples: 0 = no heave kick; 25 = gentle; 60 = lively.
@@ -1203,7 +1203,7 @@ export const jumpConfig = {
   landingBouncePercent: 25,
 
   // Controls: Lab landing pitch kick; INACTIVE in playable Original/HYBRID, which use each vehicle boundaryBodyRockPercent.
-  // Modes: RAPIER lab only; INACTIVE in playable ORIGINAL/HYBRID.
+  // Modes: LEGACY raycast tests only; INACTIVE in playable ORIGINAL/HYBRID.
   // Units / actual limits: percent; feedback clamps 0..100.
   // Increase/decrease: higher = more lab landing nod; lower = less.
   // Examples: 0 = none; 35 = current; 70 = pronounced.
@@ -1211,7 +1211,7 @@ export const jumpConfig = {
   landingBodyRockPercent: 35,
 
   // Controls: Scales impact passed to landing dust puff; existing visual dust intensity still gates visibility. Original cannon uses its separate legacy dust path.
-  // Modes: RAPIER lab + HYBRID; INACTIVE in ORIGINAL (cannon has separate per-vehicle settings).
+  // Modes: LEGACY raycast tests + HYBRID; INACTIVE in ORIGINAL (cannon has separate per-vehicle settings).
   // Units / actual limits: percent input; no upper clamp; values <=0 suppress lab emission; hybrid puff count capped at 12.
   // Increase/decrease: higher = more/larger landing puff up to effect caps; lower = less.
   // Examples: 0 = no landing puff; 40 = current; 100 = stronger.
@@ -1223,7 +1223,7 @@ export const jumpConfig = {
 // Shared simple dirt ramp geometry and material mask.
 export const rampConfig = {
   // Controls: Added terrain height at the gentle ramp lip; shared rendered/collision surface.
-  // Modes: ORIGINAL + HYBRID + RAPIER lab terrain.
+  // Modes: ORIGINAL + HYBRID + LEGACY raycast tests terrain.
   // Units / actual limits: meters; effective ramp height clamped 0..8.
   // Increase/decrease: higher = steeper/higher takeoff; lower = gentler.
   // Examples: 0 = flat; 1.5 = gentle; 4 = large.
@@ -1231,7 +1231,7 @@ export const rampConfig = {
   gentleRampHeight: 1.5,
 
   // Controls: Added terrain height at the tabletop lip; shared rendered/collision surface.
-  // Modes: ORIGINAL + HYBRID + RAPIER lab terrain.
+  // Modes: ORIGINAL + HYBRID + LEGACY raycast tests terrain.
   // Units / actual limits: meters; effective ramp height clamped 0..8.
   // Increase/decrease: higher = steeper/higher takeoff; lower = gentler.
   // Examples: 0 = flat; 1.5 = gentle; 4 = large.
@@ -1239,7 +1239,7 @@ export const rampConfig = {
   tabletopHeight: 2.5,
 
   // Controls: Added terrain height at the gap ramp lip; shared rendered/collision surface.
-  // Modes: ORIGINAL + HYBRID + RAPIER lab terrain.
+  // Modes: ORIGINAL + HYBRID + LEGACY raycast tests terrain.
   // Units / actual limits: meters; effective ramp height clamped 0..8.
   // Increase/decrease: higher = steeper/higher takeoff; lower = gentler.
   // Examples: 0 = flat; 1.5 = gentle; 4 = large.
@@ -1247,7 +1247,7 @@ export const rampConfig = {
   gapRampHeight: 3,
 
   // Controls: Added terrain height at the big kicker lip; shared rendered/collision surface.
-  // Modes: ORIGINAL + HYBRID + RAPIER lab terrain.
+  // Modes: ORIGINAL + HYBRID + LEGACY raycast tests terrain.
   // Units / actual limits: meters; effective ramp height clamped 0..8.
   // Increase/decrease: higher = steeper/higher takeoff; lower = gentler.
   // Examples: 0 = flat; 1.5 = gentle; 4 = large.
@@ -1255,7 +1255,7 @@ export const rampConfig = {
   bigKickerHeight: 4,
 
   // Controls: Dirt mask strength near ramps; also affects path materials and ground effects classification.
-  // Modes: ORIGINAL + HYBRID + RAPIER lab terrain.
+  // Modes: ORIGINAL + HYBRID + LEGACY raycast tests terrain.
   // Units / actual limits: percent; clamped 0..100.
   // Increase/decrease: higher = stronger dirt mask; lower = greener ramp.
   // Examples: 0 = no added dirt mask; 70 = current; 100 = full.
@@ -1264,12 +1264,19 @@ export const rampConfig = {
 
 };
 
-// Legacy raycast lab settings; mostly INACTIVE in playable HYBRID.
+// Legacy legacy raycast tests settings; mostly INACTIVE in playable HYBRID.
+// The playable Dirt Jump Lab now uses RapierWorldVehicle exactly like the game.
+// This object remains for JumpVehiclePrototype automated raycast-solver tests.
+// BOTH playable environments still share its mass/restLength for the underlying
+// Rapier body/wheel layout and landingBounceScalePercent for landing feedback.
+// acceleration, maxSpeed, releaseDeceleration, physical spring/damper and lab body
+// feedback values below DO NOT drive either playable environment. Tune arcadeHandlingConfig
+// and vehicleConfig instead. No numeric values were changed during lab alignment.
 export const jumpVehicleConfig = {
   // Dirty / backhoe.
   dirty: {
     // Controls: Rapier chassis collider mass; also scales engine/air torque. In HYBRID this is inherited from lab for airborne inertia only.
-    // Modes: RAPIER raycast lab; HYBRID also inherits mass/restLength; other fields INACTIVE in playable HYBRID.
+    // Modes: LEGACY raycast tests; HYBRID also inherits mass/restLength; other fields INACTIVE in playable HYBRID.
     // Units / actual limits: kg; no application clamp; finite >0 required for Rapier.
     // Increase/decrease: higher = larger inertia; force/torque scaling means effects are not simply slower.
     // Examples: 800 = light; 1200 = Dirty current; 1900 = Stinky current.
@@ -1277,7 +1284,7 @@ export const jumpVehicleConfig = {
     mass: 1200,
 
     // Controls: Baseline forward/reverse drive acceleration, before speed adjustment in playable modes. Lab has its own engine acceleration.
-    // Modes: RAPIER raycast lab only; INACTIVE in main-game HYBRID and ORIGINAL.
+    // Modes: LEGACY raycast tests only; INACTIVE in playable HYBRID (main game + Dirt Jump Lab) and ORIGINAL.
     // Units / actual limits: m/s^2; no clamp; finite >=0 intended.
     // Increase/decrease: higher = quicker speed gain; lower = slower.
     // Examples: 6 = gentle; 8 = moderate; 11 = Dirty playable baseline.
@@ -1285,7 +1292,7 @@ export const jumpVehicleConfig = {
     acceleration: 8,
 
     // Controls: Raycast lab forward speed gate; not used by playable HYBRID (use arcadeHandlingConfig.topSpeed).
-    // Modes: RAPIER raycast lab only; INACTIVE in main-game HYBRID and ORIGINAL.
+    // Modes: LEGACY raycast tests only; INACTIVE in playable HYBRID (main game + Dirt Jump Lab) and ORIGINAL.
     // Units / actual limits: m/s; no clamp; finite >=0 intended; force gate is not a hard velocity clamp.
     // Increase/decrease: higher = longer engine acceleration; lower = earlier force cutoff.
     // Examples: 12 = small test speed; 18 = current; 25 = faster lab.
@@ -1293,7 +1300,7 @@ export const jumpVehicleConfig = {
     maxSpeed: 18,
 
     // Controls: Subtracts speed while neither accelerate nor reverse is held, after drag.
-    // Modes: RAPIER raycast lab only; INACTIVE in main-game HYBRID and ORIGINAL.
+    // Modes: LEGACY raycast tests only; INACTIVE in playable HYBRID (main game + Dirt Jump Lab) and ORIGINAL.
     // Units / actual limits: m/s^2; negative becomes 0; no upper cap.
     // Increase/decrease: higher = shorter coast; lower = longer coast.
     // Examples: 0 = drag only; 3.5 = truck coast; 8 = brisk stop.
@@ -1301,7 +1308,7 @@ export const jumpVehicleConfig = {
     releaseDeceleration: 5,
 
     // Controls: Raycast wheel suspension rest length; HYBRID uses it as a visual wheel baseline, not a spring.
-    // Modes: RAPIER raycast lab; HYBRID also inherits mass/restLength; other fields INACTIVE in playable HYBRID.
+    // Modes: LEGACY raycast tests; HYBRID also inherits mass/restLength; other fields INACTIVE in playable HYBRID.
     // Units / actual limits: meters; no application clamp; positive intended.
     // Increase/decrease: higher = more lab rest travel; lower = less; hybrid baseline cancels with render rest length.
     // Examples: .3 = short; .45 = Dirty current; .52 = Stinky current.
@@ -1309,7 +1316,7 @@ export const jumpVehicleConfig = {
     restLength: 0.45,
 
     // Controls: Lab raycast spring stiffness; INACTIVE as a chassis spring in playable HYBRID.
-    // Modes: RAPIER raycast lab only; INACTIVE in main-game HYBRID and ORIGINAL.
+    // Modes: LEGACY raycast tests only; INACTIVE in playable HYBRID (main game + Dirt Jump Lab) and ORIGINAL.
     // Units / actual limits: Rapier spring coefficient; no application clamp; finite >=0 intended.
     // Increase/decrease: higher = firmer/higher-frequency spring; lower = softer.
     // Examples: 40 = soft; 58 = Stinky current; 75 = Dirty current.
@@ -1317,7 +1324,7 @@ export const jumpVehicleConfig = {
     suspensionStiffness: 75,
 
     // Controls: Lab raycast spring damping while compressing; INACTIVE in playable HYBRID.
-    // Modes: RAPIER raycast lab only; INACTIVE in main-game HYBRID and ORIGINAL.
+    // Modes: LEGACY raycast tests only; INACTIVE in playable HYBRID (main game + Dirt Jump Lab) and ORIGINAL.
     // Units / actual limits: Rapier damping coefficient; no application clamp; nonnegative intended.
     // Increase/decrease: higher = more lab compression damping; lower = more compression oscillation.
     // Examples: 3 = light; 5 = current; 8 = strong.
@@ -1325,7 +1332,7 @@ export const jumpVehicleConfig = {
     suspensionCompression: 5,
 
     // Controls: Lab spring damping while extending; multiplied by (1 - .4*landingBouncePercent/100). INACTIVE in playable HYBRID.
-    // Modes: RAPIER raycast lab only; INACTIVE in main-game HYBRID and ORIGINAL.
+    // Modes: LEGACY raycast tests only; INACTIVE in playable HYBRID (main game + Dirt Jump Lab) and ORIGINAL.
     // Units / actual limits: Rapier damping coefficient; no application clamp; nonnegative intended.
     // Increase/decrease: higher = less lab rebound oscillation; lower = more rebound.
     // Examples: 3.5 = Stinky current; 4.5 = Dirty current; 7 = stronger.
@@ -1333,7 +1340,7 @@ export const jumpVehicleConfig = {
     suspensionRelaxation: 4.5,
 
     // Controls: Visual outward body lean during turns and debris roll; cannot flip the collider.
-    // Modes: RAPIER raycast lab only; INACTIVE in main-game HYBRID and ORIGINAL.
+    // Modes: LEGACY raycast tests only; INACTIVE in playable HYBRID (main game + Dirt Jump Lab) and ORIGINAL.
     // Units / actual limits: percent; clamped 0..100.
     // Increase/decrease: higher = more visible lean; lower = flatter body.
     // Examples: 0 = no turn lean; 25 = subtle; 100 = up to 12 degrees from turns.
@@ -1341,7 +1348,7 @@ export const jumpVehicleConfig = {
     bodyRollPercent: 20,
 
     // Controls: Visual body tilt under acceleration/braking and debris pitch.
-    // Modes: RAPIER raycast lab only; INACTIVE in main-game HYBRID and ORIGINAL.
+    // Modes: LEGACY raycast tests only; INACTIVE in playable HYBRID (main game + Dirt Jump Lab) and ORIGINAL.
     // Units / actual limits: percent; clamped 0..100.
     // Increase/decrease: higher = more nodding; lower = flatter body.
     // Examples: 0 = none; 20 = subtle; 100 = up to 10 degrees from acceleration.
@@ -1349,7 +1356,7 @@ export const jumpVehicleConfig = {
     bodyPitchPercent: 18,
 
     // Controls: Per-vehicle multiplier on jumpConfig landing heave in lab and HYBRID; cannon landings use their own per-vehicle bounce instead.
-    // Modes: RAPIER lab + HYBRID ordinary landings; INACTIVE in ORIGINAL and cannon landings.
+    // Modes: LEGACY raycast tests + HYBRID ordinary landings; INACTIVE in ORIGINAL and cannon landings.
     // Units / actual limits: percent multiplier; no clamp here; final feedback clamps 0..100.
     // Increase/decrease: higher = stronger lab landing kick; lower = weaker.
     // Examples: 0 = no heave kick; 100 = unchanged; 125 = Stinky current.
@@ -1360,7 +1367,7 @@ export const jumpVehicleConfig = {
   // Stinky / garbage truck.
   stinky: {
     // Controls: Rapier chassis collider mass; also scales engine/air torque. In HYBRID this is inherited from lab for airborne inertia only.
-    // Modes: RAPIER raycast lab; HYBRID also inherits mass/restLength; other fields INACTIVE in playable HYBRID.
+    // Modes: LEGACY raycast tests; HYBRID also inherits mass/restLength; other fields INACTIVE in playable HYBRID.
     // Units / actual limits: kg; no application clamp; finite >0 required for Rapier.
     // Increase/decrease: higher = larger inertia; force/torque scaling means effects are not simply slower.
     // Examples: 800 = light; 1200 = Dirty current; 1900 = Stinky current.
@@ -1368,7 +1375,7 @@ export const jumpVehicleConfig = {
     mass: 1900,
 
     // Controls: Baseline forward/reverse drive acceleration, before speed adjustment in playable modes. Lab has its own engine acceleration.
-    // Modes: RAPIER raycast lab only; INACTIVE in main-game HYBRID and ORIGINAL.
+    // Modes: LEGACY raycast tests only; INACTIVE in playable HYBRID (main game + Dirt Jump Lab) and ORIGINAL.
     // Units / actual limits: m/s^2; no clamp; finite >=0 intended.
     // Increase/decrease: higher = quicker speed gain; lower = slower.
     // Examples: 6 = gentle; 8 = moderate; 11 = Dirty playable baseline.
@@ -1376,7 +1383,7 @@ export const jumpVehicleConfig = {
     acceleration: 6,
 
     // Controls: Raycast lab forward speed gate; not used by playable HYBRID (use arcadeHandlingConfig.topSpeed).
-    // Modes: RAPIER raycast lab only; INACTIVE in main-game HYBRID and ORIGINAL.
+    // Modes: LEGACY raycast tests only; INACTIVE in playable HYBRID (main game + Dirt Jump Lab) and ORIGINAL.
     // Units / actual limits: m/s; no clamp; finite >=0 intended; force gate is not a hard velocity clamp.
     // Increase/decrease: higher = longer engine acceleration; lower = earlier force cutoff.
     // Examples: 12 = small test speed; 18 = current; 25 = faster lab.
@@ -1384,7 +1391,7 @@ export const jumpVehicleConfig = {
     maxSpeed: 18,
 
     // Controls: Subtracts speed while neither accelerate nor reverse is held, after drag.
-    // Modes: RAPIER raycast lab only; INACTIVE in main-game HYBRID and ORIGINAL.
+    // Modes: LEGACY raycast tests only; INACTIVE in playable HYBRID (main game + Dirt Jump Lab) and ORIGINAL.
     // Units / actual limits: m/s^2; negative becomes 0; no upper cap.
     // Increase/decrease: higher = shorter coast; lower = longer coast.
     // Examples: 0 = drag only; 3.5 = truck coast; 8 = brisk stop.
@@ -1392,7 +1399,7 @@ export const jumpVehicleConfig = {
     releaseDeceleration: 5,
 
     // Controls: Raycast wheel suspension rest length; HYBRID uses it as a visual wheel baseline, not a spring.
-    // Modes: RAPIER raycast lab; HYBRID also inherits mass/restLength; other fields INACTIVE in playable HYBRID.
+    // Modes: LEGACY raycast tests; HYBRID also inherits mass/restLength; other fields INACTIVE in playable HYBRID.
     // Units / actual limits: meters; no application clamp; positive intended.
     // Increase/decrease: higher = more lab rest travel; lower = less; hybrid baseline cancels with render rest length.
     // Examples: .3 = short; .45 = Dirty current; .52 = Stinky current.
@@ -1400,7 +1407,7 @@ export const jumpVehicleConfig = {
     restLength: 0.52,
 
     // Controls: Lab raycast spring stiffness; INACTIVE as a chassis spring in playable HYBRID.
-    // Modes: RAPIER raycast lab only; INACTIVE in main-game HYBRID and ORIGINAL.
+    // Modes: LEGACY raycast tests only; INACTIVE in playable HYBRID (main game + Dirt Jump Lab) and ORIGINAL.
     // Units / actual limits: Rapier spring coefficient; no application clamp; finite >=0 intended.
     // Increase/decrease: higher = firmer/higher-frequency spring; lower = softer.
     // Examples: 40 = soft; 58 = Stinky current; 75 = Dirty current.
@@ -1408,7 +1415,7 @@ export const jumpVehicleConfig = {
     suspensionStiffness: 58,
 
     // Controls: Lab raycast spring damping while compressing; INACTIVE in playable HYBRID.
-    // Modes: RAPIER raycast lab only; INACTIVE in main-game HYBRID and ORIGINAL.
+    // Modes: LEGACY raycast tests only; INACTIVE in playable HYBRID (main game + Dirt Jump Lab) and ORIGINAL.
     // Units / actual limits: Rapier damping coefficient; no application clamp; nonnegative intended.
     // Increase/decrease: higher = more lab compression damping; lower = more compression oscillation.
     // Examples: 3 = light; 5 = current; 8 = strong.
@@ -1416,7 +1423,7 @@ export const jumpVehicleConfig = {
     suspensionCompression: 5,
 
     // Controls: Lab spring damping while extending; multiplied by (1 - .4*landingBouncePercent/100). INACTIVE in playable HYBRID.
-    // Modes: RAPIER raycast lab only; INACTIVE in main-game HYBRID and ORIGINAL.
+    // Modes: LEGACY raycast tests only; INACTIVE in playable HYBRID (main game + Dirt Jump Lab) and ORIGINAL.
     // Units / actual limits: Rapier damping coefficient; no application clamp; nonnegative intended.
     // Increase/decrease: higher = less lab rebound oscillation; lower = more rebound.
     // Examples: 3.5 = Stinky current; 4.5 = Dirty current; 7 = stronger.
@@ -1424,7 +1431,7 @@ export const jumpVehicleConfig = {
     suspensionRelaxation: 3.5,
 
     // Controls: Visual outward body lean during turns and debris roll; cannot flip the collider.
-    // Modes: RAPIER raycast lab only; INACTIVE in main-game HYBRID and ORIGINAL.
+    // Modes: LEGACY raycast tests only; INACTIVE in playable HYBRID (main game + Dirt Jump Lab) and ORIGINAL.
     // Units / actual limits: percent; clamped 0..100.
     // Increase/decrease: higher = more visible lean; lower = flatter body.
     // Examples: 0 = no turn lean; 25 = subtle; 100 = up to 12 degrees from turns.
@@ -1432,7 +1439,7 @@ export const jumpVehicleConfig = {
     bodyRollPercent: 25,
 
     // Controls: Visual body tilt under acceleration/braking and debris pitch.
-    // Modes: RAPIER raycast lab only; INACTIVE in main-game HYBRID and ORIGINAL.
+    // Modes: LEGACY raycast tests only; INACTIVE in playable HYBRID (main game + Dirt Jump Lab) and ORIGINAL.
     // Units / actual limits: percent; clamped 0..100.
     // Increase/decrease: higher = more nodding; lower = flatter body.
     // Examples: 0 = none; 20 = subtle; 100 = up to 10 degrees from acceleration.
@@ -1440,7 +1447,7 @@ export const jumpVehicleConfig = {
     bodyPitchPercent: 22,
 
     // Controls: Per-vehicle multiplier on jumpConfig landing heave in lab and HYBRID; cannon landings use their own per-vehicle bounce instead.
-    // Modes: RAPIER lab + HYBRID ordinary landings; INACTIVE in ORIGINAL and cannon landings.
+    // Modes: LEGACY raycast tests + HYBRID ordinary landings; INACTIVE in ORIGINAL and cannon landings.
     // Units / actual limits: percent multiplier; no clamp here; final feedback clamps 0..100.
     // Increase/decrease: higher = stronger lab landing kick; lower = weaker.
     // Examples: 0 = no heave kick; 100 = unchanged; 125 = Stinky current.

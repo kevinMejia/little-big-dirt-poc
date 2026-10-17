@@ -97,7 +97,7 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.m
 import { BackhoeLoader } from './BackhoeLoader.js';
 import { DirtyGLB } from './assets/dirty/DirtyGLB.js';
 import { StinkyGLB } from './assets/stinky/StinkyGLB.js';
-import { stinkyCollision, sanitizeStinkyPose, applyStinkyPose, stinkyActions } from './StinkyEquipment.js';
+import { sanitizeStinkyPose, applyStinkyPose, stinkyActions } from './StinkyEquipment.js';
 import { bindVehicleGarage } from './VehicleGarage.js';
 
 import { TreeCollisionSystem } from './TreeCollisionSystem.js?v=rapier-world-2';
@@ -106,7 +106,7 @@ import { EnvironmentAssets } from './EnvironmentAssets.js';
 import { EnvironmentWorld } from './EnvironmentWorld.js';
 import { worldAppearance, createWorldAtmosphere, createTerrainPainter, createSceneryLayout, createGroundDetails } from './WorldAppearance.js';
 
-import { vehicleConfig, originalDriveConfig, cameraSettings, groundDebrisConfig, jumpConfig, jumpVehicleConfig } from './VehicleConfig.js';
+import { cameraSettings, groundDebrisConfig, jumpConfig } from './VehicleConfig.js';
 
 import { HillSpeedPhysics } from './HillSpeedPhysics.js';
 import { DrivingInput } from './DrivingInput.js';
@@ -116,6 +116,7 @@ import { createDebrisDebug } from './GroundDebrisDebug.js';
 import { addGroundTextures } from './GroundTextures.js';
 import { createPolishedLighting, ContactShading, polishTerrain, VehicleSurfaceEffects } from './VisualPolish.js';
 import { DirtJumpSystem, playgroundFeatures } from './DirtJumpSystem.js';
+import {playableVehicleConfig,smoothDrivingSteering,hybridDrivingInput,hybridLandingFeedback} from './PlayableVehicleSetup.js';
 import { RapierWorldVehicle, loadWorldPhysics } from './RapierWorldVehicle.js?v=rapier-world-4';
 import { BoundaryCannon } from './BoundaryCannon.js';
 import { VehicleFeedback, SoftBoundary, cameraReturnDecay } from './VehicleFeedback.js';
@@ -232,7 +233,7 @@ return g}
 
 function garbage(){if(!stinkyTemplate)return proceduralGarbage();const model=stinkyTemplate.clone();model.group.userData.controller=model;return model.group;}
 
-const configs=[{hill:vehicleConfig.backhoe,name:'Backhoe Loader',mass:8,...originalDriveConfig.dirty,accel:originalDriveConfig.dirty.acceleration,max:originalDriveConfig.dirty.topSpeed,reverse:originalDriveConfig.dirty.reverseSpeed,grip:3.4,collision:{radius:1.2,rear:-2.4,front:2.75},build:backhoe},{hill:vehicleConfig.garbageTruck,name:'Garbage Truck',mass:19,...originalDriveConfig.stinky,accel:originalDriveConfig.stinky.acceleration,max:originalDriveConfig.stinky.topSpeed,reverse:originalDriveConfig.stinky.reverseSpeed,grip:2.4,collision:stinkyTemplate?stinkyCollision:{radius:1.4,rear:-2,front:2.35},build:garbage}];
+const configs=[{...playableVehicleConfig(0),name:'Backhoe Loader',mass:8,grip:3.4,build:backhoe},{...playableVehicleConfig(1,stinkyTemplate?undefined:{radius:1.4,rear:-2,front:2.35}),name:'Garbage Truck',mass:19,grip:2.4,build:garbage}];
 
 let physicsMode='original',rapierController=null;
 addEventListener('pagehide',e=>{if(!e.persisted)rapierController?.dispose();});
@@ -393,8 +394,7 @@ function update(dt){const previousHeading=heading;const cfg=configs[index];treeC
 
 const drivingInput=controls.read(speed,pad);
 const forward=drivingInput.accelerate,back=drivingInput.reverse,brake=drivingInput.brake,emergencyBrake=drivingInput.emergencyBrake;
-const input=Number(drivingInput.steerRight)-Number(drivingInput.steerLeft)+drivingInput.axis;
-steer=THREE.MathUtils.damp(steer,THREE.MathUtils.clamp(input,-1,1),cfg.steeringInputRate,dt);
+steer=smoothDrivingSteering(steer,drivingInput,cfg,dt);
 
 const groundY=surfaceHeight(position.x,position.z);
 
@@ -454,9 +454,9 @@ if(flight){
 }
 
 }else{
- const state=rapierController.update(dt,{throttle:forward?1:back?-1:0,steering:steer,brake:brake||emergencyBrake,emergencyBrake,pitch:rapierController.physics.state.airborne?Number(back)-Number(forward):0});
+ const state=rapierController.update(dt,hybridDrivingInput(drivingInput,steer,rapierController.physics.state.airborne));
  position.set(state.position.x,state.position.y,state.position.z);heading=state.heading;speed=state.speed;slope=state.grade;flight=state.airborne?{kind:'rapier',vy:state.verticalSpeed}:null;
- for(const event of state.events)if(event.type==='landing'){bodyFeedback.landingImpact(configs[index].hill,event.impact,event.bounce??jumpConfig.landingBouncePercent*jumpVehicleConfig[index===1?'stinky':'dirty'].landingBounceScalePercent/100);if(jumpConfig.landingDustPercent>0)surfaceEffects.puff(event.x,surfaceHeight(event.x,event.z)+.2,event.z,event.impact*jumpConfig.landingDustPercent/100);landingSound(event.impact);}
+ for(const event of state.events)if(event.type==='landing')hybridLandingFeedback(event,index,cfg,bodyFeedback,surfaceEffects,surfaceHeight,landingSound);
 }
 
 if(physicsMode==='original'){
