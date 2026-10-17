@@ -1,0 +1,83 @@
+{
+  "blender": "2.83.0",
+  "triangles": 52366,
+  "wheels": [
+    {
+      "steering": "Steering_L0",
+      "roll": "Wheel_L0",
+      "x": -1.43,
+      "z": 2.25,
+      "radius": 0.72,
+      "front": true
+    },
+    {
+      "steering": "Steering_L1",
+      "roll": "Wheel_L1",
+      "x": -1.43,
+      "z": -0.8,
+      "radius": 0.72,
+      "front": false
+    },
+    {
+      "steering": "Steering_L2",
+      "roll": "Wheel_L2",
+      "x": -1.43,
+      "z": -2.15,
+      "radius": 0.72,
+      "front": false
+    },
+    {
+      "steering": "Steering_R0",
+      "roll": "Wheel_R0",
+      "x": 1.43,
+      "z": 2.25,
+      "radius": 0.72,
+      "front": true
+    },
+    {
+      "steering": "Steering_R1",
+      "roll": "Wheel_R1",
+      "x": 1.43,
+      "z": -0.8,
+      "radius": 0.72,
+      "front": false
+    },
+    {
+      "steering": "Steering_R2",
+      "roll": "Wheel_R2",
+      "x": 1.43,
+      "z": -2.15,
+      "radius": 0.72,
+      "front": false
+    }
+  ],
+  "hydraulics": [
+    {
+      "name": "CompactorRam-1",
+      "a": "RamFixed-1",
+      "b": "RamMoving-1",
+      "barrel": "CompactorRam-1_Barrel",
+      "rod": "CompactorRam-1_Rod"
+    },
+    {
+      "name": "CompactorRam1",
+      "a": "RamFixed1",
+      "b": "RamMoving1",
+      "barrel": "CompactorRam1_Barrel",
+      "rod": "CompactorRam1_Rod"
+    }
+  ],
+  "jointLimits": {
+    "RearHopperPivot": [
+      0,
+      0.7
+    ],
+    "CompactorPivot": [
+      -0.65,
+      0.3
+    ]
+  },
+  "orientation": "+Z forward, +Y up after glTF export",
+  "reviewOnly": true,
+  "revision": "reference-sheet-v2"
+}
