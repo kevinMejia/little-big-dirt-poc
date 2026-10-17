@@ -1184,7 +1184,7 @@ export const jumpConfig = {
   // Increase/decrease: higher = faster fall/shorter flight; lower = floatier/longer flight.
   // Examples: 50 = 6 m/s^2; 100 = 12; 150 = 18.
   // Suggested start: 75..125 around current tested 100. Together with: verticalLaunchSpeed, ramp heights, minimumLaunchSpeed.
-  gravityScalePercent: 100,
+  gravityScalePercent: 250,
 
   // Controls: Forward/reverse pitch torque in flight, in RAPIER lab and HYBRID; inactive in Original.
   // Modes: RAPIER lab + HYBRID; INACTIVE in ORIGINAL (cannon has separate per-vehicle settings).
