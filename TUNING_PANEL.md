@@ -98,10 +98,11 @@ lighting, bloom and model controls remain local visual controls.
   the panel ended at y=296, left steering began at y=306; accelerator remained
   available at the right. A real held accelerator drove the vehicle with Settings
   open. This is browser viewport testing, not physical iPhone hardware testing.
-- Project build and new checks pass. The existing full-check command still stops
-  at `jump-prototype.mjs`'s gravity expectation, which assumes different tuning
-  from the current approved configuration. No physics defaults were changed to
-  make that legacy assertion pass.
+- The full project check passes, including gravity, cannon flight, legacy tire grip
+  and main/lab alignment. Gravity tests use the configured acceleration and explicit
+  25–200% clamp cases; cannon apex uses the ballistic launch/gravity relationship.
+  The legacy tire-grip benchmark explicitly fixes its original 100% gravity fixture.
+  No gameplay code or approved physics defaults changed for these test corrections.
 
 Screenshots: [portrait](docs/screenshots/settings-portrait.png),
 [landscape](docs/screenshots/settings-landscape.png),

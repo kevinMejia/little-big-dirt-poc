@@ -2,13 +2,17 @@ import assert from 'node:assert/strict';
 import R from '../viewer/vendor/rapier/rapier.mjs';
 import {JumpVehiclePrototype} from '../JumpVehiclePrototype.js';
 import {rapierTireGrip,updateRapierTireGrip} from '../RapierHandling.js';
+import {jumpConfig} from '../VehicleConfig.js';
+// Legacy raycast tire-grip benchmark uses its original 12 m/s² fixture.
+// Gameplay gravity is separately covered by jump-prototype and hybrid tests.
+const gripFixture={...jumpConfig,gravityScalePercent:100};
 await R.init();
 const surface={vertices:new Float32Array([-600,0,-600,-600,0,600,600,0,-600,600,0,600]),indices:new Uint32Array([0,1,2,2,1,3]),halfSize:600,heightAt:()=>0};
 const wheels=[-1.43,1.43].flatMap(x=>[-2.15,-.8,2.25].map(z=>({x,z,r:.72,front:z>0})));
 for(const speed of [0,8,35,70,-35])assert.equal(rapierTireGrip(speed,0),2.5,'straight-line physics retains original grip');
 assert.equal(rapierTireGrip(8,1),2.5);assert.equal(rapierTireGrip(35,1),6);assert.equal(rapierTireGrip(-35,-1),6);
 function trial(vehicle,speed,steering,assisted){
- const p=new JumpVehiclePrototype(R,surface,{vehicle,wheels:vehicle==='stinky'?wheels:null,safetyWalls:false,chassisHalfExtents:vehicle==='stinky'?{x:1.2,y:.45,z:2.7}:{x:1,y:.45,z:1.5}});
+ const p=new JumpVehiclePrototype(R,surface,{config:gripFixture,vehicle,wheels:vehicle==='stinky'?wheels:null,safetyWalls:false,chassisHalfExtents:vehicle==='stinky'?{x:1.2,y:.45,z:2.7}:{x:1,y:.45,z:1.5}});
  p.reset(0,0,0);for(let i=0;i<240;i++)p.update(1/120,{});p.body.setLinvel({x:0,y:0,z:speed},true);p.parked=false;
  let minContacts=p.wheels.length,maxSlip=0,totalYaw=0,previousYaw=0;
  for(let i=0;i<240;i++){

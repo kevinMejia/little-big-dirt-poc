@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import R from '../viewer/vendor/rapier/rapier.mjs';
 import {DirtJumpSystem,playgroundFeatures} from '../DirtJumpSystem.js';
 import {JumpVehiclePrototype,matchWheelContacts,interpolateJumpPose} from '../JumpVehiclePrototype.js';
+import {jumpConfig} from '../VehicleConfig.js';
 await R.init();assert.equal(R.version(),'0.21.0');
 const ramps=new DirtJumpSystem(),surface=ramps.createSurface(120,1);
 assert(surface.spacing<=1);assert.equal(surface.indices.length,240*240*6);
@@ -20,7 +21,17 @@ for(const vehicle of ['dirty','stinky'])for(const f of ramps.features){
  for(let i=0;i<2400;i++)p.step(1/120,{});const v=p.body.linvel();assert.equal(v.x,0,vehicle+' release stop X');assert.equal(v.z,0,vehicle+' release stop Z');const stopped={...p.body.translation()};for(let i=0;i<240;i++)p.step(1/120,{});assert.deepEqual({...p.body.translation()},stopped,'holds stopped');
  p.dispose();total++;
 }
-const flat=new DirtJumpSystem().createSurface(120,2),p=new JumpVehiclePrototype(R,flat);p.reset(0,-70,0);for(let i=0;i<200;i++)p.step(1/120,{});p.impulse({x:0,y:8,z:10});while(p.state.contacts)p.step(1/120,{});for(let i=0;i<8;i++)p.step(1/120,{});const before=p.body.linvel().y;for(let i=0;i<12;i++)p.step(1/120,{});assert(Math.abs(p.body.linvel().y-before+1.2)<.03,'gravity drives airborne velocity');p.step(1/120,{pitch:1});assert(Math.abs(p.body.angvel().x)>0,'air pitch torque');p.dispose();
+const flat=new DirtJumpSystem().createSurface(120,2),p=new JumpVehiclePrototype(R,flat);p.reset(0,-70,0);for(let i=0;i<200;i++)p.step(1/120,{});p.impulse({x:0,y:8,z:10});while(p.state.contacts)p.step(1/120,{});for(let i=0;i<8;i++)p.step(1/120,{});const before=p.body.linvel().y;for(let i=0;i<12;i++)p.step(1/120,{});assert(Math.abs(p.body.linvel().y-before+12*Math.max(.25,Math.min(2,jumpConfig.gravityScalePercent/100))*(12/120))<.03,'gravity drives airborne velocity');p.step(1/120,{pitch:1});assert(Math.abs(p.body.angvel().x)>0,'air pitch torque');p.dispose();
+// Analytic free flight at known gravity values also guards both clamps. Starting
+// high above terrain isolates gravity from contacts, springs and landing effects.
+for(const [percent,gravity] of [[0,3],[25,3],[100,12],[200,24],[250,24]]){
+ const flight=new JumpVehiclePrototype(R,flat,{config:{...jumpConfig,gravityScalePercent:percent}});
+ flight.reset(0,-70,30);flight.hasGrounded=true;flight.body.setLinvel({x:0,y:8,z:0},true);
+ for(let i=0;i<12;i++)flight.step(1/120,{});
+ assert.equal(flight.state.contacts,0,'gravity fixture stays in free flight');
+ assert(Math.abs(flight.body.linvel().y-(8-gravity*.1))<.003,percent+'% gravity follows analytic velocity and supported clamps');
+ flight.dispose();
+}
 const manifest=JSON.parse(fs.readFileSync(new URL('../assets/dirty/manifest.json',import.meta.url),'utf8'));
 const binding=matchWheelContacts(manifest.wheels,p.wheels);assert.deepEqual(binding.map(b=>b.physicsIndex),[2,0,3,1]);for(const {wheel,physicsIndex} of binding){const contact=p.wheels[physicsIndex];assert.equal(wheel.x,contact.x);assert.equal(wheel.z,contact.z);assert.equal(wheel.radius,contact.r);assert.equal(wheel.front,contact.front);}assert.throws(()=>matchWheelContacts([...manifest.wheels,manifest.wheels[0]],p.wheels),/unique/);
 const reverse=new JumpVehiclePrototype(R,flat);reverse.reset(0,-70,0);for(let i=0;i<300;i++)reverse.step(1/120,{throttle:1});assert(reverse.state.speed>5);for(let i=0;i<700;i++)reverse.step(1/120,{throttle:-1});assert(reverse.state.speed<-2,'brake before reversing');for(let i=0;i<1200;i++)reverse.step(1/120,{});assert.equal(reverse.body.linvel().z,0,'reverse release stops');reverse.dispose();

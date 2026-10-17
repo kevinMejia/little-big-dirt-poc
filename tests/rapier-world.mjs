@@ -5,7 +5,7 @@ import {RapierWorldVehicle} from '../RapierWorldVehicle.js';
 import {DirtJumpSystem,playgroundFeatures} from '../DirtJumpSystem.js';
 import {TreeCollisionSystem} from '../TreeCollisionSystem.js';
 import {RockInteractionSystem} from '../RockInteractionSystem.js';
-import {vehicleConfig,groundDebrisConfig,arcadeHandlingConfig} from '../VehicleConfig.js';
+import {vehicleConfig,groundDebrisConfig,arcadeHandlingConfig,jumpConfig} from '../VehicleConfig.js';
 import {applyReleaseDeceleration,getSpeedMultiplier} from '../VehicleMotion.js';
 await R.init();
 const base=(x,z)=>2.6*Math.sin(x*.035)*Math.cos(z*.044)+3.6*Math.sin((x+z)*.018)+1.4*Math.cos(z*.085+x*.027)+.00034*(x*x+z*z);
@@ -65,7 +65,7 @@ for(const index of [0,1]){
  for(let i=0;i<2400;i++)game.update(1/120,{});assert.equal(game.physics.body.linvel().x,0);assert.equal(game.physics.body.linvel().z,0);const parked={...game.physics.body.translation()};for(let i=0;i<120;i++)game.update(1/120,{});assert.deepEqual({...game.physics.body.translation()},parked);
  const pose=game.rootPose(game.physics.currentPose);game.resetAt(pose,.7);assert.equal(game.physics.body.linvel().z,0);assert(Math.abs(game.rootPose(game.physics.currentPose).y-pose.y)<1e-6);
  game.resetAt(new THREE.Vector3(0,0,200),0);let launched=false,landed=false,peak=0,launches=0,prior=false;for(let i=0;i<1500;i++){const state=game.update(1/120,{throttle:launched?0:1});if(game.cannonFlight&&!prior){launches++;launched=true;}prior=game.cannonFlight;peak=Math.max(peak,state.position.y);if(state.events.some(e=>e.type==='landing')&&launched)landed=true;assert(Math.abs(state.position.x)<210&&Math.abs(state.position.z)<210);assert(Number.isFinite(state.verticalSpeed));}
- assert(launched&&landed,'physical cannon takeoff and landing');assert(peak>20);assert.equal(launches,1);game.dispose();
+ assert(launched&&landed,'physical cannon takeoff and landing');const gravity=12*Math.max(.25,Math.min(2,jumpConfig.gravityScalePercent/100)),expectedRise=cfg(index).hill.boundaryCannon.verticalLaunchSpeed**2/(2*gravity);assert(Math.abs(peak-expectedRise)<.5,'cannon apex follows configured launch speed and clamped gravity');assert.equal(launches,1);game.dispose();
 }
 
 for(const index of [0,1])for(const ramp of jumps.features){

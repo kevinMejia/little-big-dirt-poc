@@ -54,5 +54,6 @@ budget, finite vertices, named pivots/materials, visual JSON validation/round tr
 mobile-safe defaults and absence of physics dependencies. In-browser checks cover
 all controls, bloom on/off, defaults, downloaded JSON and loading it back, orbit/
 reset view, mobile layout, and shared navigation. Run `npm run build` and `npm test`.
-The existing gravity-dependent physics assertions with the current unchanged
-`gravityScalePercent: 250` remain separate from showroom validation.
+The full project check also passes with the unchanged `gravityScalePercent: 250`.
+Physics regression expectations now account for the effective 200% gravity cap;
+the legacy tire-grip benchmark explicitly uses its original 100% gravity fixture.
