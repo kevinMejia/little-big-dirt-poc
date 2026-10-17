@@ -18,7 +18,7 @@ for(const prefix of ['http://localhost:8000/','https://example.com/little-big-di
  assert.equal(currentArea(prefix+'viewer/dirty.html?asset=candidate',base),'dirty');
  assert.equal(currentArea(prefix+'index.html?handling=1&debug=1',base),'handling');
 }
-assert(!navigationItems.find(item=>item.id==='showroom').path,'showroom stays disabled');
+assert.equal(navigationItems.find(item=>item.id==='showroom').path,'viewer/showroom.html','showroom is reachable from every area');
 assert.equal(navigationItems.find(item=>item.id==='settings').path,'index.html#switcher','Settings reuses existing main-game controls');
 assert.equal(new Set(navigationItems.map(item=>item.id)).size,navigationItems.length);
 const records=new Map(),storage={getItem:key=>records.get(key)??null,setItem:(key,value)=>records.set(key,value)};

@@ -4,7 +4,7 @@ import {readGamePreferences,gamePreferenceStorage} from './GamePreferences.js';
 export const navigationItems = [
  {id:'play',label:'Play',path:'index.html'},
  {id:'jumps',label:'Dirt Jump Lab',path:'viewer/jumps.html'},
- {id:'showroom',label:'Asset Showroom',note:'Coming soon'},
+ {id:'showroom',label:'Asset Showroom',path:'viewer/showroom.html'},
  {id:'settings',label:'Settings',path:'index.html#switcher',note:'Game controls & physics'},
  {id:'handling',label:'Handling Course',path:'index.html?handling=1'},
  {id:'environment',label:'Environment Workshop',path:'viewer/environment.html'},

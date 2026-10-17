@@ -38,7 +38,7 @@ def verify():
                 if url.startswith('.'):local(url,built)
             scripts=[text] if built.suffix in ('.js','.mjs') else re.findall(r'<script\s+type="module"[^>]*>([\s\S]*?)</script>',text)
             for script in scripts:
-                subprocess.run(['node','--input-type=module','--check'],input=script,text=True,check=True,capture_output=True)
+                subprocess.run(['node','--input-type=module','--check'],input=script,text=True,encoding='utf-8',check=True,capture_output=True)
         if built.suffix=='.glb':
             raw=built.read_bytes();magic,version,total=struct.unpack_from('<4sII',raw)
             assert magic==b'glTF' and version==2 and total==len(raw),relative
@@ -63,7 +63,7 @@ def verify():
                 if relative.endswith(('.js','.mjs')):assert 'javascript' in response.headers['Content-Type']
         print(f'PASS: {len(manifest["files"])} production files served unchanged under /dirty-sandbox-game/; local links and GLB resources verified',flush=True)
     finally:server.shutdown();server.server_close();thread.join()
-    for test in ['navigation.mjs','vehicle-config.mjs','hill-speed.mjs','release-deceleration.mjs','speed-adjustment.mjs','driving-input.mjs','vehicle-garage.mjs','gameplay-feedback.mjs','boundary-cannon.mjs','jump-prototype.mjs']:
+    for test in ['showroom.mjs','navigation.mjs','vehicle-config.mjs','hill-speed.mjs','release-deceleration.mjs','speed-adjustment.mjs','driving-input.mjs','vehicle-garage.mjs','gameplay-feedback.mjs','boundary-cannon.mjs','jump-prototype.mjs']:
         subprocess.run(['node',str(ROOT/'tests'/test)],cwd=ROOT,check=True)
     for test in ['run_tree_tests.py','run_rapier_world_tests.py','run_environment_tests.py','run_world_appearance_tests.py','run_ground_debris_tests.py','run_visual_polish_tests.py','dirty-asset.py','run_dirty_tests.py','run_stinky_tests.py','run_steering_probe.py']:
         subprocess.run([sys.executable,str(ROOT/'tests'/test)],cwd=ROOT,check=True)
