@@ -8,3 +8,11 @@ export function applyReleaseDeceleration(speed,dt,config){
   const magnitude=Math.max(0,Math.abs(speed)-deceleration*Math.max(0,dt));
   return magnitude<=threshold?0:Math.sign(speed)*magnitude;
 }
+
+/** Additive percentage relative to original tuning: +100 = 2x, -50 = .5x.
+ * Empty/missing/invalid values keep the original; -100 or lower disables drive.
+ */
+export function getSpeedMultiplier(value){
+  const percent=Number(value??0);
+  return Number.isFinite(percent)?Math.max(0,1+percent/100):1;
+}

@@ -20,21 +20,22 @@ export class EnvironmentAssets {
     return this.cache.get(kind);
   }
   async clone(kind){return (await this.load(kind)).clone(true);}
-  /** Optional static rendering building block for later approved integration.
+  /** Static rendering shared by the playable environment and optional previews.
    * Slots are stable: hide one while an animated clone uses the same transform.
-   * This does not register colliders or change the playable world. */
-  async createStaticBatch(kind,transforms){
-    const template=await this.load(kind),group=new THREE.Group(),batches=[];
+   * The visual adapter owns visibility; interaction systems still own colliders. */
+  async createStaticBatch(kind,transforms,preparedTemplate=null){
+    const template=preparedTemplate??await this.load(kind),group=new THREE.Group(),batches=[];
     template.updateMatrixWorld(true);
     template.traverse(o=>{if(!o.isMesh)return;
       const batch=new THREE.InstancedMesh(o.geometry,o.material,transforms.length);
       batch.castShadow=batch.receiveShadow=true;batch.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
       batches.push({batch,local:o.matrixWorld.clone()});group.add(batch);
     });
-    const zero=new THREE.Matrix4().makeScale(0,0,0),combined=new THREE.Matrix4();
-    const write=(slot,visible=true)=>{for(const {batch,local} of batches){combined.multiplyMatrices(visible?transforms[slot]:zero,local);batch.setMatrixAt(slot,combined);batch.instanceMatrix.needsUpdate=true;batch.computeBoundingSphere();}};
+    const zero=new THREE.Matrix4().makeScale(0,0,0),combined=new THREE.Matrix4();let dirty=true;
+    const write=(slot,visible=true)=>{for(const {batch,local} of batches){combined.multiplyMatrices(visible?transforms[slot]:zero,local);batch.setMatrixAt(slot,combined);batch.instanceMatrix.needsUpdate=true;}dirty=true;};
+    const flush=()=>{if(!dirty)return;for(const {batch} of batches)batch.computeBoundingSphere();dirty=false;};
     transforms.forEach((_,i)=>write(i));
-    return {group,setVisible:write,dispose(){group.removeFromParent();for(const {batch} of batches)batch.dispose();}};
+    flush();return {group,setVisible:write,flush,dispose(){group.removeFromParent();for(const {batch} of batches)batch.dispose();}};
   }
   async dispose(){
     if(this.disposed)return;this.disposed=true;

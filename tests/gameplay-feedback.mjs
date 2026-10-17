@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {VehicleFeedback,SoftBoundary,cameraReturnDecay} from '../VehicleFeedback.js';
+import {VehicleFeedback,SoftBoundary,cameraReturnDecay,boundaryFlightProgress} from '../VehicleFeedback.js';
 import {vehicleConfig} from '../VehicleConfig.js';
 const config=vehicleConfig.backhoe;
 const frame=(feedback,dt,speed=10,yawRate=0,groundY=0,settings=config)=>feedback.update(dt,{speed,yawRate,groundY,groundPitch:0,groundRoll:0,config:settings});
@@ -48,3 +48,15 @@ const noBounce=new SoftBoundary();const contact=noBounce.resolve({x:0,z:210},0,2
 const impact=new VehicleFeedback();impact.boundaryImpact(20,1,0,config);frame(impact,1/60,0);assert.ok(impact.heave.value<0,'barrier compresses chassis');
 for(let i=0;i<300;i++)frame(impact,1/60,0);assert.ok(Math.abs(impact.heave.value)<1e-8,'barrier reaction settles');
 console.log('PASS: orbit return 0/50/100%, frame independence; all boundary normals, corners/reverse, capped rebound, contact latch, escape, release stop and compression settling.');
+assert.deepEqual(boundaryFlightProgress(0,3),{progress:0,arc:0,landed:false});
+assert.equal(boundaryFlightProgress(1.5,3).arc,1,'original full launch height retained');
+assert.deepEqual(boundaryFlightProgress(3,3),{progress:1,arc:0,landed:true});
+assert.ok(boundaryFlightProgress(.001,3).arc<.00001,'lift-off/arrival ease without a velocity step');
+for(const dt of [1/144,1/60,1/20]){
+ const feedback=new VehicleFeedback();feedback.landingImpact(config);let lowest=0,rebound=0;
+ for(let i=0;i<5/dt;i++){frame(feedback,dt,0);lowest=Math.min(lowest,feedback.heave.value);rebound=Math.max(rebound,feedback.heave.value);}
+ assert.ok(lowest<-.05,'landing visibly compresses chassis');assert.ok(rebound>.005,'chassis rebounds after contact');
+ assert.ok(Math.abs(feedback.heave.value)<1e-6,'landing settles');assert.equal(feedback.landingSeconds,0);
+}
+const quiet=new VehicleFeedback();quiet.landingImpact({...config,boundaryBouncePercent:0,boundaryBodyRockPercent:0});frame(quiet,1/60,0);assert.equal(quiet.heave.value,0);assert.equal(quiet.pitch.value,0);
+console.log('PASS: restored airborne arc/endpoints, eased arrival, landing compression/rebound/settling at 20–144 Hz and disabled landing effects.');

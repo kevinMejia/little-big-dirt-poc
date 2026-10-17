@@ -19,6 +19,14 @@ Node.js 22+ is needed only for regression tests. Optional npm scripts wrap Pytho
 
 ## Controls
 
+Per-vehicle speed tuning is in `VehicleConfig.js`: `speedAdjustmentPercent` defaults
+to `0` for both vehicles. `25` gives 1.25x normal acceleration and forward/reverse
+speed limits, `100` gives 2x, and `-50` gives .5x. Use `0`, `""`, or omit the setting
+to retain original tuning; leave an empty value as a quoted string so JavaScript
+remains valid. `-100` or lower disables powered driving. Vehicles still start stopped;
+hill percentages compose with the adjusted limits. Braking, hill hold and collision
+thresholds retain their existing settings. Edits apply without changing physics code.
+
 | Control | Action |
 | --- | --- |
 | W / up | Accelerate |
@@ -111,7 +119,8 @@ until you choose to perform the publication steps.
 - assets/dirty/candidate/: unpromoted work, loaded only with explicit candidate
   viewer URLs. Deployment does not promote or replace the active model.
 - assets/blender/ and assets/models/: approved tree/boulder sources and GLBs.
-  viewer/environment.html is their standalone preview; world integration is pending.
+  viewer/environment.html remains their standalone preview. EnvironmentWorld.js
+  connects the same imported assets to the playable world's existing interactions.
 - EnvironmentAssets.js: shared loading and optional static instancing for those assets.
 - viewer/dirty.html and viewer/comparison.html: vehicle inspection and reference views.
 - tools/blender/: authoring/validation scripts. Blender is needed only to rebuild models.
@@ -145,10 +154,9 @@ HTTPS URL on a real iPhone/iPad:
 - Reloading the game and viewer URLs has no missing assets.
 
 This deployment setup does not change driving physics, suspension, vehicle models,
-terrain, collisions or touch behavior. The approved environment integration remains
-pending rather than being included in these deployment changes.
+terrain, collisions or touch behavior. Environment integration is documented below.
 
-## Camera, visual body feedback and soft boundaries
+## Camera, visual body feedback and airborne boundary return
 
 Drag an empty area of the game canvas with a mouse or one finger to orbit the
 selected vehicle. Driving buttons retain their own pointer IDs, so another finger
@@ -176,17 +184,18 @@ VehicleFeedback.js is a small math/feedback helper, not a rigidbody suspension e
   no larger than 1/120 second. The visual parent receives feedback after terrain
   alignment; wheels compensate through their own parent transforms. Hydraulic
   updates run afterward. Logical position/heading and the chase target do not bounce.
-- The old boundary launch is replaced by collision-normal velocity removal and
-  a small inward rebound: min(3 units/s, incoming normal speed * bouncePercent/100).
-  The vehicle's existing capsule bounds are kept inside the map's boundary inset.
-  Oblique contacts preserve tangential motion, with residual motion passing through
-  the existing tree/rock contact routines and fading smoothly. Release/Space/E brakes
-  also stop that motion. A latch prevents repeated impulses from held outward input;
-  clear the barrier and release or drive away to rearm it.
-- Boundary body rocking scales a short spring impulse (at 100%, up to 2 units/s
-  compression velocity and 1.5 rad/s pitch/roll velocity), normalized by impact speed
-  up to 10 units/s. It settles without moving the logical collider. Setting the
-  corresponding percentage to zero disables each visual/rebound contribution.
+- Reaching the boundary launches the vehicle back toward the central 20% of the
+  map, preserving the original 3-second flight and 20%-of-map-width arc height.
+  Flight progress eases at departure and arrival instead of hitting the ground
+  with an abrupt vertical velocity change. Tree/rock ground collisions are bypassed
+  while airborne; parked/grounded collisions remain unchanged.
+- Landing adds a short chassis compression, rebound and rocking reaction on the
+  visual parent. Wheels fit the ground as the sprung body settles. Boundary bounce
+  percent scales the landing compression impulse: min(3, 6 * percent/100) units/s.
+  Boundary body rock percent scales up to .8 rad/s pitch impulse. Vertical damping
+  is reduced briefly for 1.8 seconds to allow a visible rebound before normal settling.
+  These impulses never move the logical collider or restart a parked vehicle.
+  Setting each percentage to zero disables its landing contribution.
 
 Visual front-wheel steering uses the same turn sign as the heading update for both
 vehicles; reverse preserves the normal reversed yaw response. Model/asset files and

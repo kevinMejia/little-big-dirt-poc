@@ -3,6 +3,10 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const percent=v=>clamp(v??0,0,100)/100;
 const radians=degrees=>degrees*Math.PI/180;
 export const cameraReturnDecay=(value,dt)=>Math.exp(-8*percent(value)*Math.max(0,dt));
+export function boundaryFlightProgress(elapsed,duration){
+  const t=clamp(elapsed/Math.max(.01,duration),0,1),progress=t*t*(3-2*t);
+  return {progress,arc:4*progress*(1-progress),landed:t===1};
+}
 export function groundVisualWheel(pivot,root,height){
   const w=pivot.userData.wheel,contact=pivot.position.clone().set(w.x,0,w.z);
   root.localToWorld(contact);contact.y=height(contact.x,contact.z)-.035+w.r;
@@ -41,7 +45,12 @@ export class SoftBoundary {
 }
 export class VehicleFeedback {
   constructor(){this.reset();}
-  reset(){this.pitch={value:0,velocity:0};this.roll={value:0,velocity:0};this.heave={value:0,velocity:0};this.previous=null;}
+  reset(){this.pitch={value:0,velocity:0};this.roll={value:0,velocity:0};this.heave={value:0,velocity:0};this.previous=null;this.landingSeconds=0;}
+  landingImpact(config){
+    this.heave.velocity=-Math.min(3,6*percent(config.boundaryBouncePercent));
+    this.pitch.velocity=percent(config.boundaryBodyRockPercent)*.8;
+    this.landingSeconds=1.8;
+  }
   boundaryImpact(strength,forward,right,config){
     const amount=percent(config.boundaryBodyRockPercent)*clamp(strength/10,0,1);
     this.heave.velocity-=amount*2;this.pitch.velocity+=forward*amount*1.5;this.roll.velocity-=right*amount*1.5;
@@ -57,9 +66,10 @@ export class VehicleFeedback {
     };
     const steps=Math.max(1,Math.ceil(dt/(1/120))),h=dt/steps;
     for(let i=0;i<steps;i++)for(const key of ['pitch','roll','heave']){
-      const spring=this[key];spring.velocity+=((targets[key]-spring.value)*65-spring.velocity*10)*h;spring.value+=spring.velocity*h;
+      const spring=this[key],damping=key==='heave'&&this.landingSeconds>0?6:10;spring.velocity+=((targets[key]-spring.value)*65-spring.velocity*damping)*h;spring.value+=spring.velocity*h;
       const limit=key==='heave'?.3:radians(16);spring.value=clamp(spring.value,-limit,limit);
     }
     this.previous={speed,groundY,groundPitch,groundRoll,verticalSpeed};
+    this.landingSeconds=Math.max(0,this.landingSeconds-dt);
   }
 }

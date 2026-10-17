@@ -86,13 +86,15 @@ import { bindVehicleGarage } from './VehicleGarage.js';
 
 import { TreeCollisionSystem } from './TreeCollisionSystem.js';
 import { RockInteractionSystem } from './RockInteractionSystem.js';
+import { EnvironmentAssets } from './EnvironmentAssets.js';
+import { EnvironmentWorld } from './EnvironmentWorld.js';
 
 import { vehicleConfig, cameraSettings } from './VehicleConfig.js';
 
 import { HillSpeedPhysics } from './HillSpeedPhysics.js';
 import { DrivingInput } from './DrivingInput.js';
-import { applyReleaseDeceleration } from './VehicleMotion.js';
-import { VehicleFeedback, SoftBoundary, cameraReturnDecay, groundVisualWheel } from './VehicleFeedback.js';
+import { applyReleaseDeceleration, getSpeedMultiplier } from './VehicleMotion.js';
+import { VehicleFeedback, SoftBoundary, cameraReturnDecay, groundVisualWheel, boundaryFlightProgress } from './VehicleFeedback.js';
 
 const hillPhysics=new HillSpeedPhysics(height);
 
@@ -116,7 +118,7 @@ function groundNormal(x,z){const e=.7;return new THREE.Vector3(height(x-e,z)-hei
 
 // Map distances are in world units. The terrain spans -220 to +220 on each axis.
 
-const mapSettings={halfSize:220,boundaryInset:15};
+const mapSettings={halfSize:220,boundaryInset:15,launchHeightFraction:.2,landingWidthFraction:.2,flightSeconds:3};
 
 const world=mapSettings.halfSize,segments=220,geo=new THREE.PlaneGeometry(world*2,world*2,segments,segments);geo.rotateX(-Math.PI/2);const pos=geo.attributes.position,colors=[];
 
@@ -141,9 +143,10 @@ function makeRock(x,z,s){rockInteractions.addRock(x,z,s);rand();rand();rand()}
 
 for(let i=0;i<80;i++){const x=(rand()-.5)*370,z=(rand()-.5)*370;if(Math.abs(x)<16&&Math.abs(z)<16)continue;makeRock(x,z,.45+rand()*1.2)}
 
-function ramp(x,z,angle){const g=new THREE.Group();g.position.set(x,height(x,z)+.35,z);g.rotation.y=angle;box(g,7,.55,12,0,1.4,0,mat(0xe4a05b)).rotation.x=-.2;scene.add(g)}
-
-ramp(13,-28,.2);ramp(-35,-12,-.7);ramp(35,36,.5);
+const environmentAssets=new EnvironmentAssets();let environmentWorld=null;
+try{environmentWorld=await EnvironmentWorld.connect(scene,environmentAssets,treeCollisions,rockInteractions);}
+catch(error){console.error('Blender environment integration failed',error);const warning=document.createElement('div');warning.id='environmentAssetWarning';warning.setAttribute('role','alert');warning.style.cssText='position:fixed;z-index:8;top:150px;right:12px;max-width:310px;padding:12px;background:#632c20;color:white;border-radius:10px';warning.textContent='Tree/rock models could not load. Procedural fallback is active. '+error.message;document.body.append(warning);}
+addEventListener('pagehide',event=>{if(event.persisted)return;environmentWorld?.dispose();environmentAssets.dispose();});
 
 let dirtyTemplate;
 try{dirtyTemplate=await DirtyGLB.load(new URL('./assets/dirty/dirty.glb',location.href).href);}catch(error){console.warn('New backhoe failed to load; trying previous Blender asset',error);try{dirtyTemplate=await DirtyGLB.load(new URL('./assets/dirty/backups/pre-reference-sheet/dirty.glb',location.href).href);}catch(fallbackError){console.error('Blender assets unavailable; using procedural fallback',fallbackError);}}
@@ -165,7 +168,11 @@ let index=0,vehicle,position=new THREE.Vector3(start.x,0,start.z),heading=0,spee
 
 const vehicleRoot=new THREE.Group();scene.add(vehicleRoot);
 const vehicleVisual=new THREE.Group();vehicleRoot.add(vehicleVisual);
-const bodyFeedback=new VehicleFeedback(),boundaryMotion=new SoftBoundary();
+const bodyFeedback=new VehicleFeedback(),boundaryMotion=new SoftBoundary();let flight=null;
+function launchFromBoundary(){
+ const range=world*mapSettings.landingWidthFraction,destination=new THREE.Vector3((rand()*2-1)*range,0,(rand()*2-1)*range);destination.y=height(destination.x,destination.z)-.09;
+ flight={from:position.clone(),to:destination,elapsed:0};heading=Math.atan2(destination.x-position.x,destination.z-position.z);speed=0;steer=0;hillPhysics.reset();bodyFeedback.reset();boundaryMotion.reset();
+}
 
 // Orbit the existing chase camera. Only canvas pointers can own an orbit;
 // drive buttons keep their independent pointer capture for multitouch.
@@ -179,7 +186,7 @@ addEventListener('blur',releaseOrbit);addEventListener('resize',releaseOrbit);ad
 
 function choose(i){hillPhysics.reset();bodyFeedback.reset();boundaryMotion.reset();vehicleVisual.position.set(0,0,0);vehicleVisual.rotation.set(0,0,0);index=i; if(vehicle){if(vehicle.userData.controller)vehicle.userData.controller.dispose();else{vehicleVisual.remove(vehicle);vehicle.traverse(o=>{if(o.isMesh)o.geometry.dispose()})}}vehicle=configs[i].build();vehicleVisual.add(vehicle);if(i===1){for(const x of [-.8,.8]){box(vehicle,.35,.22,.12,x,index===0?1.7:1.85,index===0?2.38:3.43,white);box(vehicle,.3,.18,.12,x,1.35,index===0?-2.4:-3.13,red)}box(vehicle,.16,.85,.16,.7,3.7,-.5,metal);}document.querySelector('#vehicleName').textContent=configs[i].name;document.querySelector('#backhoeBtn').classList.toggle('active',i===0);document.querySelector('#garbageBtn').classList.toggle('active',i===1);speed=0}
 
-function reset(){hillPhysics.reset();bodyFeedback.reset();boundaryMotion.reset();releaseOrbit();cameraOrbit.yaw=cameraOrbit.pitch=0;position.set(0,height(0,0),0);heading=0;speed=0;steer=0}
+function reset(){flight=null;hillPhysics.reset();bodyFeedback.reset();boundaryMotion.reset();releaseOrbit();cameraOrbit.yaw=cameraOrbit.pitch=0;position.set(0,height(0,0),0);heading=0;speed=0;steer=0}
 
 choose(0);reset();
 
@@ -256,7 +263,7 @@ function honk(){try{audio??=new (window.AudioContext||window.webkitAudioContext)
 
 const clock=new THREE.Clock(),camTarget=new THREE.Vector3(),targetPos=new THREE.Vector3(),up=new THREE.Vector3(0,1,0);
 
-function update(dt){const previousHeading=heading;const cfg=configs[index];treeCollisions.setVehicles([{position,heading,bounds:cfg.collision,airborne:false}]);treeCollisions.update(dt);rockInteractions.setVehicles([{position,heading,bounds:cfg.collision,airborne:false}]);rockInteractions.update(dt);const pad=navigator.getGamepads?.()[0];const ax=pad?.axes?.[0]||0;
+function update(dt){const previousHeading=heading;const cfg=configs[index];treeCollisions.setVehicles([{position,heading,bounds:cfg.collision,airborne:!!flight}]);treeCollisions.update(dt);rockInteractions.setVehicles([{position,heading,bounds:cfg.collision,airborne:!!flight}]);rockInteractions.update(dt);const pad=navigator.getGamepads?.()[0];const ax=pad?.axes?.[0]||0;
 
 const drivingInput=controls.read(speed,pad);
 const forward=drivingInput.accelerate,back=drivingInput.reverse,brake=drivingInput.brake,emergencyBrake=drivingInput.emergencyBrake;
@@ -269,17 +276,19 @@ let slope=0;
 
 
 
+if(!flight){
 let thrust=forward?1:back?-1:0;
 
 const hill=hillPhysics.update({x:position.x,z:position.z,heading,speed,thrust,config:cfg.hill,dt});slope=hill.grade;
 
-let acceleration=thrust*cfg.accel*(thrust>0&&speed<0?1.5:1)+(thrust!==0?hill.direction*cfg.accel*hill.modifier:0);
+const driveScale=getSpeedMultiplier(cfg.hill.speedAdjustmentPercent);
+let acceleration=driveScale*(thrust*cfg.accel*(thrust>0&&speed<0?1.5:1)+(thrust!==0?hill.direction*cfg.accel*hill.modifier:0));
 
 if(brake)acceleration-=Math.sign(speed)*Math.min(Math.abs(speed)/Math.max(dt,.001),24);
 
 const previousSpeed=speed;
 
-speed+=acceleration*dt;speed-=speed*cfg.drag*dt*.08;speed=hillPhysics.limitSpeed(speed,cfg.max,cfg.reverse,dt,previousSpeed);
+speed+=acceleration*dt;speed-=speed*cfg.drag*dt*.08;speed=hillPhysics.limitSpeed(speed,cfg.max*driveScale,cfg.reverse*driveScale,dt,previousSpeed);
 
 if(emergencyBrake)speed=Math.sign(speed)*Math.max(0,Math.abs(speed)-38*dt);
 
@@ -287,7 +296,6 @@ if(!forward&&!back)speed=applyReleaseDeceleration(speed,dt,cfg.hill);
 
 heading-=steer*cfg.turn*Math.min(Math.abs(speed)/9,1)*dt*Math.sign(speed||1);
 
-boundaryMotion.damp(dt,!forward&&!back,cfg.hill,emergencyBrake?38:brake?24:0);
 const previousX=position.x,previousZ=position.z;
 
 // Shared short movement steps let both obstacle systems correct the same motion.
@@ -296,15 +304,19 @@ for(let step=0;step<movementSteps;step++){
  const startX=position.x,startZ=position.z;
  speed=treeCollisions.move(position,heading,speed,movementDt,cfg.collision,{baseMaxSpeed:cfg.max,treeKnockdownSpeedPercent:cfg.hill.treeKnockdownSpeedPercent});
  speed=rockInteractions.resolveMovement(position,startX,startZ,heading,speed,movementDt,cfg.collision,{baseMaxSpeed:cfg.max,...cfg.hill});
- const lateral=Math.hypot(boundaryMotion.x,boundaryMotion.z);
- if(lateral>.001){const oldX=position.x,oldZ=position.z,angle=Math.atan2(boundaryMotion.x,boundaryMotion.z);const corrected=treeCollisions.move(position,angle,lateral,movementDt,cfg.collision,{baseMaxSpeed:cfg.max,treeKnockdownSpeedPercent:cfg.hill.treeKnockdownSpeedPercent});rockInteractions.resolveMovement(position,oldX,oldZ,angle,corrected,movementDt,cfg.collision,{baseMaxSpeed:cfg.max,...cfg.hill});}
- const contact=boundaryMotion.resolve(position,heading,speed,world-mapSettings.boundaryInset,cfg.collision,cfg.hill,thrust);speed=contact.speed;
- if(contact.impact>.1)bodyFeedback.boundaryImpact(contact.impact,-contact.nx*Math.sin(heading)-contact.nz*Math.cos(heading),contact.nx*Math.cos(heading)-contact.nz*Math.sin(heading),cfg.hill);
+ const contact=boundaryMotion.resolve(position,heading,speed,world-mapSettings.boundaryInset,cfg.collision,cfg.hill,thrust);
+ if(contact.nx||contact.nz){position.y=height(position.x,position.z)-.09;launchFromBoundary();break;}
 }
 
 hillPhysics.recordTravel(position.x-previousX,position.z-previousZ);
 
 position.y=height(position.x,position.z)-.09;
+}
+if(flight){
+ flight.elapsed+=dt;const state=boundaryFlightProgress(flight.elapsed,mapSettings.flightSeconds);
+ position.lerpVectors(flight.from,flight.to,state.progress);position.y+=state.arc*world*2*mapSettings.launchHeightFraction;
+ if(state.landed){flight=null;speed=0;hillPhysics.reset();bodyFeedback.reset();bodyFeedback.landingImpact(cfg.hill);}
+}
 
 vehicleRoot.position.copy(position);vehicleRoot.rotation.order='YXZ';vehicleRoot.rotation.y=heading;
 
@@ -317,7 +329,7 @@ vehicleRoot.rotation.x=THREE.MathUtils.damp(vehicleRoot.rotation.x,Math.atan2(ba
 vehicleRoot.rotation.z=THREE.MathUtils.damp(vehicleRoot.rotation.z,Math.atan2(rightH-leftH,2.6),9,dt);
 
 // Body feedback follows terrain alignment on a visual-only parent.
-bodyFeedback.update(dt,{speed,yawRate:(heading-previousHeading)/Math.max(dt,.001),groundY:position.y,groundPitch:vehicleRoot.rotation.x,groundRoll:vehicleRoot.rotation.z,config:cfg.hill});
+if(!flight)bodyFeedback.update(dt,{speed,yawRate:(heading-previousHeading)/Math.max(dt,.001),groundY:position.y,groundPitch:vehicleRoot.rotation.x,groundRoll:vehicleRoot.rotation.z,config:cfg.hill});
 vehicleVisual.position.y=bodyFeedback.heave.value;vehicleVisual.rotation.set(bodyFeedback.pitch.value,0,bodyFeedback.roll.value);
 // Ground each wheel in its actual parent space, compensating body movement.
 
@@ -325,13 +337,14 @@ vehicleRoot.updateMatrixWorld(true);
 
 const model=vehicle.userData.controller;
 
-if(model){model.setSteering(-steer*.35);if(!emergencyBrake)model.setWheelRotation(model.wheelAngle+speed*dt/(model.wheelReferenceRadius??.65))}
+if(model){model.setSteering(-steer*.35);if(!emergencyBrake&&!flight)model.setWheelRotation(model.wheelAngle+speed*dt/(model.wheelReferenceRadius??.65))}
 
-for(const pivot of (model?.wheels?model.wheels.map(w=>w.steering||w):vehicle.children)){const w=pivot.userData.wheel;if(!w)continue;groundVisualWheel(pivot,vehicleRoot,height);if(!model){pivot.rotation.y=w.z>0?-steer*.35:0;if(!emergencyBrake)pivot.userData.roll.rotation.x+=speed*dt/w.r}}
+for(const pivot of (model?.wheels?model.wheels.map(w=>w.steering||w):vehicle.children)){const w=pivot.userData.wheel;if(!w)continue;if(flight){const center=vehicleRoot.localToWorld(new THREE.Vector3(w.x,w.r,w.z));pivot.position.copy(pivot.parent.worldToLocal(center));}else groundVisualWheel(pivot,vehicleRoot,height);if(!model){pivot.rotation.y=w.z>0?-steer*.35:0;if(!emergencyBrake&&!flight)pivot.userData.roll.rotation.x+=speed*dt/w.r}}
 
 if(model)model.update(dt);
+environmentWorld?.update();
 
-document.querySelector('#status').textContent=emergencyBrake?'EMERGENCY BRAKE · ENGAGED':'Keyboard or gamepad supported';
+document.querySelector('#status').textContent=flight?'BOUNDARY BOOST · Returning to the middle!':bodyFeedback.landingSeconds>0?'Soft landing · Settling…':emergencyBrake?'EMERGENCY BRAKE · ENGAGED':'Keyboard or gamepad supported';
 
 if(cameraOrbit.pointer===null){const decay=cameraReturnDecay(cameraSettings.cameraReturnSpeedPercent,dt);cameraOrbit.yaw*=decay;cameraOrbit.pitch*=decay;}
 const orbitHeading=heading+cameraOrbit.yaw,elevation=chaseElevation+cameraOrbit.pitch;

@@ -109,6 +109,7 @@ export class RockInteractionSystem {
       f.active=true;f.owner=r;f.age=0;f.r=r.r*(.26+Math.random()*.12);f.mesh.visible=true;f.mesh.scale.setScalar(f.r);
       const a=i*Math.PI*2/count;f.mesh.position.set(r.x+Math.cos(a)*r.r*.3,r.group.position.y+(i%2)*r.r*.2,r.z+Math.sin(a)*r.r*.3);
       f.v.set(dx*Math.min(4,strength*.18)+Math.cos(a)*1.8,2+Math.random()*2,dz*Math.min(4,strength*.18)+Math.sin(a)*1.8);f.spin.set(Math.random()*3,Math.random()*2,Math.random()*3);
+      this.onFragmentSpawn?.(f,i,r);
     }
   }
   place(r){r.group.position.set(r.x,this.height(r.x,r.z)+r.r*.52,r.z);}
