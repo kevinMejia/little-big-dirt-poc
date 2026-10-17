@@ -253,3 +253,44 @@ Actual iPhone Safari frame rate has not been hardware-benchmarked here.
 Run `python tests/run_world_appearance_tests.py` for horizon seam geometry/colors,
 fog toggles, deterministic clustering, clearings, color/patch controls, instance
 budgets and terrain seating tests. These checks also run in the production verifier.
+
+### Stationary ground debris and wheel feedback
+
+`GroundDebrisSystem.js` adds four shared instanced batches (dirt mounds, stones,
+branches and earth clumps). These are fixed height features, separate from the
+pushable/destructible rocks. No colliders or driving forces are added.
+
+Tune `groundDebrisConfig` in `VehicleConfig.js`:
+- `densityPercent`: 0–100 maps to 0–1,000 details (500 by default).
+- `interactivePercent`: deterministic probability of a detail producing a bump.
+- `minBumpHeight` / `maxBumpHeight`: world units, constrained to 0–0.5 m.
+- `suspensionEffectPercent`: 0–100 scales the existing chassis spring targets;
+  zero disables debris wheel/chassis reactions while keeping visuals.
+- `maxInteractiveDistance`: lookup cutoff from the active vehicle, in world units.
+- Four type percentages are normalized placement weights, not separate densities.
+
+Placement uses a fixed seed, favors rocks near boulders, twigs under trees and
+soil near dirt, and excludes spawn, trunks, boulders, steep slopes and boundaries.
+Only nearby interactive grid cells are sampled. Five tire-footprint samples filter
+small details. Overlaps use the maximum height, preventing stacked launch spikes.
+There are four extra draw calls and no per-debris frame updates or shadow casting.
+
+Independent wheel supports follow `terrain + debris`; average wheel rise and
+front/rear/left/right differences feed the existing `VehicleFeedback` springs.
+Existing per-vehicle bounce, pitch and roll percentages scale those body targets.
+The authoritative terrain sampler and collision root are unchanged. Both Dirty's
+four wheels and Stinky's six wheels are supported, including reverse and flight.
+
+Open `?debrisDebug=1` for live enable/density/interactive/height/effect controls,
+controlled regeneration, footprint outlines, contact markers and wheel readings.
+Density/height/category changes regenerate deterministically on release; effect
+changes apply on the next frame. Debug settings are temporary and are not saved.
+`groundDebris.regenerate()` is the reusable controlled regeneration API.
+
+This is visual suspension: wheels follow a smooth footprint-filtered surface
+while the chassis uses the existing spring/damper. It is not tire deformation or
+physical suspension travel. Small mesh/profile differences on slopes and tire
+contact averaging are intentional approximations. No debris can push or launch a
+vehicle. Production regressions and controlled wheel scenarios are tested by
+`python tools/check_project.py`, including `tests/run_ground_debris_tests.py`.
+Actual iPhone Safari performance still requires device testing.

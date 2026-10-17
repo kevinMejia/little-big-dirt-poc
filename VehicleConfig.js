@@ -39,3 +39,12 @@ export const rockConfig = {
   largeRockResistance: 1.3,
   hitCooldownSeconds: .65,
 };
+
+// 100% density = at most 1,000 fixed details; distribution weights are normalized.
+// Heights are world units, capped at 0.5; effect scales existing visual springs only.
+export const groundDebrisConfig = {
+  enabled:true, densityPercent:50, interactivePercent:30,
+  minBumpHeight:0.05, maxBumpHeight:0.25, suspensionEffectPercent:60,
+  maxInteractiveDistance:35,
+  dirtClumpPercent:35, smallRockPercent:35, twigPercent:20, earthClumpPercent:10
+};

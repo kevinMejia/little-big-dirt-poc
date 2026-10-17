@@ -89,12 +89,14 @@ import { EnvironmentAssets } from './EnvironmentAssets.js';
 import { EnvironmentWorld } from './EnvironmentWorld.js';
 import { worldAppearance, createWorldAtmosphere, createTerrainPainter, createSceneryLayout, createGroundDetails } from './WorldAppearance.js';
 
-import { vehicleConfig, cameraSettings } from './VehicleConfig.js';
+import { vehicleConfig, cameraSettings, groundDebrisConfig } from './VehicleConfig.js';
 
 import { HillSpeedPhysics } from './HillSpeedPhysics.js';
 import { DrivingInput } from './DrivingInput.js';
 import { applyReleaseDeceleration, getSpeedMultiplier } from './VehicleMotion.js';
-import { VehicleFeedback, SoftBoundary, cameraReturnDecay, groundVisualWheel, boundaryFlightProgress } from './VehicleFeedback.js';
+import { GroundDebrisSystem, DebrisWheelContacts } from './GroundDebrisSystem.js';
+import { createDebrisDebug } from './GroundDebrisDebug.js';
+import { VehicleFeedback, SoftBoundary, cameraReturnDecay, boundaryFlightProgress } from './VehicleFeedback.js';
 
 const hillPhysics=new HillSpeedPhysics(height);
 
@@ -147,6 +149,10 @@ const rockInteractions=new RockInteractionSystem(scene,{groundHeight:height,onIm
 function makeRock(x,z,s){rockInteractions.addRock(x,z,s);rand();rand();rand()}
 
 for(const {x,z,radius} of sceneryLayout.rocks)makeRock(x,z,radius);
+const groundDebris=new GroundDebrisSystem(scene,height,world,terrainPainter,sceneryLayout,groundDebrisConfig);
+const debrisContacts=new DebrisWheelContacts();
+const debrisDebug=createDebrisDebug(scene,groundDebris,debrisContacts);
+addEventListener('pagehide',event=>{if(!event.persisted){debrisDebug?.dispose();groundDebris.dispose();}});
 const groundDetails=createGroundDetails(scene,height,world,terrainPainter,sceneryLayout);
 addEventListener('pagehide',event=>{if(!event.persisted)groundDetails.dispose();});
 
@@ -335,8 +341,9 @@ vehicleRoot.rotation.x=THREE.MathUtils.damp(vehicleRoot.rotation.x,Math.atan2(ba
 
 vehicleRoot.rotation.z=THREE.MathUtils.damp(vehicleRoot.rotation.z,Math.atan2(rightH-leftH,2.6),9,dt);
 
+const debrisTargets=debrisContacts.sample(vehicle,vehicleRoot,groundDebris,cfg.hill,!!flight);
 // Body feedback follows terrain alignment on a visual-only parent.
-if(!flight)bodyFeedback.update(dt,{speed,yawRate:(heading-previousHeading)/Math.max(dt,.001),groundY:position.y,groundPitch:vehicleRoot.rotation.x,groundRoll:vehicleRoot.rotation.z,config:cfg.hill});
+if(!flight)bodyFeedback.update(dt,{speed,yawRate:(heading-previousHeading)/Math.max(dt,.001),groundY:position.y,groundPitch:vehicleRoot.rotation.x,groundRoll:vehicleRoot.rotation.z,config:cfg.hill,debris:debrisTargets});
 vehicleVisual.position.y=bodyFeedback.heave.value;vehicleVisual.rotation.set(bodyFeedback.pitch.value,0,bodyFeedback.roll.value);
 // Ground each wheel in its actual parent space, compensating body movement.
 
@@ -346,8 +353,10 @@ const model=vehicle.userData.controller;
 
 if(model){model.setSteering(-steer*.35);if(!emergencyBrake&&!flight)model.setWheelRotation(model.wheelAngle+speed*dt/(model.wheelReferenceRadius??.65))}
 
-for(const pivot of (model?.wheels?model.wheels.map(w=>w.steering||w):vehicle.children)){const w=pivot.userData.wheel;if(!w)continue;if(flight){const center=vehicleRoot.localToWorld(new THREE.Vector3(w.x,w.r,w.z));pivot.position.copy(pivot.parent.worldToLocal(center));}else groundVisualWheel(pivot,vehicleRoot,height);if(!model){pivot.rotation.y=w.z>0?-steer*.35:0;if(!emergencyBrake&&!flight)pivot.userData.roll.rotation.x+=speed*dt/w.r}}
+for(const {pivot} of debrisContacts.wheels){const w=pivot.userData.wheel;if(!w)continue;if(flight){const center=vehicleRoot.localToWorld(new THREE.Vector3(w.x,w.r,w.z));pivot.position.copy(pivot.parent.worldToLocal(center));}else {/* Independent contacts grounded below. */}if(!model){pivot.rotation.y=w.z>0?-steer*.35:0;if(!emergencyBrake&&!flight)pivot.userData.roll.rotation.x+=speed*dt/w.r}}
 
+if(!flight)debrisContacts.ground(vehicleRoot,height,bodyFeedback);
+debrisDebug?.update(dt,vehicleRoot,bodyFeedback);
 if(model)model.update(dt);
 environmentWorld?.update();
 

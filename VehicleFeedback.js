@@ -55,7 +55,7 @@ export class VehicleFeedback {
     const amount=percent(config.boundaryBodyRockPercent)*clamp(strength/10,0,1);
     this.heave.velocity-=amount*2;this.pitch.velocity+=forward*amount*1.5;this.roll.velocity-=right*amount*1.5;
   }
-  update(dt,{speed,yawRate,groundY,groundPitch,groundRoll,config}){
+  update(dt,{speed,yawRate,groundY,groundPitch,groundRoll,config,debris={heave:0,pitch:0,roll:0}}){
     if(dt<=0)return;
     const previous=this.previous??{speed,groundY,groundPitch,groundRoll,verticalSpeed:0};
     const acceleration=clamp((speed-previous.speed)/dt,-24,24),verticalSpeed=(groundY-previous.groundY)/dt,bounce=percent(config.suspensionBouncePercent);
@@ -64,6 +64,7 @@ export class VehicleFeedback {
       pitch:-clamp(acceleration/12,-1,1)*radians(10)*percent(config.bodyPitchPercent)+clamp((groundPitch-previous.groundPitch)/dt*.12,-radians(5),radians(5))*bounce,
       heave:-clamp((verticalSpeed-previous.verticalSpeed)*.05,-.3,.3)*bounce,
     };
+    for(const key of ['pitch','roll','heave'])targets[key]+=debris[key]||0;
     const steps=Math.max(1,Math.ceil(dt/(1/120))),h=dt/steps;
     for(let i=0;i<steps;i++)for(const key of ['pitch','roll','heave']){
       const spring=this[key],damping=key==='heave'&&this.landingSeconds>0?6:10;spring.velocity+=((targets[key]-spring.value)*65-spring.velocity*damping)*h;spring.value+=spring.velocity*h;
