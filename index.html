@@ -72,7 +72,7 @@ body.touch-enabled #mobile{display:flex}body.touch-enabled #help{display:none}
 </style>
 
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/"}}</script>
-</head>
+<script type="module" src="./SharedNavigation.js"></script></head>
 
 <body>
 
@@ -120,10 +120,12 @@ import { RapierWorldVehicle, loadWorldPhysics } from './RapierWorldVehicle.js?v=
 import { BoundaryCannon } from './BoundaryCannon.js';
 import { VehicleFeedback, SoftBoundary, cameraReturnDecay } from './VehicleFeedback.js';
 
+import {readGamePreferences,saveGamePreference,gamePreferenceStorage} from './GamePreferences.js';
+const preferenceStorage=gamePreferenceStorage(),preferences=readGamePreferences(preferenceStorage);
 const debugToggle=document.querySelector('#debugToggle');
 function toggleDiagnostics(enabled){document.body.classList.toggle('show-debug',enabled);debugToggle.setAttribute('aria-pressed',String(enabled));}
-debugToggle.onclick=()=>toggleDiagnostics(!document.body.classList.contains('show-debug'));
-toggleDiagnostics(new URLSearchParams(location.search).has('debug'));
+debugToggle.onclick=()=>{toggleDiagnostics(!document.body.classList.contains('show-debug'));saveGamePreference(preferenceStorage,'diagnostics',document.body.classList.contains('show-debug'));};
+toggleDiagnostics(new URLSearchParams(location.search).has('debug')||preferences.diagnostics===true);
 const hillPhysics=new HillSpeedPhysics(surfaceHeight);
 
 const scene=new THREE.Scene();scene.background=new THREE.Color(0xb5e1ee);
@@ -265,7 +267,9 @@ document.querySelector('#resetBtn').onclick=reset;
 const keys=new Set();addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys.add(e.code);if(garage.open)return;if(e.repeat)return;if(e.code==='KeyR')reset();if(e.code==='KeyH')honk()});addEventListener('keyup',e=>keys.delete(e.code));addEventListener('blur',()=>keys.clear());
 
 const controls=new DrivingInput({root:document.querySelector('#mobile'),toggle:document.querySelector('#touchToggle'),keys,actionsRoot:document.querySelector('#vehicleActions'),actionsToggle:document.querySelector('#actionsToggle')});
-// Temporary comparison switch. Only the active controller is stepped.
+if(typeof preferences.touchControls==='boolean')controls.setEnabled(preferences.touchControls);
+document.querySelector('#touchToggle').addEventListener('click',()=>saveGamePreference(preferenceStorage,'touchControls',controls.enabled));
+// Only the active controller is stepped; navigation reuses this existing selector.
 const physicsSelector=document.querySelector('#physicsMode');
 physicsSelector.addEventListener('change',async()=>{
  const requested=physicsSelector.value;physicsSelector.disabled=true;
@@ -280,7 +284,7 @@ physicsSelector.addEventListener('change',async()=>{
   }
   keys.clear();controls.clear();speed=steer=0;hillPhysics.reset();bodyFeedback.reset();boundaryMotion.reset();surfaceEffects.reset();vehicleVisual.position.set(0,0,0);vehicleVisual.rotation.set(0,0,0);releaseOrbit();
  }catch(error){console.error('Rapier activation failed; original physics retained',error);rapierController?.dispose();rapierController=null;physicsMode='original';boundaryCannon.reset();flight=null;physicsSelector.value='original';document.querySelector('#terrainInfo').textContent='Rapier could not start; Original is available.';}
- finally{physicsSelector.value=physicsMode;physicsSelector.disabled=false;}
+ finally{physicsSelector.value=physicsMode;physicsSelector.disabled=false;saveGamePreference(preferenceStorage,'physicsMode',physicsMode);}
 });
 
 const garage=document.querySelector('#vehicleGarage'),garageFrame=document.querySelector('#garageFrame');
@@ -513,8 +517,8 @@ document.querySelector('#speed').innerHTML=Math.round(Math.abs(speed)*2.237)+' <
 
 }
 
-// Initialize the default hybrid after all shared controls and effects exist.
-physicsSelector.value='rapier';physicsSelector.dispatchEvent(new Event('change'));
+// Restore the existing physics preference (default hybrid) after shared controls and effects exist.
+physicsSelector.value=preferences.physicsMode;physicsSelector.dispatchEvent(new Event('change'));
 
 let diagnosticFrames=0,diagnosticStart=performance.now();
 function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);if(!garage.open){update(dt);renderer.render(scene,camera);diagnosticFrames++;const now=performance.now();if(now-diagnosticStart>1000){if(document.body.classList.contains('show-debug'))document.querySelector('#renderTuning').textContent=Math.round(diagnosticFrames*1000/(now-diagnosticStart))+' FPS · '+renderer.info.render.calls+' draws · '+Math.round(renderer.info.render.triangles/1000)+'k triangles';diagnosticFrames=0;diagnosticStart=now;}}}animate();
