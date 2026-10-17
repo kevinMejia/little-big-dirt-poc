@@ -40,8 +40,10 @@ owns its typing. Key releases always reach the driving handlers.
   localStorage. Previous session preferences migrate once. Touch Controls uses
   the existing DrivingInput toggle and pointer-capture implementation. Its reset
   restores automatic device detection.
-- **Display / HUD → Show Driving HUD** defaults on. It hides/restores the existing
-  `#hud` only. Preference updates do not clear a held driving input.
+- **Display / HUD → Show Driving HUD** and **Show Keyboard Controls Guide** both
+  default off. They independently hide/restore the existing `#hud` and `#help`.
+  Inline head CSS hides both before initialization; only saved preferences reveal
+  them. Vehicle reset/switch never changes these preferences. Preference updates do not clear a held driving input.
 
 ## Active controls
 
@@ -117,3 +119,21 @@ highlight their garage's area. Existing direct routes, including the handling
 course, remain unchanged. Settings continues opening the live floating window.
 
 [Mobile grouped navigation](docs/screenshots/navigation-assets-mobile.png).
+
+## Display visibility regression
+
+HUD and keyboard guide now have separate saved toggles, both off by default.
+Their inline head CSS hides them before JavaScript/module initialization. Reset
+and vehicle switching never set visibility. pagehide removes only the applied
+visibility attributes (not preferences); pageshow reads saved values again, which
+also protects restored pages from stale visibility. Saving a physics/touch option
+no longer writes default display values as if they were explicit choices.
+
+Browser validation: enable HUD alone → only HUD visible; enable guide → both
+visible; Reset → refresh → both remain enabled. Then disable both → Reset →
+switch to Stinky → Dirt Jump Lab → Play → refresh: both elements remained hidden,
+and both Settings toggles were off. Browser console had no errors. Source checks
+verify the initial hide rules precede the HUD markup. VehicleConfig.js and all
+vehicle models/controllers are unchanged by this fix.
+
+[Verified display toggles](docs/screenshots/display-visibility.png).

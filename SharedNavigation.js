@@ -1,5 +1,5 @@
 import {openSettingsPanel} from './SettingsPanel.js';
-import {readGamePreferences,gamePreferenceStorage} from './GamePreferences.js?v=central-settings-2';
+import {readGamePreferences,gamePreferenceStorage} from './GamePreferences.js?v=central-settings-3';
 // Paths are relative to this module, so local hosting and GitHub project Pages work.
 // Add a destination here, then include this module on its page. No router/scenes.
 export const navigationItems = [
@@ -85,14 +85,18 @@ export function installNavigation(){
  body[data-lbd-navigation=jumps] header{top:calc(max(12px,env(safe-area-inset-top)) + 60px);max-height:calc(100dvh - 180px);overflow:auto}
  body[data-lbd-navigation]:not([data-lbd-navigation=play]):not([data-lbd-navigation=handling]):not([data-lbd-navigation=jumps])>header{padding-left:max(76px,calc(env(safe-area-inset-left) + 76px))}
  `;document.head.append(layout);
- const touchStyle=document.createElement('style');touchStyle.textContent='body[data-lbd-driving-hud="false"] #hud{display:none!important}body[data-lbd-touch-controls="false"] #touch{display:none!important}body[data-lbd-touch-controls="true"] #touch{display:flex!important}';document.head.append(touchStyle);
+ const touchStyle=document.createElement('style');touchStyle.textContent='body[data-lbd-touch-controls="false"] #touch{display:none!important}body[data-lbd-touch-controls="true"] #touch{display:flex!important}';document.head.append(touchStyle);
  const applyTouchPreference=()=>{
   const preferences=readGamePreferences(gamePreferenceStorage());
-  document.body.dataset.lbdDrivingHud=String(preferences.showDrivingHud!==false);
+  document.body.dataset.lbdDrivingHud=String(preferences.showDrivingHud===true);
+  document.body.dataset.lbdControlsGuide=String(preferences.showControlsGuide===true);
   if(typeof preferences.touchControls==='boolean')document.body.dataset.lbdTouchControls=String(preferences.touchControls);
   else delete document.body.dataset.lbdTouchControls;
  };
  applyTouchPreference();window.addEventListener('pageshow',applyTouchPreference);window.addEventListener('lbd:preferences-change',applyTouchPreference);window.addEventListener('storage',applyTouchPreference);
+ // Cache the page with optional information hidden; pageshow reapplies the saved
+ // preferences before it is revealed again, including changes made in a lab.
+ window.addEventListener('pagehide',()=>{delete document.body.dataset.lbdDrivingHud;delete document.body.dataset.lbdControlsGuide;});
  // Preserve old Settings bookmarks by opening the shared panel in place.
  if(location.hash==='#switcher')openSettingsPanel();
  toggle.addEventListener('click',()=>{

@@ -1,5 +1,5 @@
 import {tuningFields,fieldPath,tuningValue,defaultTuningValue,setTuning,resetTuning,exportTuning} from './TuningStore.js';
-import {readGamePreferences,saveGamePreference,resetGamePreference,gamePreferenceStorage} from './GamePreferences.js?v=central-settings-2';
+import {readGamePreferences,saveGamePreference,resetGamePreference,gamePreferenceStorage} from './GamePreferences.js?v=central-settings-3';
 import {settingsPlacement} from './SettingsPlacement.js';
 
 let panel;
@@ -58,9 +58,15 @@ function createSettingsPanel(){
    }
    const reset=document.createElement('button');reset.textContent='Reset '+group;reset.addEventListener('click',()=>{report(resetTuning(paths));render();});section.append(reset);
   }
-  const display=document.createElement('details');display.dataset.group='Display / HUD';display.open=expanded.has('Display / HUD');display.innerHTML='<summary>Display / HUD</summary><div class="section"><label class="check"><input type="checkbox" aria-label="Show Driving HUD">Show Driving HUD</label><p>Show the existing dark green information panel in Play: vehicle, speed, physics, performance and tips. Driving controls stay available.</p></div>';main.append(display);
-  const hud=display.querySelector('input');hud.checked=readGamePreferences(gamePreferenceStorage()).showDrivingHud;
-  hud.addEventListener('change',()=>{saveGamePreference(gamePreferenceStorage(),'showDrivingHud',hud.checked);window.dispatchEvent(new CustomEvent('lbd:preferences-change'));$('#status').textContent='Driving HUD preference saved.';});
+  const display=document.createElement('details');display.dataset.group='Display / HUD';display.open=expanded.has('Display / HUD');display.innerHTML='<summary>Display / HUD</summary><div class="section"></div>';main.append(display);
+  for(const [key,label,description] of [
+   ['showDrivingHud','Show Driving HUD','Show the existing top-left vehicle, speed, physics and performance panel in Play. Off by default.'],
+   ['showControlsGuide','Show Keyboard Controls Guide','Show the existing bottom-center keyboard driving tips in Play. Off by default.'],
+  ]){
+   const row=document.createElement('label');row.className='check';const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.setAttribute('aria-label',label);checkbox.checked=readGamePreferences(gamePreferenceStorage())[key];row.append(checkbox,document.createTextNode(label));
+   const note=document.createElement('p');note.textContent=description;display.querySelector('.section').append(row,note);
+   checkbox.addEventListener('change',()=>{saveGamePreference(gamePreferenceStorage(),key,checkbox.checked);window.dispatchEvent(new CustomEvent('lbd:preferences-change'));checkbox.checked=readGamePreferences(gamePreferenceStorage())[key];$('#status').textContent='Display preference applied.';});
+  }
   const controls=document.createElement('details');controls.dataset.group='Controls';controls.open=expanded.has('Controls');controls.innerHTML='<summary>Controls</summary><div class="section"><label class="check"><input type="checkbox" aria-label="Touch controls">Touch controls</label><p>Uses the existing driving controls. Saved across Play and labs.</p></div>';main.append(controls);
   const checkbox=controls.querySelector('input'),button=document.querySelector('#touchToggle');
   checkbox.checked=button?button.getAttribute('aria-pressed')==='true':readGamePreferences(gamePreferenceStorage()).touchControls??(navigator.maxTouchPoints>0||matchMedia('(any-pointer: coarse)').matches);
@@ -103,5 +109,6 @@ function createSettingsPanel(){
  });
  document.querySelector('#physicsMode')?.addEventListener('change',()=>{if(dialog.open)render();});
  window.addEventListener('storage',()=>{if(dialog.open)render();});
+ window.addEventListener('pageshow',()=>{if(dialog.open)render();});
  return {open(){render();if(!dialog.open)dialog.show();place();}};
 }

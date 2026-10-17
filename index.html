@@ -69,6 +69,11 @@ body.touch-enabled #mobile{display:flex}body.touch-enabled #help{display:none}
 @media(max-height:480px){#hud{padding:9px 12px}#hud .subtitle{display:none}#vehicleName{margin-top:6px}#speed{font-size:28px}#switcher button{min-height:34px}#switcher{gap:5px}}
 
 .physics-mode{display:flex;flex-direction:column;justify-content:center;gap:2px;padding:4px 10px;background:#193b3de8;border:1px solid #ffffff55;border-radius:12px;font-size:10px;font-weight:650;color:#e2e9d8}.physics-mode select{font:650 12px system-ui;background:transparent;border:0;color:white;min-height:25px;cursor:pointer}.physics-mode option{background:#26443e;color:white}@media(max-width:800px){.physics-mode{padding:4px 10px;min-height:40px}.physics-mode select{min-height:21px}}
+/* Optional information is hidden from the very first paint. Only the shared
+   preference reader reveals it; vehicle reset/switch code never owns visibility. */
+#hud,#help{display:none!important}
+body[data-lbd-driving-hud="true"] #hud{display:block!important}
+body[data-lbd-controls-guide="true"] #help{display:block!important;max-width:calc(100vw - 32px);white-space:normal;pointer-events:none}
 </style>
 
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/"}}</script>
@@ -121,7 +126,7 @@ import { RapierWorldVehicle, loadWorldPhysics } from './RapierWorldVehicle.js?v=
 import { BoundaryCannon } from './BoundaryCannon.js';
 import { VehicleFeedback, SoftBoundary, cameraReturnDecay } from './VehicleFeedback.js';
 
-import {readGamePreferences,saveGamePreference,gamePreferenceStorage} from './GamePreferences.js?v=central-settings-2';
+import {readGamePreferences,saveGamePreference,gamePreferenceStorage} from './GamePreferences.js?v=central-settings-3';
 const preferenceStorage=gamePreferenceStorage(),preferences=readGamePreferences(preferenceStorage);
 const debugToggle=document.querySelector('#debugToggle');
 function toggleDiagnostics(enabled){document.body.classList.toggle('show-debug',enabled);debugToggle.setAttribute('aria-pressed',String(enabled));}
