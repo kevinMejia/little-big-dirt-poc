@@ -96,6 +96,8 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.m
 
 import { BackhoeLoader } from './BackhoeLoader.js';
 import { DirtyGLB } from './assets/dirty/DirtyGLB.js';
+import { StinkyGLB } from './assets/stinky/StinkyGLB.js';
+import { stinkyCollision, sanitizeStinkyPose, applyStinkyPose, stinkyActions } from './StinkyEquipment.js';
 import { bindVehicleGarage } from './VehicleGarage.js';
 
 import { TreeCollisionSystem } from './TreeCollisionSystem.js';
@@ -200,19 +202,24 @@ addEventListener('pagehide',event=>{if(event.persisted)return;environmentWorld?.
 
 let dirtyTemplate;
 try{dirtyTemplate=await DirtyGLB.load(new URL('./assets/dirty/dirty.glb',location.href).href);}catch(error){console.warn('New backhoe failed to load; trying previous Blender asset',error);try{dirtyTemplate=await DirtyGLB.load(new URL('./assets/dirty/backups/pre-reference-sheet/dirty.glb',location.href).href);}catch(fallbackError){console.error('Blender assets unavailable; using procedural fallback',fallbackError);}}
+let stinkyTemplate;
+try{stinkyTemplate=await StinkyGLB.load(new URL('./assets/stinky/stinky.glb',location.href).href);}catch(error){console.warn('Stinky GLB unavailable; procedural garbage truck fallback active',error);}
+addEventListener('pagehide',event=>{if(!event.persisted)stinkyTemplate?.dispose();});
 const start={x:0,z:0,heading:0};
 
 function wheel(g,x,z,r){const pivot=new THREE.Group();pivot.position.set(x,r,z);pivot.userData.wheel={x,z,r};g.add(pivot);const roll=new THREE.Group();pivot.add(roll);pivot.userData.roll=roll;cylinder(roll,r,.55,0,0,0,rubber);cylinder(roll,r*.49,.58,0,0,0,yellowDark);cylinder(roll,r*.19,.61,0,0,0,metal);for(let i=0;i<12;i++){const a=i*Math.PI/6;const tread=box(roll,.57,.09,.2,0,Math.cos(a)*r,Math.sin(a)*r,rubber);tread.rotation.x=-a}return pivot}
 
 function backhoe(){const model=dirtyTemplate?dirtyTemplate.clone():new BackhoeLoader();model.group.userData.controller=model;return model.group}
 
-function garbage(){const g=new THREE.Group();box(g,2.8,.7,6.4,0,1.12,0,metal);box(g,2.75,2.4,3.95,0,2.38,-1.05,mat(0x48a1b4));box(g,2.85,.4,4,0,3.77,-1.05,mat(0x337d91));box(g,2.85,2.35,2.15,0,2.4,2.15,orange);box(g,2.95,.38,2.25,0,3.7,2.15,orange);box(g,2.5,.9,.12,0,2.75,3.28,glass);box(g,2.85,.5,.35,0,1.1,3.36,metal);box(g,2.5,.18,.16,0,1.85,3.4,white);box(g,2.3,.25,.4,0,2,-3.13,metal);
+function proceduralGarbage(){const g=new THREE.Group();box(g,2.8,.7,6.4,0,1.12,0,metal);box(g,2.75,2.4,3.95,0,2.38,-1.05,mat(0x48a1b4));box(g,2.85,.4,4,0,3.77,-1.05,mat(0x337d91));box(g,2.85,2.35,2.15,0,2.4,2.15,orange);box(g,2.95,.38,2.25,0,3.7,2.15,orange);box(g,2.5,.9,.12,0,2.75,3.28,glass);box(g,2.85,.5,.35,0,1.1,3.36,metal);box(g,2.5,.18,.16,0,1.85,3.4,white);box(g,2.3,.25,.4,0,2,-3.13,metal);
 
 for(const x of [-1.43,1.43])for(const z of [-2.15,-.8,2.25])wheel(g,x,z,.72);
 
 return g}
 
-const configs=[{hill:vehicleConfig.backhoe,name:'Backhoe Loader',mass:8,accel:11,max:21,reverse:9,turn:1.42,drag:.52,grip:3.4,collision:{radius:1.2,rear:-2.4,front:2.75},build:backhoe},{hill:vehicleConfig.garbageTruck,name:'Garbage Truck',mass:19,accel:7,max:17,reverse:7,turn:1.05,drag:.8,grip:2.4,collision:{radius:1.4,rear:-2,front:2.35},build:garbage}];
+function garbage(){if(!stinkyTemplate)return proceduralGarbage();const model=stinkyTemplate.clone();model.group.userData.controller=model;return model.group;}
+
+const configs=[{hill:vehicleConfig.backhoe,name:'Backhoe Loader',mass:8,accel:11,max:21,reverse:9,turn:1.42,drag:.52,grip:3.4,collision:{radius:1.2,rear:-2.4,front:2.75},build:backhoe},{hill:vehicleConfig.garbageTruck,name:'Garbage Truck',mass:19,accel:7,max:17,reverse:7,turn:1.05,drag:.8,grip:2.4,collision:stinkyTemplate?stinkyCollision:{radius:1.4,rear:-2,front:2.35},build:garbage}];
 
 let physicsMode='original',rapierController=null;
 addEventListener('pagehide',e=>{if(!e.persisted)rapierController?.dispose();});
@@ -236,7 +243,7 @@ renderer.domElement.addEventListener('pointermove',event=>{if(event.pointerId!==
 for(const type of ['pointerup','pointercancel','lostpointercapture'])renderer.domElement.addEventListener(type,event=>{if(event.pointerId===cameraOrbit.pointer)releaseOrbit();});
 addEventListener('blur',releaseOrbit);addEventListener('resize',releaseOrbit);addEventListener('orientationchange',releaseOrbit);document.addEventListener('visibilitychange',()=>{if(document.hidden)releaseOrbit();});
 
-function choose(i){if(physicsMode==='rapier')position.copy(vehicleRoot.position);surfaceEffects.reset();hillPhysics.reset();bodyFeedback.reset();boundaryMotion.reset();vehicleVisual.position.set(0,0,0);vehicleVisual.rotation.set(0,0,0);index=i; if(vehicle){if(vehicle.userData.controller)vehicle.userData.controller.dispose();else{vehicleVisual.remove(vehicle);vehicle.traverse(o=>{if(o.isMesh)o.geometry.dispose()})}}vehicle=configs[i].build();vehicleVisual.add(vehicle);if(i===1){for(const x of [-.8,.8]){box(vehicle,.35,.22,.12,x,index===0?1.7:1.85,index===0?2.38:3.43,white);box(vehicle,.3,.18,.12,x,1.35,index===0?-2.4:-3.13,red)}box(vehicle,.16,.85,.16,.7,3.7,-.5,metal);}document.querySelector('#vehicleName').textContent=configs[i].name;document.querySelector('#backhoeBtn').classList.toggle('active',i===0);document.querySelector('#garbageBtn').classList.toggle('active',i===1);speed=0;if(physicsMode==='rapier')rapierController.setVehicle(vehicle,configs[index],index,position,heading);}
+function choose(i){if(physicsMode==='rapier')position.copy(vehicleRoot.position);surfaceEffects.reset();hillPhysics.reset();bodyFeedback.reset();boundaryMotion.reset();vehicleVisual.position.set(0,0,0);vehicleVisual.rotation.set(0,0,0);index=i; if(vehicle){if(vehicle.userData.controller)vehicle.userData.controller.dispose();else{vehicleVisual.remove(vehicle);vehicle.traverse(o=>{if(o.isMesh)o.geometry.dispose()})}}vehicle=configs[i].build();vehicleVisual.add(vehicle);if(i===1&&!vehicle.userData.controller){for(const x of [-.8,.8]){box(vehicle,.35,.22,.12,x,index===0?1.7:1.85,index===0?2.38:3.43,white);box(vehicle,.3,.18,.12,x,1.35,index===0?-2.4:-3.13,red)}box(vehicle,.16,.85,.16,.7,3.7,-.5,metal);}document.querySelector('#vehicleName').textContent=configs[i].name;document.querySelector('#backhoeBtn').classList.toggle('active',i===0);document.querySelector('#garbageBtn').classList.toggle('active',i===1);speed=0;if(physicsMode==='rapier')rapierController.setVehicle(vehicle,configs[index],index,position,heading);}
 
 function reset(){surfaceEffects.reset();flight=null;boundaryCannon.reset();hillPhysics.reset();bodyFeedback.reset();boundaryMotion.reset();releaseOrbit();cameraOrbit.yaw=cameraOrbit.pitch=0;position.set(0,surfaceHeight(0,0),0);heading=0;speed=0;steer=0;if(physicsMode==='rapier')rapierController.resetAt(position,heading);}
 
@@ -268,29 +275,37 @@ physicsSelector.addEventListener('change',async()=>{
 const garage=document.querySelector('#vehicleGarage'),garageFrame=document.querySelector('#garageFrame');
 let garageVehicle=-1;
 const equipmentPoses=new Map();
-function applyEquipmentPose(model,pose){if(!model||!pose)return;model.setFrontLoaderHeight(pose.lift/100);model.setFrontBucketTilt(THREE.MathUtils.degToRad(pose.tilt));model.setRearArmRotation(THREE.MathUtils.degToRad(pose.swing));model.setRearBoomAngle(THREE.MathUtils.degToRad(pose.boom));model.setRearStickAngle(THREE.MathUtils.degToRad(pose.stick));model.setRearBucketCurl(THREE.MathUtils.degToRad(pose.curl));model.update(0);}
+function applyEquipmentPose(model,pose){if(!model||!pose)return;if(model.setHopper){applyStinkyPose(model,pose);return;}model.setFrontLoaderHeight(pose.lift/100);model.setFrontBucketTilt(THREE.MathUtils.degToRad(pose.tilt));model.setRearArmRotation(THREE.MathUtils.degToRad(pose.swing));model.setRearBoomAngle(THREE.MathUtils.degToRad(pose.boom));model.setRearStickAngle(THREE.MathUtils.degToRad(pose.stick));model.setRearBucketCurl(THREE.MathUtils.degToRad(pose.curl));model.update(0);}
 function openGarage(i){
  releaseOrbit();
- if(garage.open)return;if(physicsMode==='rapier'){position.copy(vehicleRoot.position);rapierController.resetAt(position,heading);}keys.clear();controls.clear();speed=0;if(index!==i){controls.setVehicleActions();choose(i);applyEquipmentPose(i===0?vehicle.userData.controller:null,equipmentPoses.get(i));}
+ if(garage.open)return;if(physicsMode==='rapier'){position.copy(vehicleRoot.position);rapierController.resetAt(position,heading);}keys.clear();controls.clear();speed=0;if(index!==i){controls.setVehicleActions();choose(i);applyEquipmentPose(vehicle.userData.controller,equipmentPoses.get(i));configureVehicleActions();}
  const changed=garageVehicle!==i;garageVehicle=i;garage.showModal();
- if(changed)garageFrame.src='./viewer/dirty.html?embedded=1&vehicle='+(i===0?'backhoe':'garbage');
- else garageFrame.contentWindow.postMessage({type:'garage:visibility',visible:true},location.origin);
+ if(changed)garageFrame.src=i===1&&stinkyTemplate?'./viewer/stinky.html?embedded=1':'./viewer/dirty.html?embedded=1&vehicle='+(i===0?'backhoe':'garbage');
+ else garageFrame.contentWindow.postMessage({type:'garage:visibility',visible:true,pose:equipmentPoses.get(i)},location.origin);
 }
 function closeGarage(){if(!garage.open)return;garage.close();garageFrame.contentWindow.postMessage({type:'garage:visibility',visible:false},location.origin);keys.clear();controls.clear();speed=0;clock.getDelta();}
 document.querySelector('#garageClose').onclick=closeGarage;
 garage.addEventListener('cancel',event=>{event.preventDefault();closeGarage();});
 function truckSnapshot(){
- const truck=garbage();truck.traverse(o=>{if(o.userData.wheel)o.userData={wheel:o.userData.wheel};});const json=truck.toJSON();
+ const truck=proceduralGarbage();truck.traverse(o=>{if(o.userData.wheel)o.userData={wheel:o.userData.wheel};});const json=truck.toJSON();
  const shared=new Set([green,road,yellow,yellowDark,orange,glass,rubber,metal,white,red]);const materials=new Set();truck.traverse(o=>{if(o.isMesh){o.geometry.dispose();if(!shared.has(o.material))materials.add(o.material);}});for(const material of materials)material.dispose();return json;
 }
 addEventListener('message',event=>{
  if(event.origin!==location.origin||event.source!==garageFrame.contentWindow)return;
- if(event.data?.type==='garage:ready')garageFrame.contentWindow.postMessage({type:'garage:init',vehicle:garageVehicle,model:garageVehicle===1?truckSnapshot():null,pose:equipmentPoses.get(garageVehicle),visible:garage.open},location.origin);
+ if(event.data?.type==='garage:ready')garageFrame.contentWindow.postMessage({type:'garage:init',vehicle:garageVehicle,model:garageVehicle===1&&!stinkyTemplate?truckSnapshot():null,pose:equipmentPoses.get(garageVehicle),visible:garage.open},location.origin);
  if(!garage.open)return;
  if(event.data?.type==='garage:pose'&&garageVehicle===0){const pose=event.data.pose;const ranges={lift:[0,100],tilt:[-40,50],swing:[-65,65],boom:[-17,20],stick:[-37,43],curl:[-48,65]};if(!pose||Object.keys(ranges).some(k=>!Number.isFinite(pose[k])))return;const safe={};for(const [key,range] of Object.entries(ranges))safe[key]=THREE.MathUtils.clamp(pose[key],...range);equipmentPoses.set(0,safe);if(index===0)applyEquipmentPose(vehicle.userData.controller,safe);}
+ if(event.data?.type==='garage:pose'&&garageVehicle===1&&stinkyTemplate){const safe=sanitizeStinkyPose(event.data.pose);if(!safe)return;equipmentPoses.set(1,safe);if(index===1)applyStinkyPose(vehicle.userData.controller,safe);}
  if(event.data?.type==='garage:close')closeGarage();
 });
-const garageBindings=bindVehicleGarage({buttons:[document.querySelector('#backhoeBtn'),document.querySelector('#garbageBtn')],onSelect:i=>{if(!garage.open){controls.setVehicleActions();choose(i);applyEquipmentPose(i===0?vehicle.userData.controller:null,equipmentPoses.get(i));}},onOpen:openGarage});
+const garageBindings=bindVehicleGarage({buttons:[document.querySelector('#backhoeBtn'),document.querySelector('#garbageBtn')],onSelect:i=>{if(!garage.open){controls.setVehicleActions();choose(i);applyEquipmentPose(vehicle.userData.controller,equipmentPoses.get(i));configureVehicleActions();}},onOpen:openGarage});
+
+function configureVehicleActions(){
+ controls.setVehicleActions(index===1&&vehicle.userData.controller?.setHopper?stinkyActions(
+  ()=>equipmentPoses.get(1)??{hopper:0,compactor:0},
+  pose=>{equipmentPoses.set(1,pose);applyStinkyPose(vehicle.userData.controller,pose);}
+ ):[]);
+}
 
 let audio;
 

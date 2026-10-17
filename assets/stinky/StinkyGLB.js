@@ -25,12 +25,6 @@ export class StinkyGLB {
   setWheelRotation(angle){this.wheelAngle=angle;for(const w of this.wheels)w.spin.quaternion.copy(w.restSpin).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),angle*this.wheelReferenceRadius/w.radius));}
   setHopper(angle){this.setJoint('RearHopperPivot',angle);}
   setCompactor(angle){this.setJoint('CompactorPivot',angle);}
-  setFrontLoaderHeight(value){this.setJoint('FrontLoaderPivot',THREE.MathUtils.lerp(0,-.85,THREE.MathUtils.clamp(value,0,1)));}
-  setFrontBucketTilt(angle){this.setJoint('FrontBucketPivot',angle);}
-  setRearBoomAngle(angle){this.setJoint('RearBoomPivot',angle);}
-  setRearStickAngle(angle){this.setJoint('RearStickPivot',angle);}
-  setRearBucketCurl(angle){this.setJoint('RearBucketPivot',angle);}
-  setRearArmRotation(angle){this.setJoint('RearSwingPivot',angle,new THREE.Vector3(0,1,0));}
   reset(){for(const [name,quaternion] of this.rest)this.group.getObjectByName(name).quaternion.copy(quaternion);this.setSteering(0);this.setWheelRotation(0);this.update(0);}
   clone(){
     // Clone render resources so disposing a switched-out vehicle keeps the template valid.

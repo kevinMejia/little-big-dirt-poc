@@ -9,7 +9,7 @@ document.querySelector('h1').textContent=isTruck?'Garbage truck · Explore & pla
 if(params.get('asset')==='candidate')document.querySelector('#comparisonLink').href='./comparison.html?asset=candidate';
 let active=true;
 const initPromise=embedded?new Promise(resolve=>{const receive=event=>{if(event.origin===location.origin&&event.source===parent&&event.data?.type==='garage:init'){removeEventListener('message',receive);resolve(event.data);}};addEventListener('message',receive);parent.postMessage({type:'garage:ready'},location.origin);}):Promise.resolve(null);
-addEventListener('message',event=>{if(event.origin===location.origin&&event.source===parent&&event.data?.type==='garage:visibility')active=!!event.data.visible;});
+addEventListener('message',event=>{if(event.origin===location.origin&&event.source===parent&&event.data?.type==='garage:visibility'){active=!!event.data.visible;if(model&&event.data.pose)for(const key of ['hopper','compactor']){const value=event.data.pose[key];if(Number.isFinite(value)){document.getElementById(key).value=value;document.getElementById(key+'Value').textContent=value+'°';setters[key](value);}}}});
 addEventListener('keydown',event=>{if(event.code==='Escape'&&embedded){event.preventDefault();parent.postMessage({type:'garage:close'},location.origin);}});
 const stage=document.querySelector('#stage'),scene=new THREE.Scene();scene.background=new THREE.Color(0xe7e9e4);
 const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.0;stage.prepend(renderer.domElement);
@@ -25,18 +25,13 @@ function resize(){const {width,height}=stage.getBoundingClientRect();renderer.se
 new ResizeObserver(resize).observe(stage);resize();
 let model,angle=0;
 const rad=THREE.MathUtils.degToRad;
-function sendPose(){if(!embedded||isTruck)return;const pose={};for(const key of ['lift','tilt','swing','boom','stick','curl'])pose[key]=Number(document.getElementById(key).value);parent.postMessage({type:'garage:pose',pose},location.origin);}
-function truckController(json){
- const group=new THREE.ObjectLoader().parse(json),wheels=group.children.filter(o=>o.userData.wheel);let angle=0;
- return {group,manifest:{blender:'',triangles:0},setSteering(a){for(const w of wheels)if(w.userData.wheel.z>0)w.rotation.y=a;},setWheelRotation(a){angle=a;for(const w of wheels)w.children[0].rotation.x=a*.72/w.userData.wheel.r;},reset(){this.setSteering(0);this.setWheelRotation(0);},update(){},dispose(){group.removeFromParent();const geometries=new Set(),materials=new Set();group.traverse(o=>{if(o.isMesh){geometries.add(o.geometry);materials.add(o.material);}});for(const g of geometries)g.dispose();for(const m of materials)m.dispose();}};
-}
-
+function sendPose(){if(!embedded||isTruck)return;const pose={};for(const key of ['hopper','compactor'])pose[key]=Number(document.getElementById(key).value);parent.postMessage({type:'garage:pose',pose},location.origin);}
 const setters={steer:v=>model.setSteering(rad(v)),hopper:v=>model.setHopper(rad(v)),compactor:v=>model.setCompactor(rad(v))};
 for(const [id,set] of Object.entries(setters)){const input=document.getElementById(id);input.oninput=()=>{document.getElementById(id+'Value').textContent=input.value+(id==='lift'?'%':'°');if(model){set(Number(input.value));model.update(0);sendPose();}};}
 document.querySelector('#reset').onclick=()=>{if(!model)return;model.reset();angle=0;document.querySelector('#spin').checked=false;for(const id of Object.keys(setters)){const input=document.getElementById(id);input.value=0;document.getElementById(id+'Value').textContent='0'+(id==='lift'?'%':'°');}sendPose();};
 try{
   const init=await initPromise;if(init)active=init.visible!==false;
-  model=isTruck?truckController(init?.model):await StinkyGLB.load(new URL(params.get('asset')==='candidate'?'../assets/stinky/candidate/stinky.glb':'../assets/stinky/stinky.glb',import.meta.url).href);scene.add(model.group);
+  model=await StinkyGLB.load(new URL('../assets/stinky/stinky.glb',import.meta.url).href);scene.add(model.group);
   if(!isTruck&&init?.pose){for(const [key,value] of Object.entries(init.pose)){if(!setters[key])continue;document.getElementById(key).value=value;document.getElementById(key+'Value').textContent=value+(key==='lift'?'%':'°');setters[key](value);}model.update(0);}
   const box=new THREE.Box3().setFromObject(model.group),size=box.getSize(new THREE.Vector3());
   document.querySelector('#status').textContent=isTruck?'Garbage truck · Steering and wheel controls':`Blender model · ${size.x.toFixed(1)} × ${size.y.toFixed(1)} × ${size.z.toFixed(1)} m`;
