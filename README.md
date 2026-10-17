@@ -377,3 +377,16 @@ known limits and the integration plan. Do not enable this in normal gameplay unt
 ramp feel and the actual tree/rock/six-wheel-truck adapters have been reviewed.
 The existing custom driving controller remains the fallback. Rapier is loaded only
 by the lab, with its vendored license/source metadata under `viewer/vendor/rapier`.
+
+
+### Optional Rapier comparison in the main world
+
+The **Physics Mode** selector defaults to **Original**. Choose **Rapier** to use
+the approved jump-lab controller with Dirty or the current Stinky. Switching clears
+velocity/input and preserves position/heading. The four jump lanes are centered
+at x=-66, -22, 22, 66 and z=30, approached toward +Z from z=-13.
+
+See [JUMP_DEVELOPMENT.md](JUMP_DEVELOPMENT.md) for controller ownership, terrain,
+interaction adapters, tuning and remaining iPhone hardware validation. No models
+were replaced. Rapier loads only when selected. Both modes use the existing input,
+garage and camera. `npm test` includes actual WASM world-integration scenarios.

@@ -1,11 +1,99 @@
 # Dirt jump review and integration plan
 
-## Review first
+## Main-world comparison integration
 
-Open `viewer/jumps.html` through the existing local/production server. The main
-playable `index.html` does not import the jump system or Rapier. Its terrain,
-driving, cannon, obstacles, models, controls and release braking remain intact.
-This is the requested review milestone, not a migration of working gameplay.
+The approved lab controller is now shared with the playable world through
+`RapierWorldVehicle.js`. The top-right **Physics Mode** selector defaults to
+**Original** on every load. Select **Rapier** to compare; no saved preference or
+new dependency installation is required. The debug HUD reports the active mode.
+Both modes retain the same keyboard, gamepad and touch input system and garage.
+
+Restore point: `60601fa` on `codex/rapier-world-integration`. Nothing has been pushed
+or merged. The old movement implementation remains in `index.html` behind the
+Original branch. Remove the temporary selector/adapter branch only after review.
+
+### Authority and lifecycle
+
+Rapier owns position, orientation, velocity, gravity, suspension contacts and
+landing detection in Rapier mode. The Original acceleration, ground snap, wheel
+grounding and BoundaryCannon update are skipped completely. Existing body feedback
+adds only bounded visual motion under the physical chassis. The camera tracks the
+interpolated physical pose; physics remains fixed at 120 Hz.
+
+Switching modes preserves world position and heading and clears input, velocities,
+feedback and boundary state. A switch back to Original in midair uses the old
+ballistic gravity state with zero initial velocity so it falls instead of snapping
+to terrain. Switching vehicle rebuilds the physics body with that vehicle's wheel
+metadata; Dirty uses its four existing Blender pivots, Stinky its current six
+procedural pivots. Stinky's Blender work and loader interfaces are untouched.
+
+### Terrain, ramps and interactions
+
+The original analytic base height is unchanged. `DirtJumpSystem` adds the approved
+four lanes at x=-66/-22/22/66, z=30, facing +Z. Approach from z=-13; the landing lanes
+extend to roughly z=110. Trees/rocks inside these lanes are excluded, with all
+other seeded positions preserved. Debris is excluded from the ramp dirt lanes.
+Both comparison modes see the same ramps; Original follows their height, while
+Rapier can leave the ground.
+
+`createWorldSurface` retains the original two-unit grid and adds .75-unit sampling
+around the playground. The same vertex/index arrays form the visible terrain and
+Rapier static collider. No second physics terrain formula is maintained.
+
+Trees and rocks retain their existing animation/state/threshold systems. The
+adapter feeds an already-integrated displacement to their collision resolvers and
+applies penetration/velocity corrections to the authoritative body. It never runs
+the old forward movement step. Airborne vehicles skip grounded obstacle collisions.
+
+Interactive debris shares one static triangle collider made from the actual
+instanced geometry. Collision groups expose it to wheel rays and exclude the
+chassis, preserving suspension bumps without making tiny debris rigid barriers.
+The existing suspension-effect percentage scales collider height (0 disables it).
+Rapier uses point tire rays rather than Original's five-point footprint filter;
+tiny twigs can therefore feel slightly different. Rebuilds occur only on debris
+regeneration or effect changes.
+
+The main boundary cannon assigns inward/upward rigid-body velocity, then the same
+Rapier gravity and terrain contacts handle flight and landing. It rearms only once
+safely grounded inside. Containment redirects outward velocity without teleporting.
+Existing per-vehicle cannon speeds, spin, air control and landing feedback settings
+are reused. Terrain alignment never runs during Rapier flight.
+
+### Tuning
+
+In `VehicleConfig.js`:
+
+- `jumpVehicleConfig.dirty/stinky`: approved lab mass, acceleration, maxSpeed,
+  restLength, suspensionStiffness, suspensionCompression and suspensionRelaxation.
+- `jumpConfig`: gravityScalePercent (100 = 12 units/s²), airborne pitch control,
+  landing bounce/dust; `rampConfig`: the four heights and dirt blending.
+- Existing `vehicleConfig.backhoe/garbageTruck`: speedAdjustmentPercent,
+  downhillBoostPercent, uphillPenaltyPercent, releaseDeceleration, stopThreshold,
+  visual body feedback, tree/rock thresholds and `boundaryCannon` settings.
+
+The lab's 18-unit forward cap is retained before existing speed/hill multipliers.
+Hill modifiers affect engine force and speed envelope only while grounded and
+powered. Wheel brakes and near-zero sleep stop/hold both vehicles on slopes.
+Space and E use separate service/emergency brake rates in the adapter.
+
+### Verification and remaining review
+
+`npm run build` and `npm test` validate the production subpath and existing game
+regressions. `tests/run_rapier_world_tests.py` additionally runs actual Rapier WASM:
+shared terrain, both wheel layouts, driving/stopping/holding, eight rolling-world
+ramp takeoffs/landings, debris ray contacts, tree displacement/rebound and both
+boundary cannon flights/landings/containment. The original lab scenarios remain.
+
+Desktop browser and 390x844 responsive touch-button checks are performed against
+the production build. Actual iPhone Safari hardware performance and long play
+sessions still require device review. Rapier is lazy-loaded only when selected;
+Original incurs no WASM initialization cost. The existing `viewer/jumps.html` lab
+remains available for direct tuning comparisons.
+
+## Lab implementation reference
+
+Open `viewer/jumps.html` through the existing local/production server. The lab remains isolated from main-world interactions; the main game now shares
+its controller through the optional adapter described above.
 
 The default scene has one vehicle, flat ground and one selected ramp. Select
 **Four-ramp playground** for all four lanes, or **Rolling terrain geometry preview**
@@ -73,12 +161,12 @@ final game tuning will require the real truck's six contact positions.
 25–200%), air pitch torque (0–100%), physical restitution/spring relaxation and
 visual landing bounce, body rock, and landing dust. `rampConfig` controls four
 heights and dirt-mask strength. Both live in `VehicleConfig.js`; reload to tune. `jumpVehicleConfig` exposes per-profile mass, acceleration, stopping rate, spring/damper values and cartoon percentages.
-Rapier compat **0.21.0** is vendored only for the lab, with its Apache license and
+Rapier compat **0.21.0** is vendored for the lab and optional main-world mode, with its Apache license and
 npm source/integrity metadata under `viewer/vendor/rapier`. Its WASM is embedded in
 the ESM file: no missing external WASM URL on Pages. It adds ~4.2 MiB to deployment,
 but no Rapier download/init cost to ordinary gameplay.
 
-## Required integration work after review
+## Original integration checklist (now implemented in comparison mode)
 
 1. Introduce one per-vehicle controller adapter, behind an opt-in flag, retaining
    the existing movement implementation as the default/fallback.
@@ -105,13 +193,12 @@ but no Rapier download/init cost to ordinary gameplay.
 `tests/jump-prototype.mjs` runs the actual vendored WASM, not mocked physics:
 all four ramps with both mass profiles, fixed-step frame independence, gravity,
 air torque, physical takeoff/landing and suspension compression, exact release
-stop/hold, continuous rotated profiles, identical mesh samples, and an assertion
-that the live game has not loaded either new controller. All normal production
+stop/hold, continuous rotated profiles, identical mesh samples, and assertions
+that the main game retains its Original default and isolated controller branches. All normal production
 and gameplay checks remain required through `python tools/check_project.py`.
 
-The prototype demonstrates a viable foundation. It does not yet prove compatibility
-with the live mutable tree/rock collision pipeline or six-wheel Stinky. The four
-ray wheels approximate tires (no tire shape casts), and sharp sideways approaches
+The main-world adapter adds six-wheel support and obstacle compatibility tests.
+Ray wheels approximate tires (no tire shape casts), and sharp sideways approaches
 can touch the chassis. Mobile-size browser checks are emulation; actual iPhone
 Safari frame/memory testing is still required before enabling a Rapier controller
 in the full game. The normal playable game remains the working fallback.

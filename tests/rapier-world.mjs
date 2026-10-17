@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict';
+import * as THREE from '../three-test.mjs';
+import R from '../viewer/vendor/rapier/rapier.mjs';
+import {RapierWorldVehicle} from '../RapierWorldVehicle.js';
+import {DirtJumpSystem,playgroundFeatures} from '../DirtJumpSystem.js';
+import {TreeCollisionSystem} from '../TreeCollisionSystem.js';
+import {RockInteractionSystem} from '../RockInteractionSystem.js';
+import {vehicleConfig,groundDebrisConfig} from '../VehicleConfig.js';
+await R.init();
+const base=(x,z)=>2.6*Math.sin(x*.035)*Math.cos(z*.044)+3.6*Math.sin((x+z)*.018)+1.4*Math.cos(z*.085+x*.027)+.00034*(x*x+z*z);
+const jumps=new DirtJumpSystem(base,playgroundFeatures()),surface=jumps.createWorldSurface();
+assert(surface.indices.length/3<300000,'bounded shared terrain mesh');
+for(let i=0;i<surface.vertices.length;i+=3)assert(Math.abs(surface.vertices[i+1]-jumps.sample(surface.vertices[i],surface.vertices[i+2]))<1e-4);
+const scene=new THREE.Scene(),trees=new TreeCollisionSystem(scene),rocks=new RockInteractionSystem(scene),debris={revision:0,objects:[],group:new THREE.Group()};
+const flat=new DirtJumpSystem().createSurface(220,2);
+function vehicle(index){const group=new THREE.Group(),wheels=index===0?[[-1.31,-1.12,.92],[-1.24,1.36,.66],[1.31,-1.12,.92],[1.24,1.36,.66]]:[-1.43,1.43].flatMap(x=>[-2.15,-.8,2.25].map(z=>[x,z,.72]));for(const [x,z,r] of wheels){const p=new THREE.Group();p.userData.wheel={x,z,r};p.userData.roll=new THREE.Group();p.add(p.userData.roll);group.add(p);}return group;}
+const cfg=index=>({max:index?17:21,reverse:index?7:9,hill:{...vehicleConfig[index?'garbageTruck':'backhoe'],speedAdjustmentPercent:0,downhillBoostPercent:35,uphillPenaltyPercent:40},collision:{radius:1.2,rear:-2.4,front:2.75}});
+for(const index of [0,1]){
+ const game=new RapierWorldVehicle(R,{surface:flat,height:()=>0,groundDebris:debris,trees,rocks});game.setVehicle(vehicle(index),cfg(index),index,new THREE.Vector3(0,0,-65),.15);
+ assert.equal(game.pivots.length,index?6:4);assert.equal(game.physics.getRenderPose().position.x,0);assert(Math.abs(game.rootPose(game.physics.currentPose).y)<1e-6);assert(Math.abs(game.update(0,{}).heading-.15)<1e-6);
+ for(let i=0;i<360;i++)game.update(1/120,{throttle:1,steering:0});assert(game.physics.state.speed>8);
+ for(let i=0;i<2400;i++)game.update(1/120,{});assert.equal(game.physics.body.linvel().x,0);assert.equal(game.physics.body.linvel().z,0);const parked={...game.physics.body.translation()};for(let i=0;i<120;i++)game.update(1/120,{});assert.deepEqual({...game.physics.body.translation()},parked);
+ const pose=game.rootPose(game.physics.currentPose);game.resetAt(pose,.7);assert.equal(game.physics.body.linvel().z,0);assert(Math.abs(game.rootPose(game.physics.currentPose).y-pose.y)<1e-6);
+ game.resetAt(new THREE.Vector3(0,0,200),0);let launched=false,landed=false,peak=0,launches=0,prior=false;for(let i=0;i<1500;i++){const state=game.update(1/120,{throttle:launched?0:1});if(game.cannonFlight&&!prior){launches++;launched=true;}prior=game.cannonFlight;peak=Math.max(peak,state.position.y);if(state.events.some(e=>e.type==='landing')&&launched)landed=true;assert(Math.abs(state.position.x)<210&&Math.abs(state.position.z)<210);assert(Number.isFinite(state.verticalSpeed));}
+ assert(launched&&landed,'physical cannon takeoff and landing');assert(peak>20);assert.equal(launches,1);game.dispose();
+}
+
+for(const index of [0,1])for(const ramp of jumps.features){
+ const game=new RapierWorldVehicle(R,{surface,height:(x,z)=>jumps.sample(x,z),groundDebris:debris,trees,rocks});game.setVehicle(vehicle(index),cfg(index),index,new THREE.Vector3(ramp.x,jumps.sample(ramp.x,ramp.z-43),ramp.z-43),0);
+ let took=false,landed=false,compression=0;for(let i=0;i<1500;i++){const z=game.physics.body.translation().z,state=game.update(1/120,{throttle:z<ramp.z+55?1:0});for(const e of state.events){if(e.type==='takeoff'&&e.vy>.5)took=true;if(e.type==='landing'&&took)landed=true;}compression=Math.max(compression,...game.physics.state.compression);assert(Number.isFinite(state.position.y));}
+ assert(took&&landed,`world ${index} ${ramp.id} jump/land`);assert(compression>.04);for(let i=0;i<2400;i++)game.update(1/120,{});assert.equal(game.physics.body.linvel().x,0,'hill release X');assert.equal(game.physics.body.linvel().z,0,'hill release Z');game.dispose();
+}
+// Imported debris mesh affects suspension wheel rays without blocking the chassis.
+const mound=new THREE.SphereGeometry(1,12,8),batch=new THREE.InstancedMesh(mound,new THREE.MeshBasicMaterial(),2);batch.name='dirtClump';const matrix=new THREE.Matrix4();for(let i=0;i<2;i++){matrix.compose(new THREE.Vector3(i?1.3:-1.3,0,-60),new THREE.Quaternion(),new THREE.Vector3(1.2,.5,3));batch.setMatrixAt(i,matrix);}const debrisFixture={revision:1,group:new THREE.Group(),objects:[{kind:'dirtClump',interactive:true},{kind:'dirtClump',interactive:true}]};debrisFixture.group.add(batch);
+const priorEffect=groundDebrisConfig.suspensionEffectPercent;const peaks=[];
+for(const strength of [0,100]){groundDebrisConfig.suspensionEffectPercent=strength;const game=new RapierWorldVehicle(R,{surface:flat,height:()=>0,groundDebris:debrisFixture,trees,rocks});game.setVehicle(vehicle(0),cfg(0),0,new THREE.Vector3(0,0,-65),0);let peak=-Infinity;for(let i=0;i<380;i++){const state=game.update(1/120,{throttle:1});if(state.position.z>-63&&state.position.z<-57)peak=Math.max(peak,state.position.y);}peaks.push(peak);game.dispose();}groundDebrisConfig.suspensionEffectPercent=priorEffect;assert(peaks[1]>peaks[0]+.08,'real debris contact lifts suspension');mound.dispose();batch.material.dispose();
+// Existing collision semantics applied to an already-integrated displacement.
+const empty=new THREE.Vector3(30,0,12),velocity={x:0,z:2};trees.resolveMovement(empty,30,11,0,2,.5,{radius:1,rear:-1,front:1},{},velocity);assert(Math.abs(empty.z-12)<1e-10,'no second movement step');
+const tree=new THREE.Group();tree.position.set(0,0,5);scene.add(tree);trees.addTree(tree,.3,3);const impact=new THREE.Vector3(0,0,10);trees.resolveMovement(impact,0,0,0,100,.1,{radius:1,rear:-1,front:1},{},velocity);assert(impact.z<3);assert(velocity.z<0);
+trees.dispose();rocks.dispose();
+console.log('PASS: shared adaptive world mesh, original-order Dirty/four and Stinky/six contacts, preserved reset pose/heading, driving/exact stop/hold, both physical cannon flights/landings/single encounter/containment, eight rolling-world ramp jumps/landings, hill stopping, debris wheel-ray contacts, no duplicate movement and tree rebound.');

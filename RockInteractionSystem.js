@@ -64,7 +64,7 @@ export class RockInteractionSystem {
     const dx=position.x+fx*offset-x,dz=position.z+fz*offset-z,d=Math.hypot(dx,dz);
     return d<bounds.radius+radius?{nx:d>1e-8?dx/d:-fx,nz:d>1e-8?dz/d:-fz,depth:bounds.radius+radius-d}:null;
   }
-  resolveMovement(position,previousX,previousZ,heading,speed,dt,bounds,{baseMaxSpeed,rockCrackSpeedPercent=25,rockBreakSpeedPercent=55}){
+  resolveMovement(position,previousX,previousZ,heading,speed,dt,bounds,{baseMaxSpeed,rockCrackSpeedPercent=25,rockBreakSpeedPercent=55},velocity=null){
     if(dt<=0)return speed;
     let vx=(position.x-previousX)/dt,vz=(position.z-previousZ)/dt,result=speed;
     const reach=Math.max(Math.abs(bounds.rear),Math.abs(bounds.front))+bounds.radius+3;
@@ -97,6 +97,7 @@ export class RockInteractionSystem {
     for(const f of this.fragments){if(!f.active||f.age>this.config.respawnSeconds)continue;const c=this.contact(f.mesh.position.x,f.mesh.position.z,f.r,position,heading,bounds);if(!c)continue;
       f.mesh.position.x-=c.nx*(c.depth+.01);f.mesh.position.z-=c.nz*(c.depth+.01);f.v.x-=c.nx*Math.min(3,Math.abs(speed)*.3);f.v.z-=c.nz*Math.min(3,Math.abs(speed)*.3);
     }
+    if(velocity){velocity.x=result*speed<0?Math.sin(heading)*result:vx;velocity.z=result*speed<0?Math.cos(heading)*result:vz;}
     return result;
   }
   hit(r,c,strength,kind){r.lastHit=this.time;r.wobble=.16;r.wobbleX=-c.nz;r.wobbleZ=c.nx;this.active.add(r);this.puff(r.x,r.group.position.y,r.z,kind==='crack'?14:5);this.onImpact(strength,kind);}

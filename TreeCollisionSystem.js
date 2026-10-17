@@ -21,11 +21,11 @@ export class TreeCollisionSystem {
   }
   nearby(x,z,reach){const found=[];for(let ix=Math.floor((x-reach)/8);ix<=Math.floor((x+reach)/8);ix++)for(let iz=Math.floor((z-reach)/8);iz<=Math.floor((z+reach)/8);iz++){const bucket=this.grid.get(`${ix},${iz}`);if(bucket)found.push(...bucket);}return found;}
 
-  move(position,heading,speed,dt,{radius=1.2,rear=-1.6,front=2.6}={},knockdown={}) {
+  move(position,heading,speed,dt,{radius=1.2,rear=-1.6,front=2.6}={},knockdown={},motion=null) {
     if(dt<=0)return speed;
-    const fx=Math.sin(heading),fz=Math.cos(heading),distance=speed*dt;
+    const fx=Math.sin(heading),fz=Math.cos(heading),distance=motion?Math.hypot(motion.x,motion.z):speed*dt;
     const steps=Math.max(1,Math.ceil(Math.abs(distance)/.18));
-    let dx=fx*distance/steps,dz=fz*distance/steps,resultSpeed=speed;
+    let dx=(motion?motion.x:fx*distance)/steps,dz=(motion?motion.z:fz*distance)/steps,resultSpeed=speed;
     const offsets=[],count=Math.ceil((front-rear)/.6);
     for(let i=0;i<=count;i++)offsets.push(rear+(front-rear)*i/count);
     const candidates=this.nearby(position.x,position.z,Math.max(Math.abs(rear),Math.abs(front))+radius+Math.abs(distance)+1);
@@ -65,8 +65,11 @@ export class TreeCollisionSystem {
         if(!overlap)break;
       }
     }
+    if(motion?.result){motion.result.x=bounced?fx*resultSpeed:dx*steps/dt;motion.result.z=bounced?fz*resultSpeed:dz*steps/dt;}
     return resultSpeed;
   }
+  // Resolve an already-integrated physics displacement; never advance it twice.
+  resolveMovement(position,previousX,previousZ,heading,speed,dt,bounds,knockdown,velocity){const motion={x:position.x-previousX,z:position.z-previousZ,result:velocity},trial={x:previousX,z:previousZ};const result=this.move(trial,heading,speed,dt,bounds,knockdown,motion);position.x=trial.x;position.z=trial.z;return result;}
 
   react(tree,dx,dz,strength){
     if(tree.state!=='IDLE'&&tree.state!=='WOBBLING')return;

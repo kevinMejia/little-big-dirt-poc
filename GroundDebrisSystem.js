@@ -19,7 +19,7 @@ export class GroundDebrisSystem {
   }
   clear(){this.group.traverse(o=>{if(o.isMesh||o.isLineSegments){o.geometry.dispose();o.material.dispose();o.dispose?.();}});this.group.clear();this.grid.clear();this.objects.length=0;}
   regenerate(){
-    this.clear();if(!this.config.enabled)return;
+    this.revision=(this.revision??0)+1;this.clear();if(!this.config.enabled)return;
     let seed=79231;const random=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/4294967296);
     const weights=kinds.map(k=>Math.max(0,Number(this.config[k+'Percent'])||0)),total=weights.reduce((a,b)=>a+b,0);
     if(!total)return;
@@ -32,7 +32,7 @@ export class GroundDebrisSystem {
       if(anchors.length&&random()<.7){const a=anchors[Math.floor(random()*anchors.length)],angle=random()*Math.PI*2,d=2+random()*4;x=a.x+Math.cos(angle)*d;z=a.z+Math.sin(angle)*d;}
       if(Math.abs(x)>this.halfSize-20||Math.abs(z)>this.halfSize-20||Math.hypot(x,z)<14)continue;
       if(obstacles.some(o=>Math.hypot(o.x-x,o.z-z)<o.r+1))continue;
-      const surface=this.painter.surface(x,z);if(surface.slope>.55)continue;
+      const surface=this.painter.surface(x,z);if(surface.slope>.55||surface.ramp>.15)continue;
       if((kind==='dirtClump'||kind==='earthClump')&&random()>.22+.78*Math.max(surface.dirtMask,surface.path))continue;
       const interactive=random()<pct(this.config.interactivePercent),lo=clamp(Number(this.config.minBumpHeight)||0,0,.5),hi=clamp(Number(this.config.maxBumpHeight)||0,lo,.5);
       const h=interactive?lo+random()*(hi-lo):.025+random()*.035;

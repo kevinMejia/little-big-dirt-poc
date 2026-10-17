@@ -31,3 +31,12 @@ export class DirtJumpSystem {
  }
 }
 
+// Fine shared grid around the playground, original 2-unit grid elsewhere. One seamless mesh.
+DirtJumpSystem.prototype.createWorldSurface=function(halfSize=220,coarse=2,fine=.75){
+ const axis=(low,high)=>{const values=new Set();for(let t=-halfSize;t<=halfSize+.001;t+=coarse)values.add(Number(t.toFixed(5)));values.add(halfSize);for(let t=Math.max(-halfSize,Math.floor(low/fine)*fine);t<=Math.min(halfSize,high);t+=fine)values.add(Number(t.toFixed(5)));return [...values].sort((a,b)=>a-b);};
+ let xmin=Infinity,xmax=-Infinity,zmin=Infinity,zmax=-Infinity;for(const f of this.features)for(const side of [-f.width*.6-5,f.width*.6+5])for(const along of [-f.approach-8,85]){const x=f.x+side*Math.cos(f.angle)+along*Math.sin(f.angle),z=f.z-side*Math.sin(f.angle)+along*Math.cos(f.angle);xmin=Math.min(xmin,x);xmax=Math.max(xmax,x);zmin=Math.min(zmin,z);zmax=Math.max(zmax,z);}
+ const xs=axis(xmin,xmax),zs=axis(zmin,zmax),vertices=new Float32Array(xs.length*zs.length*3),indices=new Uint32Array((xs.length-1)*(zs.length-1)*6);let k=0,j=0;
+ for(const z of zs)for(const x of xs){vertices[k++]=x;vertices[k++]=this.sample(x,z);vertices[k++]=z;}
+ for(let z=0;z<zs.length-1;z++)for(let x=0;x<xs.length-1;x++){const a=z*xs.length+x,b=a+1,c=a+xs.length,d=c+1;indices[j++]=a;indices[j++]=c;indices[j++]=b;indices[j++]=b;indices[j++]=c;indices[j++]=d;}
+ return {vertices,indices,halfSize,heightAt:(x,z)=>this.sample(x,z)};
+};
