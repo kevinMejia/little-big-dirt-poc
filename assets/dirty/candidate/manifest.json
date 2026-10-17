@@ -1,0 +1,111 @@
+{
+  "blender": "2.83.0",
+  "triangles": 56180,
+  "wheels": [
+    {
+      "steer": "Steering_Rear_L",
+      "spin": "Wheel_Rear_L",
+      "radius": 0.92,
+      "x": -1.31,
+      "z": -1.12,
+      "front": false
+    },
+    {
+      "steer": "Steering_Front_L",
+      "spin": "Wheel_Front_L",
+      "radius": 0.66,
+      "x": -1.24,
+      "z": 1.36,
+      "front": true
+    },
+    {
+      "steer": "Steering_Rear_R",
+      "spin": "Wheel_Rear_R",
+      "radius": 0.92,
+      "x": 1.31,
+      "z": -1.12,
+      "front": false
+    },
+    {
+      "steer": "Steering_Front_R",
+      "spin": "Wheel_Front_R",
+      "radius": 0.66,
+      "x": 1.24,
+      "z": 1.36,
+      "front": true
+    }
+  ],
+  "hydraulics": [
+    {
+      "name": "FrontLift_L",
+      "a": "FrontLiftBase_-1",
+      "b": "FrontLiftTop_-1",
+      "barrel": "FrontLift_L_Barrel",
+      "rod": "FrontLift_L_Rod"
+    },
+    {
+      "name": "FrontLift_R",
+      "a": "FrontLiftBase_1",
+      "b": "FrontLiftTop_1",
+      "barrel": "FrontLift_R_Barrel",
+      "rod": "FrontLift_R_Rod"
+    },
+    {
+      "name": "FrontCurl",
+      "a": "FrontCurlBase",
+      "b": "FrontCurlEnd",
+      "barrel": "FrontCurl_Barrel",
+      "rod": "FrontCurl_Rod"
+    },
+    {
+      "name": "RearBoom",
+      "a": "RearBoomBase",
+      "b": "RearBoomEnd",
+      "barrel": "RearBoom_Barrel",
+      "rod": "RearBoom_Rod"
+    },
+    {
+      "name": "RearStick",
+      "a": "RearStickBase",
+      "b": "RearStickEnd",
+      "barrel": "RearStick_Barrel",
+      "rod": "RearStick_Rod"
+    },
+    {
+      "name": "RearCurl",
+      "a": "RearCurlBase",
+      "b": "RearCurlEnd",
+      "barrel": "RearCurl_Barrel",
+      "rod": "RearCurl_Rod"
+    }
+  ],
+  "jointLimits": {
+    "FrontLoaderPivot": [
+      -0.85,
+      0.12
+    ],
+    "FrontBucketPivot": [
+      -0.7,
+      0.9
+    ],
+    "RearSwingPivot": [
+      -1.15,
+      1.15
+    ],
+    "RearBoomPivot": [
+      -0.3,
+      0.35
+    ],
+    "RearStickPivot": [
+      -0.65,
+      0.75
+    ],
+    "RearBucketPivot": [
+      -0.85,
+      1.15
+    ]
+  },
+  "orientation": "+Z forward, +Y up after glTF export",
+  "reviewOnly": false,
+  "revision": "reference-sheet-v2"
+}

@@ -1,0 +1,25 @@
+import assert from 'node:assert/strict';
+import * as THREE from '../three-test.mjs';
+import {RockInteractionSystem} from '../RockInteractionSystem.js';
+import {rockConfig} from '../VehicleConfig.js';
+const bounds={radius:1,rear:-1,front:1},settings={baseMaxSpeed:20,rockCrackSpeedPercent:25,rockBreakSpeedPercent:55};
+const fixture=(radius=1,height=()=>0)=>{const s=new RockInteractionSystem(new THREE.Scene(),{groundHeight:height,config:{...rockConfig,maxFragments:12}});return {s,r:s.addRock(0,5,radius)};};
+function drive(f,speed,{x=0,z=0,heading=0,config=settings}={}){const p=new THREE.Vector3(x,0,z);for(let i=0;i<160;i++){const dt=.01,oldX=p.x,oldZ=p.z;p.x+=Math.sin(heading)*speed*dt;p.z+=Math.cos(heading)*speed*dt;const result=f.s.resolveMovement(p,oldX,oldZ,heading,speed,dt,bounds,config);if(f.r.lastHit===f.s.time)return {p,result};f.s.update(dt);}return {p,result:speed};}
+let f=fixture();let hit=drive(f,3);assert.equal(f.r.state,'INTACT');assert.ok(hit.result<0,'soft low-speed rebound');assert.ok(f.r.wobble>0);
+f=fixture();drive(f,6);assert.equal(f.r.state,'CRACKED');assert.ok(f.r.cracks.visible);f.s.update(.7);hit=drive(f,6);assert.equal(f.r.state,'BROKEN','second qualifying hit breaks');assert.ok(hit.result>0,'break keeps vehicle driving');
+assert.equal(f.s.fragments.filter(x=>x.active).length,5);assert.equal(f.r.group.visible,false);
+f=fixture();drive(f,12);assert.equal(f.r.state,'BROKEN','high-speed intact rock breaks immediately');
+const fragments=f.s.fragments.filter(x=>x.active);assert.ok(fragments.every(x=>x.mesh.position.distanceTo(new THREE.Vector3(0,.52,5))<1),'fragments start within original volume');
+for(let i=0;i<30;i++)f.s.update(.03);assert.ok(fragments.some(x=>x.mesh.position.z>5.5),'pieces scatter forward');assert.ok(fragments.every(x=>x.v.length()<=8),'velocity capped');
+f.s.setVehicles([{position:new THREE.Vector3(0,0,5),heading:0,bounds}]);for(let i=0;i<550;i++)f.s.update(.03);assert.equal(f.r.state,'BROKEN','occupied spawn delays respawn');assert.ok(fragments.every(x=>!x.active),'debris expires');
+f.s.setVehicles([]);f.s.update(.01);assert.equal(f.r.state,'REFORMING');f.s.setVehicles([{position:new THREE.Vector3(0,0,5),heading:0,bounds}]);f.s.update(.05);assert.equal(f.r.state,'BROKEN','returning vehicle aborts collider restoration');
+f.s.setVehicles([]);for(let i=0;i<120;i++)f.s.update(.01);assert.equal(f.r.state,'INTACT');assert.equal(f.r.cracks.visible,false);assert.equal(f.r.group.scale.x,1);
+f=fixture(1.5);drive(f,12);assert.equal(f.r.state,'CRACKED','large resistance raises break threshold');
+f=fixture();drive(f,17,{x:1.8});assert.notEqual(f.r.state,'BROKEN','fast glancing hit does not break');
+f=fixture();drive(f,-12,{z:10});assert.equal(f.r.state,'BROKEN','reverse impact works');
+f=fixture(.5);const oldZ=f.r.z;drive(f,3);assert.equal(f.r.state,'INTACT');assert.ok(f.r.z>oldZ,'small rock yields');
+f=fixture(1,(x,z)=>-.2*x);drive(f,12);const chunk=f.s.fragments.find(x=>x.active);chunk.v.set(0,0,0);chunk.mesh.position.set(0,chunk.r*.65,0);for(let i=0;i<100;i++)f.s.update(.02);assert.ok(chunk.mesh.position.x>0,'debris rolls downhill');
+for(let j=0;j<10;j++){const r=f.s.addRock(j*10,5,1);f.s.shatter(r,0,1,20);}assert.equal(f.s.fragments.length,12,'pool is bounded');
+const loose=f.s.fragments.find(x=>x.active);loose.mesh.position.set(0,.3,0);loose.v.set(0,0,0);const vehicle=new THREE.Vector3(0,0,-1);f.s.resolveMovement(vehicle,0,-1.02,0,2,.01,bounds,settings);assert.ok(loose.mesh.position.z>0,'vehicle pushes fragments without blocking');
+assert.equal(f.s.crackGeometries.size,2,'crack meshes share geometry');f.s.dispose();assert.equal(f.s.grid.size,0);
+console.log('PASS: shake/crack/second-hit/high-speed break, directional and reverse impacts, resistance, fragments from original volume, capped pool/velocity, downhill debris, small-rock pushing and safe respawn.');

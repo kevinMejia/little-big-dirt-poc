@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+
+<title>Little Big Dirt | Driving Sandbox</title>
+
+<style>
+
+*{box-sizing:border-box}body{margin:0;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;background:#a8d9f1;color:#fff}canvas{display:block}
+
+#hud{position:absolute;top:20px;left:20px;background:#132f34c9;border:1px solid #ffffff30;border-radius:18px;padding:16px 19px;min-width:210px;backdrop-filter:blur(9px);pointer-events:none}
+
+#hud h1{font-size:20px;margin:0 0 3px;font-weight:850;letter-spacing:-.5px}#hud .subtitle{font-size:11px;letter-spacing:2px;color:#b4ebbf;font-weight:800}
+
+#vehicleName{font-size:17px;font-weight:750;margin-top:13px}#speed{font-size:31px;font-weight:850;line-height:1.15}#speed small{font-size:12px;font-weight:600;color:#c5d6d7}
+
+#help{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);background:#15353dd9;padding:12px 18px;border-radius:14px;text-align:center;font-size:12px;line-height:1.8;white-space:nowrap;backdrop-filter:blur(9px)}
+
+kbd{background:#ffffff2b;border-radius:5px;padding:3px 6px;font-family:inherit;font-weight:800}
+
+#switcher{position:absolute;right:20px;top:20px;display:flex;gap:8px}
+
+button{border:1px solid #ffffff70;border-radius:12px;padding:11px 14px;background:#183b42dd;color:white;font:700 13px system-ui;cursor:pointer;backdrop-filter:blur(7px)}
+
+button.active{background:#eeb82e;color:#273130;border-color:#fff}
+
+#mobile{display:none;position:absolute;bottom:20px;left:16px;right:16px;justify-content:space-between;pointer-events:none}
+
+.cluster{display:flex;gap:10px;align-items:end}.touch{pointer-events:auto;width:66px;height:66px;border-radius:20px;font-size:24px;touch-action:none;user-select:none;background:#173e46c9}.touch.pressed{background:#eeb82e;color:#183b42}
+
+#status{position:absolute;top:114px;right:20px;font-size:12px;background:#183b42aa;padding:8px 12px;border-radius:10px}
+
+@media(max-width:800px){#help{display:none}#mobile{display:flex}#hud{top:12px;left:12px;padding:10px 13px;min-width:155px}#hud h1{font-size:15px}#speed{font-size:23px}#switcher{right:12px;top:12px;flex-direction:column}button{padding:8px 10px;font-size:11px}#status{display:none}}
+
+
+html,body{width:100%;height:100%;overscroll-behavior:none}canvas{touch-action:none}
+[hidden]{display:none!important}
+#mobile{display:none;position:fixed;z-index:5;left:max(16px,env(safe-area-inset-left));right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));align-items:flex-end;pointer-events:none;--control-size:clamp(72px,10vw,104px)}
+body.touch-enabled #mobile{display:flex}body.touch-enabled #help{display:none}
+.cluster{gap:clamp(12px,2vw,24px);align-items:flex-end}
+.touch{width:var(--control-size);height:var(--control-size);min-width:64px;min-height:64px;font-size:38px;font-weight:900;border:2px solid #ffffff8c;border-radius:24px;background:#244b60b8;box-shadow:0 5px 0 #16353d66,0 8px 22px #16353d24;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;pointer-events:auto;transition:background .1s,box-shadow .1s}
+.touch.accelerator{width:calc(var(--control-size)*1.14);height:calc(var(--control-size)*1.14);background:#2c9d56cc}
+.touch.reverse{background:#df8b2acc}
+.touch.pressed{background:#f5cb49;box-shadow:0 2px 0 #16353d66;transform:translateY(3px);color:#203930}
+#rotateHint{display:none;position:fixed;z-index:4;left:50%;top:45%;transform:translate(-50%,-50%);background:#183b42d9;padding:10px 15px;border-radius:14px;pointer-events:none;text-align:center}
+#actionArea{position:absolute;right:0;bottom:calc(var(--control-size)*1.3 + 18px);pointer-events:auto}
+#vehicleActions{display:flex;gap:12px;margin-bottom:12px}.equipment-action{font-size:17px}
+#hud{top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left))}
+#switcher{top:max(12px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right))}
+@media(orientation:portrait){body.touch-enabled #rotateHint{display:block}#mobile{--control-size:clamp(64px,16vw,84px)}.cluster{gap:8px}}
+@media(max-height:480px){#mobile{--control-size:72px;bottom:max(12px,env(safe-area-inset-bottom))}#hud{padding:8px 12px}#vehicleName{margin-top:5px}#hud h1{font-size:15px}#speed{font-size:22px}#status{display:none}#switcher{gap:5px}#switcher button{padding:7px 9px}.touch{border-radius:20px}}
+
+#vehicleGarage{position:fixed;inset:0;width:100vw;max-width:none;height:100dvh;max-height:none;border:0;padding:0;background:#e7e9e4}#vehicleGarage iframe{width:100%;height:100%;border:0;display:block}#garageClose{position:absolute;right:18px;top:18px;z-index:2;background:#243b32;color:white}.holding{outline:3px solid #f6d258;animation:garageHold .65s linear}@keyframes garageHold{from{filter:brightness(1)}to{filter:brightness(1.5)}}
+</style>
+
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/"}}</script>
+</head>
+
+<body>
+
+<div id="hud"><div class="subtitle">FREE DRIVE • PROTOTYPE 01</div><h1>LITTLE BIG DIRT</h1><div id="vehicleName">Backhoe Loader</div><div id="speed">0 <small>MPH</small></div><div id="treeTuning" style="font-size:11px;color:#ffe5a0;margin-top:6px"></div><div id="terrainInfo" style="font-size:11px;color:#c6e3d5;margin-top:6px">Explore the hills!</div></div>
+
+<div id="switcher"><button id="backhoeBtn" class="active">1 · Backhoe</button><button id="garbageBtn">2 · Garbage truck</button><button id="resetBtn">↻ Reset</button><button id="touchToggle" type="button" aria-label="Toggle touch controls" aria-pressed="false">Touch controls</button></div>
+
+<div id="status">Keyboard or gamepad supported</div>
+
+<div id="help"><kbd>W</kbd> / <kbd>↑</kbd> Drive &nbsp; <kbd>S</kbd> / <kbd>↓</kbd> Reverse &nbsp; <kbd>A</kbd><kbd>D</kbd> Steer &nbsp; <kbd>Space</kbd> Brake &nbsp; <kbd>E</kbd> Emergency brake &nbsp; <kbd>1</kbd><kbd>2</kbd> Switch vehicle (hold for garage) &nbsp; <kbd>R</kbd> Reset &nbsp; <kbd>H</kbd> Honk</div>
+
+<div id="mobile" role="group" aria-label="Touch driving controls" hidden>
+<div class="cluster"><button type="button" class="touch" data-drive="left" aria-label="Steer left" aria-pressed="false">◀</button><button type="button" class="touch" data-drive="right" aria-label="Steer right" aria-pressed="false">▶</button></div>
+<div class="cluster"><button type="button" class="touch reverse" data-drive="back" aria-label="Brake and reverse" aria-pressed="false">▼</button><button type="button" class="touch accelerator" data-drive="forward" aria-label="Accelerate" aria-pressed="false">▲</button></div>
+<div id="actionArea"><div id="vehicleActions" hidden></div><button id="actionsToggle" type="button" aria-expanded="false" aria-controls="vehicleActions" hidden>Actions</button></div>
+</div><div id="rotateHint">↻ Turn sideways for more room</div>
+<dialog id="vehicleGarage" aria-label="Vehicle garage"><button id="garageClose" type="button">← Back to driving</button><iframe id="garageFrame" title="Vehicle garage controls"></iframe></dialog>
+<script type="module">
+
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js';
+
+import { BackhoeLoader } from './BackhoeLoader.js';
+import { DirtyGLB } from './assets/dirty/DirtyGLB.js';
+import { bindVehicleGarage } from './VehicleGarage.js';
+
+import { TreeCollisionSystem } from './TreeCollisionSystem.js';
+import { RockInteractionSystem } from './RockInteractionSystem.js';
+
+import { vehicleConfig } from './VehicleConfig.js';
+
+import { HillSpeedPhysics } from './HillSpeedPhysics.js';
+import { DrivingInput } from './DrivingInput.js';
+import { applyReleaseDeceleration } from './VehicleMotion.js';
+
+const hillPhysics=new HillSpeedPhysics(height);
+
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x9dd9f2);scene.fog=new THREE.Fog(0x9dd9f2,115,340);
+
+const camera=new THREE.PerspectiveCamera(66,innerWidth/innerHeight,.1,600);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;document.body.prepend(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0xe9f9ff,0x738b53,2.15));
+
+const sun=new THREE.DirectionalLight(0xfff4cf,2.6);sun.position.set(-65,105,40);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-120;sun.shadow.camera.right=120;sun.shadow.camera.top=120;sun.shadow.camera.bottom=-120;sun.shadow.normalBias=.035;scene.add(sun);
+
+const mat=(c,roughness=1)=>new THREE.MeshStandardMaterial({color:c,roughness,flatShading:true});
+
+const green=mat(0x86bc68),road=mat(0xcba46b),yellow=mat(0xf3b926),yellowDark=mat(0xd89b19),orange=mat(0xf18a34),glass=mat(0x91d8e6,.25),rubber=mat(0x292f35),metal=mat(0x68747b),white=mat(0xf4f2e6),red=mat(0xe35a46);
+
+function height(x,z){return 2.6*Math.sin(x*.035)*Math.cos(z*.044)+3.6*Math.sin((x+z)*.018)+1.4*Math.cos(z*.085+x*.027)+.00034*(x*x+z*z)}
+
+function groundNormal(x,z){const e=.7;return new THREE.Vector3(height(x-e,z)-height(x+e,z),2*e,height(x,z-e)-height(x,z+e)).normalize()}
+
+// Map distances are in world units. The terrain spans -220 to +220 on each axis.
+
+const mapSettings={halfSize:220,boundaryInset:15,launchHeightFraction:.2,landingWidthFraction:.2,flightSeconds:3};
+
+const world=mapSettings.halfSize,segments=220,geo=new THREE.PlaneGeometry(world*2,world*2,segments,segments);geo.rotateX(-Math.PI/2);const pos=geo.attributes.position,colors=[];
+
+for(let i=0;i<pos.count;i++){const x=pos.getX(i),z=pos.getZ(i);pos.setY(i,height(x,z));const path=Math.abs(x-18*Math.sin(z*.025));const c=new THREE.Color(path<5?0xb99563:0x79a956);c.multiplyScalar(1+.055*Math.sin(x*.48)*Math.cos(z*.39));colors.push(c.r,c.g,c.b)}
+
+geo.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));geo.computeVertexNormals();const terrain=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}));terrain.receiveShadow=true;scene.add(terrain);
+
+function box(parent,w,h,d,x,y,z,m){const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);return mesh}
+
+function cylinder(parent,r,len,x,y,z,m){const mesh=new THREE.Mesh(new THREE.CylinderGeometry(r,r,len,10),m);mesh.rotation.z=Math.PI/2;mesh.position.set(x,y,z);mesh.castShadow=true;parent.add(mesh);return mesh}
+
+const treeCollisions=new TreeCollisionSystem(scene,{groundHeight:height,onImpact:treeImpactSound});
+
+function makeTree(x,z,scale=1){const g=new THREE.Group();g.position.set(x,height(x,z)-.08,z);const trunk=cylinder(g,.22*scale,2.3*scale,0,1.1*scale,0,mat(0x91623e));trunk.rotation.z=0;for(let i=0;i<2;i++){const cone=new THREE.Mesh(new THREE.ConeGeometry((1.45-i*.35)*scale,2.8*scale,7),mat(i?0x438659:0x326e4b));cone.position.y=(2.55+i*1.3)*scale;cone.castShadow=true;g.add(cone)}scene.add(g);treeCollisions.addTree(g,.22*scale,3.5*scale)}
+
+let seed=3184;function rand(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
+
+for(let i=0;i<175;i++){const x=(rand()-.5)*410,z=(rand()-.5)*410;if(Math.abs(x)<20&&Math.abs(z)<20)continue;makeTree(x,z,.65+rand()*.9)}
+
+const rockInteractions=new RockInteractionSystem(scene,{groundHeight:height,onImpact:rockImpactSound});
+function makeRock(x,z,s){rockInteractions.addRock(x,z,s);rand();rand();rand()}
+
+for(let i=0;i<80;i++){const x=(rand()-.5)*370,z=(rand()-.5)*370;if(Math.abs(x)<16&&Math.abs(z)<16)continue;makeRock(x,z,.45+rand()*1.2)}
+
+function ramp(x,z,angle){const g=new THREE.Group();g.position.set(x,height(x,z)+.35,z);g.rotation.y=angle;box(g,7,.55,12,0,1.4,0,mat(0xe4a05b)).rotation.x=-.2;scene.add(g)}
+
+ramp(13,-28,.2);ramp(-35,-12,-.7);ramp(35,36,.5);
+
+let dirtyTemplate;
+try{dirtyTemplate=await DirtyGLB.load(new URL('./assets/dirty/dirty.glb',location.href).href);}catch(error){console.warn('New backhoe failed to load; trying previous Blender asset',error);try{dirtyTemplate=await DirtyGLB.load(new URL('./assets/dirty/backups/pre-reference-sheet/dirty.glb',location.href).href);}catch(fallbackError){console.error('Blender assets unavailable; using procedural fallback',fallbackError);}}
+const start={x:0,z:0,heading:0};
+
+function wheel(g,x,z,r){const pivot=new THREE.Group();pivot.position.set(x,r,z);pivot.userData.wheel={x,z,r};g.add(pivot);const roll=new THREE.Group();pivot.add(roll);pivot.userData.roll=roll;cylinder(roll,r,.55,0,0,0,rubber);cylinder(roll,r*.49,.58,0,0,0,yellowDark);cylinder(roll,r*.19,.61,0,0,0,metal);for(let i=0;i<12;i++){const a=i*Math.PI/6;const tread=box(roll,.57,.09,.2,0,Math.cos(a)*r,Math.sin(a)*r,rubber);tread.rotation.x=-a}return pivot}
+
+function backhoe(){const model=dirtyTemplate?dirtyTemplate.clone():new BackhoeLoader();model.group.userData.controller=model;return model.group}
+
+function garbage(){const g=new THREE.Group();box(g,2.8,.7,6.4,0,1.12,0,metal);box(g,2.75,2.4,3.95,0,2.38,-1.05,mat(0x48a1b4));box(g,2.85,.4,4,0,3.77,-1.05,mat(0x337d91));box(g,2.85,2.35,2.15,0,2.4,2.15,orange);box(g,2.95,.38,2.25,0,3.7,2.15,orange);box(g,2.5,.9,.12,0,2.75,3.28,glass);box(g,2.85,.5,.35,0,1.1,3.36,metal);box(g,2.5,.18,.16,0,1.85,3.4,white);box(g,2.3,.25,.4,0,2,-3.13,metal);
+
+for(const x of [-1.43,1.43])for(const z of [-2.15,-.8,2.25])wheel(g,x,z,.72);
+
+return g}
+
+const configs=[{hill:vehicleConfig.backhoe,name:'Backhoe Loader',mass:8,accel:11,max:21,reverse:9,turn:1.42,drag:.52,grip:3.4,collision:{radius:1.2,rear:-2.4,front:2.75},build:backhoe},{hill:vehicleConfig.garbageTruck,name:'Garbage Truck',mass:19,accel:7,max:17,reverse:7,turn:1.05,drag:.8,grip:2.4,collision:{radius:1.4,rear:-2,front:2.35},build:garbage}];
+
+let index=0,vehicle,position=new THREE.Vector3(start.x,0,start.z),heading=0,speed=0,steer=0,tilt=0;
+
+let flight=null;
+
+function launchFromBoundary(){hillPhysics.reset();const range=world*mapSettings.landingWidthFraction;const destination=new THREE.Vector3((rand()*2-1)*range,0,(rand()*2-1)*range);destination.y=height(destination.x,destination.z)-.09;flight={from:position.clone(),to:destination,elapsed:0};heading=Math.atan2(destination.x-position.x,destination.z-position.z);speed=0;steer=0}
+
+const vehicleRoot=new THREE.Group();scene.add(vehicleRoot);
+
+function choose(i){hillPhysics.reset();index=i; if(vehicle){if(vehicle.userData.controller)vehicle.userData.controller.dispose();else{vehicleRoot.remove(vehicle);vehicle.traverse(o=>{if(o.isMesh)o.geometry.dispose()})}}vehicle=configs[i].build();vehicleRoot.add(vehicle);if(i===1){for(const x of [-.8,.8]){box(vehicle,.35,.22,.12,x,index===0?1.7:1.85,index===0?2.38:3.43,white);box(vehicle,.3,.18,.12,x,1.35,index===0?-2.4:-3.13,red)}box(vehicle,.16,.85,.16,.7,3.7,-.5,metal);}document.querySelector('#vehicleName').textContent=configs[i].name;document.querySelector('#backhoeBtn').classList.toggle('active',i===0);document.querySelector('#garbageBtn').classList.toggle('active',i===1);speed=0}
+
+function reset(){hillPhysics.reset();flight=null;position.set(0,height(0,0),0);heading=0;speed=0;steer=0}
+
+choose(0);reset();
+
+document.querySelector('#resetBtn').onclick=reset;
+
+const keys=new Set();addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys.add(e.code);if(garage.open)return;if(e.repeat)return;if(e.code==='KeyR')reset();if(e.code==='KeyH')honk()});addEventListener('keyup',e=>keys.delete(e.code));addEventListener('blur',()=>keys.clear());
+
+const controls=new DrivingInput({root:document.querySelector('#mobile'),toggle:document.querySelector('#touchToggle'),keys,actionsRoot:document.querySelector('#vehicleActions'),actionsToggle:document.querySelector('#actionsToggle')});
+const garage=document.querySelector('#vehicleGarage'),garageFrame=document.querySelector('#garageFrame');
+let garageVehicle=-1;
+const equipmentPoses=new Map();
+function applyEquipmentPose(model,pose){if(!model||!pose)return;model.setFrontLoaderHeight(pose.lift/100);model.setFrontBucketTilt(THREE.MathUtils.degToRad(pose.tilt));model.setRearArmRotation(THREE.MathUtils.degToRad(pose.swing));model.setRearBoomAngle(THREE.MathUtils.degToRad(pose.boom));model.setRearStickAngle(THREE.MathUtils.degToRad(pose.stick));model.setRearBucketCurl(THREE.MathUtils.degToRad(pose.curl));model.update(0);}
+function openGarage(i){
+ if(garage.open)return;keys.clear();controls.clear();speed=0;if(index!==i){controls.setVehicleActions();choose(i);applyEquipmentPose(i===0?vehicle.userData.controller:null,equipmentPoses.get(i));}
+ const changed=garageVehicle!==i;garageVehicle=i;garage.showModal();
+ if(changed)garageFrame.src='./viewer/dirty.html?embedded=1&vehicle='+(i===0?'backhoe':'garbage');
+ else garageFrame.contentWindow.postMessage({type:'garage:visibility',visible:true},location.origin);
+}
+function closeGarage(){if(!garage.open)return;garage.close();garageFrame.contentWindow.postMessage({type:'garage:visibility',visible:false},location.origin);keys.clear();controls.clear();speed=0;clock.getDelta();}
+document.querySelector('#garageClose').onclick=closeGarage;
+garage.addEventListener('cancel',event=>{event.preventDefault();closeGarage();});
+function truckSnapshot(){
+ const truck=garbage();truck.traverse(o=>{if(o.userData.wheel)o.userData={wheel:o.userData.wheel};});const json=truck.toJSON();
+ const shared=new Set([green,road,yellow,yellowDark,orange,glass,rubber,metal,white,red]);const materials=new Set();truck.traverse(o=>{if(o.isMesh){o.geometry.dispose();if(!shared.has(o.material))materials.add(o.material);}});for(const material of materials)material.dispose();return json;
+}
+addEventListener('message',event=>{
+ if(event.origin!==location.origin||event.source!==garageFrame.contentWindow)return;
+ if(event.data?.type==='garage:ready')garageFrame.contentWindow.postMessage({type:'garage:init',vehicle:garageVehicle,model:garageVehicle===1?truckSnapshot():null,pose:equipmentPoses.get(garageVehicle),visible:garage.open},location.origin);
+ if(!garage.open)return;
+ if(event.data?.type==='garage:pose'&&garageVehicle===0){const pose=event.data.pose;const ranges={lift:[0,100],tilt:[-40,50],swing:[-65,65],boom:[-17,20],stick:[-37,43],curl:[-48,65]};if(!pose||Object.keys(ranges).some(k=>!Number.isFinite(pose[k])))return;const safe={};for(const [key,range] of Object.entries(ranges))safe[key]=THREE.MathUtils.clamp(pose[key],...range);equipmentPoses.set(0,safe);if(index===0)applyEquipmentPose(vehicle.userData.controller,safe);}
+ if(event.data?.type==='garage:close')closeGarage();
+});
+const garageBindings=bindVehicleGarage({buttons:[document.querySelector('#backhoeBtn'),document.querySelector('#garbageBtn')],onSelect:i=>{if(!garage.open){controls.setVehicleActions();choose(i);applyEquipmentPose(i===0?vehicle.userData.controller:null,equipmentPoses.get(i));}},onOpen:openGarage});
+
+let audio;
+
+function unlockAudio(){try{audio??=new (window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume().catch(()=>{})}catch(e){}}
+
+addEventListener('keydown',unlockAudio);addEventListener('pointerdown',unlockAudio);
+
+function rockImpactSound(strength,kind){
+  if(!audio||audio.state!=='running')return;
+  try{const now=audio.currentTime,osc=audio.createOscillator(),gain=audio.createGain();osc.type='triangle';osc.frequency.setValueAtTime(kind==='break'?180:kind==='crack'?260:140,now);osc.frequency.exponentialRampToValueAtTime(65,now+.18);gain.gain.setValueAtTime(.035,now);gain.gain.exponentialRampToValueAtTime(.0001,now+.24);osc.connect(gain);gain.connect(audio.destination);osc.start(now);osc.stop(now+.25);osc.onended=()=>{osc.disconnect();gain.disconnect()};
+  if(kind!=='bump'){const buffer=audio.createBuffer(1,Math.floor(audio.sampleRate*.22),audio.sampleRate),data=buffer.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*Math.pow(1-i/data.length,2)*(Math.sin(i/audio.sampleRate*65)>0?1:.15);const noise=audio.createBufferSource(),filter=audio.createBiquadFilter(),g=audio.createGain();noise.buffer=buffer;filter.type='lowpass';filter.frequency.value=kind==='break'?900:1600;g.gain.value=.045;noise.connect(filter);filter.connect(g);g.connect(audio.destination);noise.start();noise.onended=()=>{noise.disconnect();filter.disconnect();g.disconnect()};}}catch(e){}
+}
+function treeImpactSound(strength,kind='wobble'){
+
+  if(!audio||audio.state!=='running')return;
+
+  try{
+
+    const now=audio.currentTime,osc=audio.createOscillator(),gain=audio.createGain();
+
+    osc.type=kind==='fall'?'triangle':'sine';osc.frequency.setValueAtTime(kind==='fall'?480:strength<3?220:360,now);osc.frequency.exponentialRampToValueAtTime(85,now+.2);
+
+    gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(.045,now+.008);gain.gain.exponentialRampToValueAtTime(.0001,now+.3);
+
+    osc.connect(gain);gain.connect(audio.destination);osc.start(now);osc.stop(now+.32);osc.onended=()=>{osc.disconnect();gain.disconnect()};
+
+    const buffer=audio.createBuffer(1,Math.floor(audio.sampleRate*.22),audio.sampleRate),data=buffer.getChannelData(0);
+
+    for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*(1-i/data.length);
+
+    const noise=audio.createBufferSource(),filter=audio.createBiquadFilter(),rustle=audio.createGain();noise.buffer=buffer;filter.type='bandpass';filter.frequency.value=kind==='fall'?900:1700;filter.Q.value=.6;rustle.gain.value=kind==='fall'?.024:.016;
+
+    noise.connect(filter);filter.connect(rustle);rustle.connect(audio.destination);noise.start(now);noise.onended=()=>{noise.disconnect();filter.disconnect();rustle.disconnect()};
+
+  }catch(e){}
+
+}
+
+function honk(){try{audio??=new (window.AudioContext||window.webkitAudioContext)();const osc=audio.createOscillator(),gain=audio.createGain();osc.type='sawtooth';osc.frequency.value=index===0?310:195;gain.gain.setValueAtTime(.11,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+.24);osc.connect(gain);gain.connect(audio.destination);osc.start();osc.stop(audio.currentTime+.25)}catch(e){}}
+
+const clock=new THREE.Clock(),camTarget=new THREE.Vector3(),targetPos=new THREE.Vector3(),up=new THREE.Vector3(0,1,0);
+
+function update(dt){const cfg=configs[index];treeCollisions.setVehicles([{position,heading,bounds:cfg.collision,airborne:!!flight}]);treeCollisions.update(dt);rockInteractions.setVehicles([{position,heading,bounds:cfg.collision,airborne:!!flight}]);rockInteractions.update(dt);const pad=navigator.getGamepads?.()[0];const ax=pad?.axes?.[0]||0;
+
+const drivingInput=controls.read(speed,pad);
+const forward=drivingInput.accelerate,back=drivingInput.reverse,brake=drivingInput.brake,emergencyBrake=drivingInput.emergencyBrake;
+const input=Number(drivingInput.steerRight)-Number(drivingInput.steerLeft)+drivingInput.axis;
+steer=THREE.MathUtils.damp(steer,THREE.MathUtils.clamp(input,-1,1),5,dt);
+
+const groundY=height(position.x,position.z);
+
+let slope=0;
+
+if(!flight){
+
+let thrust=forward?1:back?-1:0;
+
+const hill=hillPhysics.update({x:position.x,z:position.z,heading,speed,thrust,config:cfg.hill,dt});slope=hill.grade;
+
+let acceleration=thrust*cfg.accel*(thrust>0&&speed<0?1.5:1)+(thrust!==0?hill.direction*cfg.accel*hill.modifier:0);
+
+if(brake)acceleration-=Math.sign(speed)*Math.min(Math.abs(speed)/Math.max(dt,.001),24);
+
+const previousSpeed=speed;
+
+speed+=acceleration*dt;speed-=speed*cfg.drag*dt*.08;speed=hillPhysics.limitSpeed(speed,cfg.max,cfg.reverse,dt,previousSpeed);
+
+if(emergencyBrake)speed=Math.sign(speed)*Math.max(0,Math.abs(speed)-38*dt);
+
+if(!forward&&!back)speed=applyReleaseDeceleration(speed,dt,cfg.hill);
+
+heading-=steer*cfg.turn*Math.min(Math.abs(speed)/9,1)*dt*Math.sign(speed||1);
+
+const previousX=position.x,previousZ=position.z;
+
+// Shared short movement steps let both obstacle systems correct the same motion.
+const movementSteps=Math.max(1,Math.ceil(Math.abs(speed)*dt/.16)),movementDt=dt/movementSteps;
+for(let step=0;step<movementSteps;step++){
+ const startX=position.x,startZ=position.z;
+ speed=treeCollisions.move(position,heading,speed,movementDt,cfg.collision,{baseMaxSpeed:cfg.max,treeKnockdownSpeedPercent:cfg.hill.treeKnockdownSpeedPercent});
+ speed=rockInteractions.resolveMovement(position,startX,startZ,heading,speed,movementDt,cfg.collision,{baseMaxSpeed:cfg.max,...cfg.hill});
+}
+
+hillPhysics.recordTravel(position.x-previousX,position.z-previousZ);
+
+position.y=height(position.x,position.z)-.09;
+
+const limit=world-mapSettings.boundaryInset;
+
+if(Math.abs(position.x)>=limit||Math.abs(position.z)>=limit){position.x=THREE.MathUtils.clamp(position.x,-limit,limit);position.z=THREE.MathUtils.clamp(position.z,-limit,limit);launchFromBoundary()}
+
+}
+
+if(flight){flight.elapsed+=dt;const t=Math.min(flight.elapsed/mapSettings.flightSeconds,1);position.lerpVectors(flight.from,flight.to,t);position.y+=4*t*(1-t)*world*2*mapSettings.launchHeightFraction;if(t===1){flight=null;speed=0}}
+
+vehicleRoot.position.copy(position);vehicleRoot.rotation.order='YXZ';vehicleRoot.rotation.y=heading;
+
+const frontH=height(position.x+Math.sin(heading)*2,position.z+Math.cos(heading)*2),backH=height(position.x-Math.sin(heading)*2,position.z-Math.cos(heading)*2);
+
+const rightH=height(position.x+Math.cos(heading)*1.3,position.z-Math.sin(heading)*1.3),leftH=height(position.x-Math.cos(heading)*1.3,position.z+Math.sin(heading)*1.3);
+
+vehicleRoot.rotation.x=THREE.MathUtils.damp(vehicleRoot.rotation.x,Math.atan2(backH-frontH,4),5,dt);
+
+vehicleRoot.rotation.z=THREE.MathUtils.damp(vehicleRoot.rotation.z,Math.atan2(rightH-leftH,2.6)-steer*speed*.001,9,dt);
+
+// Fit each tire to the ground under its axle, including on uneven slopes.
+
+vehicleRoot.updateMatrixWorld(true);
+
+const model=vehicle.userData.controller;
+
+if(model){model.setSteering(steer*.35);if(!emergencyBrake&&!flight)model.setWheelRotation(model.wheelAngle+speed*dt/(model.wheelReferenceRadius??.65))}
+
+for(const pivot of (model?.wheels?model.wheels.map(w=>w.steering||w):vehicle.children)){const w=pivot.userData.wheel;if(!w)continue;if(flight){pivot.position.y=w.r;continue}const contact=vehicleRoot.localToWorld(new THREE.Vector3(w.x,0,w.z));contact.y=height(contact.x,contact.z)-.035;const local=vehicleRoot.worldToLocal(contact);pivot.position.y=local.y+w.r;if(!model){pivot.rotation.y=w.z>0?steer*.35:0;if(!emergencyBrake)pivot.userData.roll.rotation.x+=speed*dt/w.r}}
+
+if(model)model.update(dt);
+
+document.querySelector('#status').textContent=flight?'BOUNDARY BOOST · Returning to the middle!':emergencyBrake?'EMERGENCY BRAKE · ENGAGED':'Keyboard or gamepad supported';
+
+const behind=new THREE.Vector3(-Math.sin(heading)*20,8,-Math.cos(heading)*20);targetPos.copy(position).add(behind);camera.position.lerp(targetPos,1-Math.exp(-4*dt));camTarget.set(position.x,position.y+2.4,position.z);camera.lookAt(camTarget);
+
+document.querySelector('#treeTuning').textContent='Speed '+Math.round(Math.abs(speed)/cfg.max*100)+'% · Tree knockdown '+cfg.hill.treeKnockdownSpeedPercent+'% ('+(cfg.max*cfg.hill.treeKnockdownSpeedPercent/100).toFixed(1)+' units/s)';
+
+document.querySelector('#speed').innerHTML=Math.round(Math.abs(speed)*2.237)+' <small>MPH</small>';document.querySelector('#terrainInfo').textContent=Math.abs(slope)>.03?(slope>0?'Climbing a hill':'Heading downhill'):'Explore the hills!';
+
+}
+
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);if(!garage.open){update(dt);renderer.render(scene,camera)}}animate();
+
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+
+</script></body></html>
+
+
+

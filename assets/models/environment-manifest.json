@@ -1,0 +1,11 @@
+{
+  "blender": "2.83.0",
+  "glbBytes": {
+    "tree": 248040,
+    "boulder": 79384,
+    "fractured": 153260
+  },
+  "fracturePieces": 5,
+  "axes": "GLB +Y up, ground origin at 0; Blender +Z up",
+  "reviewOnly": true
+}

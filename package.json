@@ -1,0 +1,17 @@
+{
+  "name": "dirty-sandbox-game",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Existing Three.js driving sandbox; static browser modules with no bundler.",
+  "scripts": {
+    "dev": "python -m http.server 8000 --bind 127.0.0.1",
+    "build": "python tools/build_site.py",
+    "preview": "python tools/serve_site.py --production --port 8001",
+    "test": "python tools/check_project.py"
+  },
+  "config": {
+    "threeCdnVersion": "0.168.0",
+    "pagesBase": "/dirty-sandbox-game/"
+  }
+}

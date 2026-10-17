@@ -1,0 +1,46 @@
+# Dependencies and generated deployment output
+node_modules/
+dist/
+build/
+coverage/
+.cache/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+service-account*.json
+.aws/
+.ssh/
+.npmrc
+
+# Editor/OS and temporary files
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+*.log
+*.tmp
+*.temp
+*.swp
+*.blend[0-9]
+*.blend[0-9][0-9]
+
+# Local handoffs and screenshots (keep actual textures/references)
+/suspension-context.zip
+/*-preview.png
+/backhoe-refinement.png
+/assets/models/environment-browser-preview.png
+
+# Separate nested checkout; contains no game source and is not a submodule
+/Little-Big-Dirt/
