@@ -7,7 +7,7 @@ export const worldAppearance={
   terrainColorVariation:25,
   dirtPatchPercent:15,
   rockyGroundPercent:8,
-  grassDetailDensity:40,
+  grassDetailDensity:60,
   vegetationClusteringPercent:60,
   hazeStrengthPercent:8,
 };
