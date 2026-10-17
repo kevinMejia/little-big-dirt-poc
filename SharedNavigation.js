@@ -1,11 +1,12 @@
-import {readGamePreferences,gamePreferenceStorage} from './GamePreferences.js';
+import {openSettingsPanel} from './SettingsPanel.js';
+import {readGamePreferences,gamePreferenceStorage} from './GamePreferences.js?v=central-settings-2';
 // Paths are relative to this module, so local hosting and GitHub project Pages work.
 // Add a destination here, then include this module on its page. No router/scenes.
 export const navigationItems = [
  {id:'play',label:'Play',path:'index.html'},
  {id:'jumps',label:'Dirt Jump Lab',path:'viewer/jumps.html'},
  {id:'showroom',label:'Asset Showroom',path:'viewer/showroom.html'},
- {id:'settings',label:'Settings',path:'index.html#switcher',note:'Game controls & physics'},
+ {id:'settings',label:'Settings',action:'settings',note:'Live tuning & controls'},
  {id:'handling',label:'Handling Course',path:'index.html?handling=1'},
  {id:'environment',label:'Environment Workshop',path:'viewer/environment.html'},
  {id:'dirty',label:'Dirty Garage',path:'viewer/dirty.html'},
@@ -17,7 +18,7 @@ export const navigationItems = [
 export function navigationURL(item,base=import.meta.url){return new URL(item.path,base);}
 export function currentArea(location,base=import.meta.url){
  const url=new URL(location),root=new URL('.',base);
- if(url.pathname===root.pathname||url.pathname===new URL('index.html',root).pathname)return url.hash==='#switcher'?'settings':url.searchParams.has('handling')?'handling':'play';
+ if(url.pathname===root.pathname||url.pathname===new URL('index.html',root).pathname)return url.searchParams.has('handling')?'handling':'play';
  return navigationItems.find(item=>item.path&&navigationURL(item,base).pathname===url.pathname)?.id;
 }
 
@@ -31,7 +32,7 @@ dialog::backdrop{background:#102b2970;backdrop-filter:blur(3px)}
 .heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;position:sticky;top:0;background:#fbfcf5;border-bottom:1px solid #e1e6d8;z-index:1}
 h2{font-size:20px;margin:0}.eyebrow{font-size:10px;font-weight:750;letter-spacing:1.6px;color:#63765d;margin-bottom:4px}
 .close{min-width:48px;min-height:48px;border:1px solid #d2dbc9;border-radius:12px;background:white;color:#243b32;font-size:15px;touch-action:manipulation}
-nav{display:grid;gap:8px;padding:14px}a,.unavailable{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:52px;padding:13px 14px;border:1px solid #d9e1d1;border-radius:12px;text-decoration:none;background:white;color:#243b32;text-align:left;font-weight:650;touch-action:manipulation}
+nav{display:grid;gap:8px;padding:14px}a,.settings,.unavailable{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:52px;padding:13px 14px;border:1px solid #d9e1d1;border-radius:12px;text-decoration:none;background:white;color:#243b32;text-align:left;font-weight:650;touch-action:manipulation}
 a:hover{background:#f7efcf}a[aria-current=page]{background:#f8d66c;border-color:#d0aa38}.note{font-size:11px;font-weight:500;color:#596953;white-space:nowrap}.unavailable{background:#edf0e8;color:#62705b;cursor:default}button:focus-visible,a:focus-visible{outline:3px solid #b47b00;outline-offset:2px}
 @media(prefers-reduced-motion:no-preference){dialog[open]{animation:appear .12s ease-out}@keyframes appear{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}}
 `;
@@ -52,13 +53,11 @@ export function installNavigation(){
  const nav=document.createElement('nav');nav.setAttribute('aria-label','Game and labs');
  const active=currentArea(location.href);
  for(const item of navigationItems){
-  const row=document.createElement(item.path?'a':'div');row.textContent=item.label;
+  const row=document.createElement(item.action?'button':item.path?'a':'div');row.textContent=item.label;
   if(item.path){row.href=navigationURL(item).href;if(item.id===active)row.setAttribute('aria-current','page');
-   // On Play/Handling, reuse the live controls without unloading the game.
-   if(item.id==='settings'&&document.querySelector('#switcher'))row.addEventListener('click',event=>{
-    event.preventDefault();dialog.addEventListener('close',focusGameSettings,{once:true});dialog.close();
-   });
+
   }
+  else if(item.action){row.type='button';row.className='settings';row.addEventListener('click',()=>{dialog.addEventListener('close',openSettingsPanel,{once:true});dialog.close();});}
   else{row.className='unavailable';row.setAttribute('aria-disabled','true');}
   if(item.note||item.id===active){const note=document.createElement('span');note.className='note';note.textContent=item.note??'You are here';row.append(note);}
   nav.append(row);
@@ -72,15 +71,16 @@ export function installNavigation(){
  body[data-lbd-navigation=jumps] header{top:calc(max(12px,env(safe-area-inset-top)) + 60px);max-height:calc(100dvh - 180px);overflow:auto}
  body[data-lbd-navigation]:not([data-lbd-navigation=play]):not([data-lbd-navigation=handling]):not([data-lbd-navigation=jumps])>header{padding-left:max(76px,calc(env(safe-area-inset-left) + 76px))}
  `;document.head.append(layout);
- const touchStyle=document.createElement('style');touchStyle.textContent='body[data-lbd-touch-controls="false"] #touch{display:none!important}body[data-lbd-touch-controls="true"] #touch{display:flex!important}';document.head.append(touchStyle);
+ const touchStyle=document.createElement('style');touchStyle.textContent='body[data-lbd-driving-hud="false"] #hud{display:none!important}body[data-lbd-touch-controls="false"] #touch{display:none!important}body[data-lbd-touch-controls="true"] #touch{display:flex!important}';document.head.append(touchStyle);
  const applyTouchPreference=()=>{
   const preferences=readGamePreferences(gamePreferenceStorage());
+  document.body.dataset.lbdDrivingHud=String(preferences.showDrivingHud!==false);
   if(typeof preferences.touchControls==='boolean')document.body.dataset.lbdTouchControls=String(preferences.touchControls);
   else delete document.body.dataset.lbdTouchControls;
  };
- applyTouchPreference();window.addEventListener('pageshow',applyTouchPreference);
- // Incoming Settings links point at the same main-game controls, not a new page.
- if(location.hash==='#switcher')focusGameSettings();
+ applyTouchPreference();window.addEventListener('pageshow',applyTouchPreference);window.addEventListener('lbd:preferences-change',applyTouchPreference);window.addEventListener('storage',applyTouchPreference);
+ // Preserve old Settings bookmarks by opening the shared panel in place.
+ if(location.hash==='#switcher')openSettingsPanel();
  toggle.addEventListener('click',()=>{
   // Existing blur handlers release keyboard/touch/camera captures. No game
   // controller changes and no held throttle after closing or changing pages.
@@ -95,13 +95,6 @@ export function installNavigation(){
  // Keep keyboard driving handlers from seeing menu shortcuts; native Tab and
  // Escape behavior still works because the browser's default is not prevented.
  for(const type of ['keydown','keyup'])window.addEventListener(type,event=>{if(dialog.open)event.stopImmediatePropagation();},true);
-}
-
-function focusGameSettings(){
- const controls=document.querySelector('#switcher');if(!controls)return;
- controls.setAttribute('tabindex','-1');controls.setAttribute('role','group');controls.setAttribute('aria-label','Game settings and physics');
- controls.focus({preventScroll:true});
- controls.animate([{outline:'3px solid #f4ce58',outlineOffset:'6px'},{outline:'3px solid transparent',outlineOffset:'6px'}],{duration:1800});
 }
 
 if(typeof document!=='undefined')installNavigation();

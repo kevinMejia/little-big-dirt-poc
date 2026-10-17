@@ -42,6 +42,8 @@ export class RapierWorldVehicle {
   const v=p.body.linvel(),edge=this.limit+4;if(current.x>edge&&v.x>0||current.x<-edge&&v.x<0)p.body.setLinvel({...v,x:-Math.sign(current.x)*Math.abs(v.x)},true);if(current.z>edge&&v.z>0||current.z<-edge&&v.z<0)p.body.setLinvel({...p.body.linvel(),z:-Math.sign(current.z)*Math.abs(v.z)},true);
  }
  update(dt,input){
+  const tuning=arcadeHandlingConfig[this.index?'stinky':'dirty'];
+  Object.assign(this.cfg,{accel:tuning.acceleration,max:tuning.topSpeed,reverse:tuning.reverseSpeed,turn:tuning.turn,drag:tuning.drag});
   this.input=input;
   const p=this.physics;this.grade=0;p.update(dt,input);
   const pose={position:p.body.translation(),rotation:p.body.rotation()},root=this.rootPose(pose),forward=rotateVector(pose.rotation,{x:0,y:0,z:1});return {position:root,heading:Math.atan2(forward.x,forward.z),speed:p.state.speed,airborne:p.state.airborne,verticalSpeed:p.state.verticalSpeed,grade:this.grade,events:p.events.splice(0),cannon:this.cannonFlight};

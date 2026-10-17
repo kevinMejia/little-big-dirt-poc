@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {navigationItems,navigationURL,currentArea} from '../SharedNavigation.js';
-import {readGamePreferences,saveGamePreference,preferenceKey} from '../GamePreferences.js';
+import {readGamePreferences,saveGamePreference,resetGamePreference,preferenceKey} from '../GamePreferences.js';
 
 for(const prefix of ['http://localhost:8000/','https://example.com/little-big-dirt-poc/']){
  const base=prefix+'SharedNavigation.js';
@@ -19,17 +19,21 @@ for(const prefix of ['http://localhost:8000/','https://example.com/little-big-di
  assert.equal(currentArea(prefix+'index.html?handling=1&debug=1',base),'handling');
 }
 assert.equal(navigationItems.find(item=>item.id==='showroom').path,'viewer/showroom.html','showroom is reachable from every area');
-assert.equal(navigationItems.find(item=>item.id==='settings').path,'index.html#switcher','Settings reuses existing main-game controls');
+assert.equal(navigationItems.find(item=>item.id==='settings').action,'settings','Settings opens the shared overlay without navigation');
+assert.equal(navigationItems.find(item=>item.id==='settings').path,undefined);
 assert.equal(new Set(navigationItems.map(item=>item.id)).size,navigationItems.length);
 const records=new Map(),storage={getItem:key=>records.get(key)??null,setItem:(key,value)=>records.set(key,value)};
 const base='https://example.com/game/GamePreferences.js';
 saveGamePreference(storage,'physicsMode','original',base);
 saveGamePreference(storage,'touchControls',true,base);
 saveGamePreference(storage,'diagnostics',true,base);
-assert.deepEqual(readGamePreferences(storage,base),{physicsMode:'original',touchControls:true,diagnostics:true});
+assert.deepEqual(readGamePreferences(storage,base),{physicsMode:'original',showDrivingHud:true,touchControls:true,diagnostics:true});
 assert.equal(readGamePreferences(storage,'https://example.com/other/GamePreferences.js').physicsMode,'rapier','deployments do not share preferences');
 saveGamePreference(storage,'physicsMode','invalid',base);
 assert.equal(readGamePreferences(storage,base).physicsMode,'original');
+saveGamePreference(storage,'showDrivingHud',false,base);assert.equal(readGamePreferences(storage,base).showDrivingHud,false);
+resetGamePreference(storage,'showDrivingHud',base);assert.equal(readGamePreferences(storage,base).showDrivingHud,true);
+resetGamePreference(storage,'touchControls',base);assert.equal(readGamePreferences(storage,base).touchControls,undefined,'touch reset restores automatic detection');
 records.set(preferenceKey(base),'malformed JSON');assert.equal(readGamePreferences(storage,base).physicsMode,'rapier');
 assert.equal(readGamePreferences(null,base).physicsMode,'rapier','blocked storage preserves default controls');
 console.log('PASS: every navigation destination exists and includes the shared menu; current areas, candidate/query URLs, disabled future pages, and root/project Pages bases.');

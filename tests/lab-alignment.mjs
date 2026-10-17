@@ -14,6 +14,7 @@ import {TreeCollisionSystem} from '../TreeCollisionSystem.js';
 import {RockInteractionSystem} from '../RockInteractionSystem.js';
 import {mergeDrivingInput,PointerInputState} from '../DrivingInput.js';
 import {arcadeHandlingConfig,vehicleConfig,jumpConfig,jumpVehicleConfig,originalDriveConfig} from '../VehicleConfig.js';
+import {setTuning,resetTuning} from '../TuningStore.js';
 await R.init();
 const tuningSnapshot=JSON.stringify({arcadeHandlingConfig,vehicleConfig,jumpConfig,jumpVehicleConfig,originalDriveConfig});
 
@@ -114,6 +115,23 @@ for(const index of [0,1]){
  const legacy=jumpVehicleConfig[index?'stinky':'dirty'],savedLegacy={...legacy};
  try{Object.assign(legacy,{acceleration:.1,maxSpeed:1,releaseDeceleration:100,suspensionStiffness:500,suspensionCompression:100,suspensionRelaxation:100});assert(Math.abs(earlySpeed()-baseline)<1e-6,'legacy raycast drive/spring settings cannot override either hybrid');}finally{Object.assign(legacy,savedLegacy);}
  scenarios+=2;
+}
+// Edit a running controller through the same store used by the panel. Compare
+// against an untouched moving controller: no recreation, reset or teleport.
+for(const index of [0,1]){
+ const terrain=new DirtJumpSystem(()=>0,[]),pair=makePair(index,terrain,new THREE.Vector3(0,-.09,-100));
+ const key=index?'stinky':'dirty',other=index?'dirty':'stinky',path='arcadeHandlingConfig.'+key+'.acceleration';
+ const otherAcceleration=arcadeHandlingConfig[other].acceleration;
+ for(let i=0;i<30;i++)pair.forEach(entry=>tick(entry,index,1/120,input(1)));
+ const bodies=pair.map(entry=>entry.controller.physics.body),positions=bodies.map(body=>({...body.translation()}));
+ try{
+  setTuning(path,0,null);
+  pair.forEach((entry,i)=>{assert.equal(entry.controller.physics.body,bodies[i]);assert.deepEqual({...bodies[i].translation()},positions[i],'live edit keeps position');});
+  const before=pair.map(entry=>entry.controller.physics.state.speed);
+  const states=pair.map(entry=>tick(entry,index,1/120,input(1)));compare(pair,states);
+  states.forEach((state,i)=>assert(state.speed<before[i],'zero acceleration takes effect on the running vehicle'));
+  assert.equal(arcadeHandlingConfig[other].acceleration,otherAcceleration,'other vehicle unchanged');
+ }finally{resetTuning([path],null);for(const entry of pair){entry.dispose();entry.model.dispose();}}
 }
 const touch=new PointerInputState();touch.set(1,'back');assert(mergeDrivingInput(new Set(),touch,null,10).brake);
 assert(!mergeDrivingInput(new Set(),touch,null,10).reverse);assert(mergeDrivingInput(new Set(),touch,null,0).reverse);

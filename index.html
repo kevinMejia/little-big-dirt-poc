@@ -78,7 +78,7 @@ body.touch-enabled #mobile{display:flex}body.touch-enabled #help{display:none}
 
 <div id="hud"><div class="subtitle">FREE DRIVE</div><h1>LITTLE BIG DIRT</h1><div id="vehicleName">Backhoe Loader</div><div id="speed">0 <small>MPH</small></div><button id="debugToggle" type="button" aria-label="Toggle driving diagnostics" aria-pressed="false" title="Driving diagnostics">i</button><div id="treeTuning" style="font-size:11px;color:#ffe5a0;margin-top:6px"></div><div id="renderTuning" style="font-size:10px;color:#c6e3d5;margin-top:4px"></div><div id="terrainInfo" style="font-size:11px;color:#c6e3d5;margin-top:6px">Explore the hills!</div></div>
 
-<div id="switcher"><label class="physics-mode" for="physicsMode">Physics Mode<select id="physicsMode"><option value="original">Original</option><option value="rapier" selected>Rapier</option></select></label><button id="backhoeBtn" class="active">1 · Backhoe</button><button id="garbageBtn">2 · Garbage truck</button><a href="?handling=1" style="color:white;align-self:center">Handling course</a><button id="resetBtn">↻ Reset</button><button id="touchToggle" type="button" aria-label="Toggle touch controls" aria-pressed="false">Touch controls</button></div>
+<div id="switcher"><label class="physics-mode" for="physicsMode">Physics Mode<select id="physicsMode"><option value="original">Original</option><option value="rapier" selected>Rapier</option></select></label><button id="backhoeBtn" class="active">1 · Backhoe</button><button id="garbageBtn">2 · Garbage truck</button><button id="resetBtn">↻ Reset</button></div><button id="touchToggle" type="button" aria-label="Toggle touch controls" aria-pressed="false" hidden>Touch controls</button>
 
 <div id="status">Keyboard or gamepad supported</div>
 
@@ -117,11 +117,11 @@ import { addGroundTextures } from './GroundTextures.js';
 import { createPolishedLighting, ContactShading, polishTerrain, VehicleSurfaceEffects } from './VisualPolish.js';
 import { DirtJumpSystem, playgroundFeatures } from './DirtJumpSystem.js';
 import {playableVehicleConfig,smoothDrivingSteering,hybridDrivingInput,hybridLandingFeedback} from './PlayableVehicleSetup.js';
-import { RapierWorldVehicle, loadWorldPhysics } from './RapierWorldVehicle.js?v=rapier-world-4';
+import { RapierWorldVehicle, loadWorldPhysics } from './RapierWorldVehicle.js?v=rapier-world-5';
 import { BoundaryCannon } from './BoundaryCannon.js';
 import { VehicleFeedback, SoftBoundary, cameraReturnDecay } from './VehicleFeedback.js';
 
-import {readGamePreferences,saveGamePreference,gamePreferenceStorage} from './GamePreferences.js';
+import {readGamePreferences,saveGamePreference,gamePreferenceStorage} from './GamePreferences.js?v=central-settings-2';
 const preferenceStorage=gamePreferenceStorage(),preferences=readGamePreferences(preferenceStorage);
 const debugToggle=document.querySelector('#debugToggle');
 function toggleDiagnostics(enabled){document.body.classList.toggle('show-debug',enabled);debugToggle.setAttribute('aria-pressed',String(enabled));}
@@ -270,6 +270,10 @@ const keys=new Set();addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','A
 const controls=new DrivingInput({root:document.querySelector('#mobile'),toggle:document.querySelector('#touchToggle'),keys,actionsRoot:document.querySelector('#vehicleActions'),actionsToggle:document.querySelector('#actionsToggle')});
 if(typeof preferences.touchControls==='boolean')controls.setEnabled(preferences.touchControls);
 document.querySelector('#touchToggle').addEventListener('click',()=>saveGamePreference(preferenceStorage,'touchControls',controls.enabled));
+function applyControlPreference(){const saved=readGamePreferences(preferenceStorage),enabled=typeof saved.touchControls==='boolean'?saved.touchControls:navigator.maxTouchPoints>0||matchMedia('(any-pointer: coarse)').matches;if(enabled!==controls.enabled)controls.setEnabled(enabled);}
+addEventListener('lbd:preferences-change',applyControlPreference);
+addEventListener('storage',applyControlPreference);
+addEventListener('lbd:tuning-change',event=>{for(let i=0;i<configs.length;i++)Object.assign(configs[i],playableVehicleConfig(i,configs[i].collision));if(event.detail.paths.some(path=>path.startsWith('groundDebrisConfig.')))groundDebris.regenerate();});
 // Only the active controller is stepped; navigation reuses this existing selector.
 const physicsSelector=document.querySelector('#physicsMode');
 physicsSelector.addEventListener('change',async()=>{

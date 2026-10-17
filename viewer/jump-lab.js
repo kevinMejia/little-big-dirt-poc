@@ -7,7 +7,7 @@ import {DirtyGLB} from '../assets/dirty/DirtyGLB.js';
 import {StinkyGLB} from '../assets/stinky/StinkyGLB.js';
 import {jumpConfig,rampConfig} from '../VehicleConfig.js';
 import {PointerInputState,mergeDrivingInput} from '../DrivingInput.js';
-import {smoothDrivingSteering,hybridDrivingInput,hybridLandingFeedback} from '../PlayableVehicleSetup.js';
+import {smoothDrivingSteering,hybridDrivingInput,hybridLandingFeedback,playableVehicleConfig} from '../PlayableVehicleSetup.js';
 import {createPolishedLighting,VehicleSurfaceEffects} from '../VisualPolish.js';
 import {addGroundTextures} from '../GroundTextures.js';
 import {VehicleFeedback} from '../VehicleFeedback.js';
@@ -73,6 +73,7 @@ for(const button of document.querySelectorAll('.drive')){
  button.addEventListener('pointerdown',event=>{event.preventDefault();touch.set(event.pointerId,button.dataset.input);button.setPointerCapture(event.pointerId);button.classList.add('pressed');});
  for(const type of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(type,event=>{touch.release(event.pointerId);button.classList.toggle('pressed',touch.held(button.dataset.input));});
 }
+addEventListener('lbd:tuning-change',()=>{if(lab)Object.assign(lab.config,playableVehicleConfig(vehicleIndex(),lab.config.collision));});
 $('#reset').onclick=reset;$('#mode').onchange=rebuild;$('#feature').onchange=rebuild;$('#vehicle').onchange=rebuild;
 $('#view').onclick=()=>{follow=!follow;if(!follow){camera.position.set(190,190,-170);orbit.target.set(0,0,24);}else reset();};
 $('#cannon').onclick=()=>{

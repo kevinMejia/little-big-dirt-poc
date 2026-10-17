@@ -1,3 +1,4 @@
+import './TuningStore.js';
 import {vehicleConfig,originalDriveConfig,jumpConfig,jumpVehicleConfig} from './VehicleConfig.js';
 import {stinkyCollision} from './StinkyEquipment.js';
 
