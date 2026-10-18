@@ -1502,3 +1502,104 @@ export const turboBoostConfig = {
   // Suggested start: 2.5; no pickup colliders or rigid bodies are created.
   pickupRadius: 2.5,
 };
+// Word Hunt defaults. Runtime Settings overrides are persisted separately from vehicle tuning.
+export const wordHuntConfig={
+  // Controls: Automatically run the shuffled word hunt.
+  // Modes: Play, Dirty and Stinky; independent of vehicle handling.
+  // Units / actual limits: Boolean; true runs, false clears incomplete progress.
+  // Increase/decrease: True starts a hunt; false removes letters and HUD.
+  // Examples: true for Luca; false for driving only.
+  // Suggested start: true.
+  enabled: true,
+  // Controls: Word Hunt HUD visibility, independent of Driving HUD.
+  // Modes: Play, Dirty and Stinky; independent of vehicle handling.
+  // Units / actual limits: Boolean; no gameplay or timer effect.
+  // Increase/decrease: True shows spelling slots and elapsed time.
+  // Examples: false for an unobstructed view with pickups still active.
+  // Suggested start: true.
+  showHud: true,
+  // Controls: World letter rendering.
+  // Modes: Play, Dirty and Stinky; independent of vehicle handling.
+  // Units / actual limits: Boolean; hidden letters remain collectible.
+  // Increase/decrease: True makes letters visible; false hides world meshes.
+  // Examples: true for normal play; false for a visibility experiment.
+  // Suggested start: true.
+  visible: true,
+  // Controls: Shared letter geometry scale.
+  // Modes: Play, Dirty and Stinky; independent of vehicle handling.
+  // Units / actual limits: Metres per font unit; Settings clamps 2–6.
+  // Increase/decrease: Larger letters are easier to see; collection radius is independent.
+  // Examples: 3 compact; 3.6 balanced; 5 very prominent.
+  // Suggested start: 3.6.
+  letterSize: 3.6,
+  // Controls: Letter centre above sampled terrain.
+  // Modes: Play, Dirty and Stinky; independent of vehicle handling.
+  // Units / actual limits: Metres; use positive heights, typically 2.5–4.
+  // Increase/decrease: Higher lifts the visual; pickup still checks vehicle ground clearance.
+  // Examples: 2.5 low floating; 3 suits both vehicles; 4 tall.
+  // Suggested start: 3.
+  floatingHeight: 3,
+  // Controls: Readable horizontal wobble phase speed.
+  // Modes: Play, Dirty and Stinky; independent of vehicle handling.
+  // Units / actual limits: Degrees/second; visual yaw stays within ±32 degrees.
+  // Increase/decrease: Higher speeds up wobble; zero holds the phase.
+  // Examples: 0 still; 14 gentle; 30 lively.
+  // Suggested start: 14.
+  rotationSpeed: 14,
+  // Controls: Swept horizontal driving collection reach.
+  // Modes: Play, Dirty and Stinky; independent of vehicle handling.
+  // Units / actual limits: Metres; Settings clamps 3–10; vertical ground clearance <6m.
+  // Increase/decrease: Larger is more forgiving for both vehicles.
+  // Examples: 3 close contact; 5.5 forgiving; 8 very easy.
+  // Suggested start: 5.5.
+  collectionRadius: 5.5,
+  // Controls: Minimum separation between word letters.
+  // Modes: Play, Dirty and Stinky; independent of vehicle handling.
+  // Units / actual limits: Metres; positive; unavailable layouts safely retry without partial words.
+  // Increase/decrease: Higher spreads letters farther and increases search distance.
+  // Examples: 20 short drives; 24 balanced; 35 more exploration.
+  // Suggested start: 24.
+  minSpacing: 24,
+  // Controls: Particles emitted by each pickup.
+  // Modes: Play, Dirty and Stinky; independent of vehicle handling.
+  // Units / actual limits: Integer particles, clamped 0–64; completion triples, capped at 128.
+  // Increase/decrease: Higher adds sparkle and GPU work; zero suppresses particles.
+  // Examples: 0 minimal; 16 subtle; 24 cheerful; 40 busy.
+  // Suggested start: 24.
+  pickupParticleIntensity: 24,
+  // Controls: Pop, upward movement and shrink after collection.
+  // Modes: Play, Dirty and Stinky; independent of vehicle handling.
+  // Units / actual limits: Seconds; must be >0; progress and sound update immediately.
+  // Increase/decrease: Higher prolongs the visual; lower makes it snappier.
+  // Examples: 0.25 quick; 0.38 playful; 0.6 leisurely.
+  // Suggested start: 0.38.
+  pickupAnimationDuration: 0.38,
+  // Controls: Completed-word banner before automatic next word.
+  // Modes: Play, Dirty and Stinky; independent of vehicle handling.
+  // Units / actual limits: Seconds; must be >0; never pauses driving.
+  // Increase/decrease: Higher leaves the result visible longer.
+  // Examples: 2 quick; 2.6 balanced; 3 relaxed.
+  // Suggested start: 2.6.
+  celebrationDuration: 2.6,
+  // Controls: Independent Web Audio chime/jingle gain.
+  // Modes: Play, Dirty and Stinky; independent of vehicle handling.
+  // Units / actual limits: Linear gain 0–1; saved Settings clamps to this range.
+  // Increase/decrease: Higher is louder; zero silences the feature.
+  // Examples: 0 silent; 0.2 soft; 0.35 gentle; 0.5 prominent.
+  // Suggested start: 0.35.
+  soundVolume: 0.35,
+  // Controls: Mute Word Hunt sounds while retaining its volume.
+  // Modes: Play, Dirty and Stinky; independent of vehicle handling.
+  // Units / actual limits: Boolean; existing game audio is unaffected.
+  // Increase/decrease: True silences pickups, completion and record tones.
+  // Examples: true for quiet play; false for musical feedback.
+  // Suggested start: false.
+  muted: false,
+  // Controls: Initial editable word list when none has been saved.
+  // Modes: Play, Dirty and Stinky; independent of vehicle handling.
+  // Units / actual limits: Comma-separated defaults; Settings stores unique uppercase A–Z words, 2–12 letters.
+  // Increase/decrease: More words extend each shuffled round; an empty saved list pauses the feature.
+  // Examples: "TREE,BALL" supports repeated letters; customize through Settings.
+  // Suggested start: Five sample words below.
+  words: "LUCA,DIRT,TREE,TRUCK,STINKY",
+};

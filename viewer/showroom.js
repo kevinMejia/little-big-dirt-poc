@@ -1,3 +1,4 @@
+import {LetterShowroomPreview} from '../FloatingLetters.js';
 import {createTurboPedestal} from './TurboPedestal.js';
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
@@ -70,8 +71,11 @@ async function chooseAsset(id){
  const entry=showroomAssets.find(asset=>asset.id===id);if(!entry)return;const generation=++assetGeneration;
  $('#visualSettings').disabled=true;$('#loadStatus').hidden=false;$('#loadStatus').textContent='Loading the Blender asset…';$('#error').textContent='';
  try{
-  const loaded=await ShowroomAssetPreview.load(entry);if(disposed||generation!==assetGeneration){loaded.dispose();return;}
+  const loaded=await (entry.id==='floating-letter'?LetterShowroomPreview.load():ShowroomAssetPreview.load(entry));if(disposed||generation!==assetGeneration){loaded.dispose();return;}
   preview?.dispose();preview=loaded;scene.add(preview.object);settings={...showroomDefaults};updateControls();resize();applySettings();resetView();
+  const isLetter=entry.id==='floating-letter';letterControl.hidden=!isLetter;if(isLetter)preview.setLetter(letterSelect.value);
+  $('.asset-title h2').textContent=isLetter?'WORD HUNT':'TURBO BOOST';$('.asset-title p').textContent=isLetter?'FLOATING 3D ALPHABET':'ENERGY PICKUP / BLENDER GLB';$('.asset-title .description').textContent=isLetter?'Find a letter. Start an adventure.':'A little spark of speed.';$('.asset-caption').textContent=isLetter?'Shared beveled letters · A–Z':'01 / Turbo Boost';$('.review-note').textContent='Preview and adjust appearance. Export saves visual preview values only.';
+  $('#sourceLink').textContent=isLetter?'Letter renderer source':'Blender source';$('#glbLink').textContent=isLetter?'Font data':'Download GLB';
   $('#sourceLink').href=entry.source;$('#glbLink').href=entry.url;$('#visualSettings').disabled=false;$('#loadStatus').hidden=true;
  }catch(error){console.error(error);$('#error').textContent='The preview could not load. '+error.message;$('#loadStatus').hidden=true;}
 }
@@ -80,6 +84,8 @@ function downloadSettings(){
  const link=document.createElement('a');link.href=url;link.download=data.assetId+'-visual-preview.json';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);$('#settingsStatus').textContent='Exported preview values. No gameplay or approval state changed.';
 }
 buildControls();
+const letterControl=document.createElement('label');letterControl.textContent='Preview letter ';const letterSelect=document.createElement('select');letterSelect.setAttribute('aria-label','Preview letter');for(const c of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'){const o=document.createElement('option');o.value=o.textContent=c;letterSelect.append(o);}letterControl.append(letterSelect);$('#controls').prepend(letterControl);letterSelect.onchange=()=>preview?.setLetter?.(letterSelect.value);
+
 for(const entry of showroomAssets){const option=document.createElement('option');option.value=entry.id;option.textContent=entry.label;$('#assetSelect').append(option);}
 const upcoming=document.createElement('optgroup');upcoming.label='Future previews';for(const label of futureAssetCategories){const option=document.createElement('option');option.textContent=label+' — planned';option.disabled=true;upcoming.append(option);}$('#assetSelect').append(upcoming);
 $('#assetSelect').onchange=event=>chooseAsset(event.target.value);

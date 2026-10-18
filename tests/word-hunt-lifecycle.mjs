@@ -1,0 +1,25 @@
+import assert from 'node:assert/strict';
+import * as THREE from '../three-test.mjs';
+import {WordHuntSystem} from '../WordHuntSystem.js';
+import {readHunt,saveHunt} from '../WordHuntState.js';
+class Element {constructor(){this.children=[];this.textContent='';}append(...c){this.children.push(...c);}replaceChildren(){this.children=[];}setAttribute(){}remove(){}}
+const store=new Map(),storage={getItem:k=>store.get(k)??null,setItem:(k,v)=>store.set(k,v)};
+globalThis.window=new EventTarget();window.localStorage=storage;window.sessionStorage=storage;
+globalThis.document=new EventTarget();document.createElement=()=>new Element();document.head=new Element();document.body=new Element();
+const data=readHunt();data.words=['TREE'];saveHunt(data);
+const letters={create:()=>new THREE.Group(),animate:(r,t,s,y)=>{r.position.y=y;},dispose(){}};
+const hunt=new WordHuntSystem(new THREE.Scene(),{halfSize:330,height:()=>0},letters);
+const zero=new THREE.Vector3();hunt.update(0,zero,false,100);assert.equal(hunt.word,'TREE');assert.equal(hunt.items.length,4);assert.equal(hunt.timer.started,false);
+const original=hunt.items.map(i=>({...i.point}));
+const collect=(index,now)=>{hunt.resetVehicle();const p=hunt.items[index].point;hunt.update(.016,new THREE.Vector3(p.x,p.y,p.z),false,now);};
+collect(3,1000);assert.deepEqual(hunt.items.map(i=>i.collected),[false,false,false,true]);assert.equal(hunt.timer.elapsed,0);
+hunt.resetVehicle();assert.deepEqual(hunt.items.map(i=>i.point),original);assert.equal(hunt.timer.started,true);
+collect(0,1200);assert.equal(hunt.timer.elapsed,200);
+hunt.update(.01,zero,true,1500);hunt.update(.01,zero,true,1700);collect(2,1800);assert.equal(hunt.timer.elapsed,200);
+collect(1,2200);assert.equal(hunt.timer.elapsed,600);assert.equal(hunt.timer.started,false);assert.match(hunt.banner.textContent,/NEW RECORD/);assert.equal(readHunt().records.TREE.count,1);assert.equal(readHunt().records.TREE.best,600);
+hunt.update(.5,zero,false,2700);assert.equal(hunt.timer.elapsed,600);
+hunt.update(3,zero,false,5700);assert.equal(hunt.word,'TREE');assert.equal(hunt.items.filter(i=>i.collected).length,0);
+collect(2,6000);collect(3,6100);collect(1,6200);collect(0,6300);assert.equal(readHunt().records.TREE.count,2);assert.equal(readHunt().records.TREE.best,300);
+const disabled=readHunt();disabled.enabled=false;saveHunt(disabled);hunt.change();assert.equal(hunt.items.length,0);assert.equal(hunt.word,null);assert.equal(hunt.hud.hidden,true);
+disabled.enabled=true;disabled.words=[];saveHunt(disabled);hunt.change();hunt.update(.1,zero,false,7000);assert.equal(hunt.word,null);assert.equal(hunt.items.length,0);hunt.dispose();
+console.log('PASS Word Hunt lifecycle: out-of-order/repeated slots, exact first/final timer, pause/reset isolation, particles, records, automatic next hunt, disable and empty list.');

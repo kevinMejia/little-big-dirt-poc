@@ -1,3 +1,4 @@
+import {appendWordHuntSettings} from './WordHuntSettings.js';
 import {tuningFields,fieldPath,tuningValue,defaultTuningValue,setTuning,resetTuning,exportTuning,exportEnvironmentTuning,exportStorybookTuning} from './TuningStore.js';
 import {readGamePreferences,saveGamePreference,resetGamePreference,gamePreferenceStorage} from './GamePreferences.js?v=central-settings-3';
 import {settingsPlacement} from './SettingsPlacement.js';
@@ -77,6 +78,7 @@ function createSettingsPanel(){
    }
    const reset=document.createElement('button');reset.textContent='Reset '+group;reset.addEventListener('click',()=>{report(resetTuning(paths));render();});section.append(reset);
   }
+  appendWordHuntSettings(main,expanded.has('Word Hunt'));
   const display=document.createElement('details');display.dataset.group='Display / HUD';display.open=expanded.has('Display / HUD');display.innerHTML='<summary>Display / HUD</summary><div class="section"></div>';main.append(display);
   for(const [key,label,description] of [
    ['showDrivingHud','Show Driving HUD','Show the existing top-left vehicle, speed, physics and performance panel in Play. Off by default.'],
@@ -124,7 +126,7 @@ function createSettingsPanel(){
  for(const type of ['keydown','keyup'])dialog.addEventListener(type,event=>{
   const target=event.target;
   if(event.key==='Escape'){event.stopPropagation();if(type==='keydown')dialog.close();return;}
-  if(type==='keydown'&&(target.matches('input[type=number],select')||target.matches('input[type=range]')&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End','PageUp','PageDown'].includes(event.key)||target.matches('button,input[type=checkbox]')&&[' ','Enter'].includes(event.key)))event.stopPropagation();
+  if(type==='keydown'&&(target.matches('input:not([type]),input[type=text],input[type=number],select')||target.matches('input[type=range]')&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End','PageUp','PageDown'].includes(event.key)||target.matches('button,input[type=checkbox]')&&[' ','Enter'].includes(event.key)))event.stopPropagation();
  });
  document.querySelector('#physicsMode')?.addEventListener('change',()=>{if(dialog.open)render();});
  window.addEventListener('storage',()=>{if(dialog.open)render();});
