@@ -15,6 +15,14 @@ export const tuningFields=[];
 function add(group,root,keys,{vehicle=false,mode='both',scope='driving'}={}){
  for(const [key,label,min,max,step,unit,description,hardMin=min,hardMax=max] of keys)tuningFields.push({id:root+'.'+key,root,key,label,group,min,max,step,unit,description,hardMin,hardMax,vehicle,mode,scope});
 }
+add('Turbo Boost','turboBoostConfig',[
+ ['speedBoostPercent','Extra boost speed',0,300,10,'%','Live in hybrid Play: 0 = normal; 100 = 2x; 200 = 3x; 300 = 4x. Higher is faster; normal handling values stay unchanged.'],
+ ['durationSeconds','Boost duration',0,20,.1,'s','Higher lasts longer; 0 disables collection. A second pickup refreshes the timer without stacking. Applies on the next collection.'],
+ ['respawnSeconds','Pickup respawn time',.1,60,.1,'s','Higher waits longer before the floating asset returns. Pedestals remain visible. Existing cooldowns keep their current deadline.'],
+ ['pickupCount','Pickup count',0,30,1,'','Live seeded placement: rounded to an integer. Higher adds pickups; lower removes the last slots. Retained slots preserve cooldowns.'],
+ ['pickupRadius','Collection radius',.5,6,.1,'m','Higher is easier to collect. Swept checks prevent missed pickups at high speed; no rigid bodies or invisible colliders.'],
+]);
+tuningFields.push({id:'turboBoostConfig.enabled',root:'turboBoostConfig',key:'enabled',label:'Enable Turbo Boost',description:'Live in hybrid Play. Off hides pickups and clears active boost; lab and Original driving remain unchanged.',group:'Turbo Boost',type:'boolean',mode:'both',vehicle:false});
 add('Driving','drive',[
  ['acceleration','Acceleration',0,40,.5,'m/s²','Forward acceleration; speed adjustment also multiplies this.',0,null],
  ['topSpeed','Forward speed',0,60,.5,'m/s','Base forward limit before speed adjustment and hills.',0,null],

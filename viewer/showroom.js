@@ -1,3 +1,4 @@
+import {createTurboPedestal} from './TurboPedestal.js';
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
@@ -16,10 +17,7 @@ const pedestalTop=.46;
 const studioMaterials=[];
 function material(color,metalness,roughness){const m=new THREE.MeshStandardMaterial({color,metalness,roughness});studioMaterials.push(m);return m;}
 function pedestal(){
- const base=new THREE.Mesh(new THREE.CylinderGeometry(1.95,2.08,.32,80),material('#344f49',.5,.38));base.position.y=.16;base.castShadow=base.receiveShadow=true;scene.add(base);
- const top=new THREE.Mesh(new THREE.CylinderGeometry(1.88,1.95,.14,80),material('#5c7569',.38,.35));top.position.y=.39;top.receiveShadow=true;scene.add(top);
- const lightMaterial=new THREE.MeshBasicMaterial({color:'#85d7ca'});studioMaterials.push(lightMaterial);const edge=new THREE.Mesh(new THREE.TorusGeometry(1.92,.018,8,100),lightMaterial);edge.rotation.x=Math.PI/2;edge.position.y=.32;scene.add(edge);
- const detail=new THREE.Mesh(new THREE.RingGeometry(1.3,1.31,80),material('#a3b19c',.5,.4));detail.rotation.x=-Math.PI/2;detail.position.y=pedestalTop+.003;scene.add(detail);
+ scene.add(createTurboPedestal(studioMaterials));
  const floor=new THREE.Mesh(new THREE.PlaneGeometry(200,200),material('#e8ece4',0,.92));floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);
 }
 function resetView(){camera.position.set(4.5,3.7,7.8);orbit.target.set(0,2.35,0);orbit.update();}

@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import {JumpVehiclePrototype,rotateVector} from './JumpVehiclePrototype.js';
+import {TurboBoost} from './TurboBoost.js';
+import {getSpeedMultiplier} from './VehicleMotion.js';
 import {arcadeHandlingConfig} from './VehicleConfig.js';
 import {HillSpeedPhysics} from './HillSpeedPhysics.js';
 import {ArcadeGroundDrive} from './ArcadeGroundDrive.js';
@@ -7,7 +9,7 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 let rapierPromise;
 export async function loadWorldPhysics(){rapierPromise??=import('./viewer/vendor/rapier/rapier.mjs').then(async module=>{await module.default.init();return module.default;});return rapierPromise;}
 export class RapierWorldVehicle {
- constructor(RAPIER,{surface,height,groundDebris,trees,rocks,limit=205}){if(typeof trees?.resolveMovement!=='function'||typeof rocks?.resolveMovement!=='function')throw new Error('Rapier requires current tree/rock collision adapters. Reload the game to refresh cached modules.');Object.assign(this,{RAPIER,surface,height,groundDebris,trees,rocks,limit});this.hills=new HillSpeedPhysics(height);this.point=new THREE.Vector3();this.rotation=new THREE.Quaternion();this.normal=new THREE.Vector3();this.cannonArmed=true;this.cannonFlight=false;this.cameraHeading=null;}
+ constructor(RAPIER,{surface,height,groundDebris,trees,rocks,limit=205}){if(typeof trees?.resolveMovement!=='function'||typeof rocks?.resolveMovement!=='function')throw new Error('Rapier requires current tree/rock collision adapters. Reload the game to refresh cached modules.');Object.assign(this,{RAPIER,surface,height,groundDebris,trees,rocks,limit});this.hills=new HillSpeedPhysics(height);this.turbo=new TurboBoost();this.point=new THREE.Vector3();this.rotation=new THREE.Quaternion();this.normal=new THREE.Vector3();this.cannonArmed=true;this.cannonFlight=false;this.cameraHeading=null;}
  setVehicle(vehicle,cfg,index,position,heading){
   this.physics?.dispose();this.vehicle=vehicle;const tuning=arcadeHandlingConfig[index?'stinky':'dirty'];this.cfg={...cfg,accel:tuning.acceleration,max:tuning.topSpeed,reverse:tuning.reverseSpeed,turn:tuning.turn,drag:tuning.drag};this.index=index;
   const model=vehicle.userData.controller,pivots=(model?.wheels?model.wheels.map(w=>w.steering||w):vehicle.children).filter(w=>w.userData.wheel);
@@ -16,7 +18,21 @@ export class RapierWorldVehicle {
   this.arcade=new ArcadeGroundDrive(this);this.physics.step=(h,input)=>this.arcade.step(h,input);
   this.resetAt(position,heading);
  }
- resetAt(position,heading){this.physics.reset(position.x,position.z,position.y-.12,heading);this.physics.hasGrounded=true;this.hills.reset();this.cannonFlight=false;this.cannonArmed=true;this.cameraHeading=heading;}
+ resetAt(position,heading){this.turbo.reset();this.physics.reset(position.x,position.z,position.y-.12,heading);this.physics.hasGrounded=true;this.hills.reset();this.cannonFlight=false;this.cannonArmed=true;this.cameraHeading=heading;}
+ collectTurbo(){
+  if(!this.turbo.activate())return false;
+  const p=this.physics,t=arcadeHandlingConfig[this.index?'stinky':'dirty'];
+  const sign=Math.sign(p.state.speed)||1;
+  const normal=(sign<0?t.reverseSpeed:t.topSpeed)*getSpeedMultiplier(this.cfg.hill.speedAdjustmentPercent);
+  const v=p.body.linvel(),q=p.body.rotation(),f=rotateVector(q,{x:0,y:0,z:1});
+  const len=Math.hypot(v.x,v.z);
+  const target=Math.max(len,normal*this.turbo.multiplier);
+  const dx=p.state.airborne&&len>.1?v.x/len:Math.sin(Math.atan2(f.x,f.z))*sign;
+  const dz=p.state.airborne&&len>.1?v.z/len:Math.cos(Math.atan2(f.x,f.z))*sign;
+  p.body.setLinvel({x:dx*target,y:v.y,z:dz*target},true);
+  p.state.speed=target*sign;
+  return true;
+ }
  rootPose(pose){const down=rotateVector(pose.rotation,{x:0,y:-this.physics.offset,z:0});return {x:pose.position.x+down.x,y:pose.position.y+down.y,z:pose.position.z+down.z};}
  afterStep(p,h){
   const current=this.rootPose({position:p.body.translation(),rotation:p.body.rotation()}),previous=this.rootPose(p.previousPose),q=p.body.rotation(),forward=rotateVector(q,{x:0,y:0,z:1}),heading=Math.atan2(forward.x,forward.z),velocity=p.body.linvel();

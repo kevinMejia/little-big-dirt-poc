@@ -1,0 +1,28 @@
+import assert from 'node:assert/strict';
+import {TurboBoost,TurboPickupTimer,crossesPickup} from '../TurboBoost.js';
+import {turboBoostConfig} from '../VehicleConfig.js';
+import {turboPickupLayout} from '../TurboPickupLayout.js';
+import {tuningFields,setTuning,resetTuning,loadTuning,tuningValue} from '../TuningStore.js';
+
+assert.deepEqual(turboBoostConfig,{enabled:true,speedBoostPercent:200,durationSeconds:2,respawnSeconds:5,pickupCount:15,pickupRadius:2.5});
+const boost=new TurboBoost({...turboBoostConfig});assert(boost.activate());assert.equal(boost.multiplier,3);
+boost.step(1.5);boost.activate();assert.equal(boost.remaining,2);assert.equal(boost.multiplier,3,'refresh without stacking');
+boost.step(2);assert.equal(boost.multiplier,1);boost.activate();boost.reset();assert.equal(boost.remaining,0);
+boost.config.enabled=false;assert(!boost.activate());
+const a=new TurboPickupTimer(),b=new TurboPickupTimer();
+assert(a.collect(5));assert(!a.collect(5));a.step(2);assert(b.collect(5));a.step(3);b.step(3);
+assert(a.available);assert(!b.available);assert.equal(b.remaining,2);assert(a.collect(5));boost.reset();assert.equal(a.remaining,5,'vehicle reset independent of pickup timers');
+assert(crossesPickup({x:-10,y:0,z:0},{x:10,y:0,z:0},{x:0,y:0,z:0},2.5));
+assert(!crossesPickup({x:-10,y:10,z:0},{x:10,y:10,z:0},{x:0,y:0,z:0},2.5));
+const options={halfSize:330,height:()=>0,trees:[{x:80,z:80,scale:1}],rocks:[{x:-80,z:-80,radius:3}],ramps:[{x:80,z:0,angle:0}],count:15};
+const layout=turboPickupLayout(options);assert.equal(layout.length,15);assert.deepEqual(layout,turboPickupLayout(options));
+assert(layout.some(p=>p.x===80&&p.z===-34),'ramp approach pickup');
+assert(layout.every(p=>Math.max(Math.abs(p.x),Math.abs(p.z))<=305&&p.y===0));
+assert.deepEqual(layout.slice(0,5),turboPickupLayout({...options,count:5}),'stable slots across count edits');
+const data=new Map(),storage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v)};
+for(const key of Object.keys(turboBoostConfig))assert(tuningFields.some(f=>f.id==='turboBoostConfig.'+key),'exposed '+key);
+assert(setTuning('turboBoostConfig.speedBoostPercent',100,storage));assert(setTuning('turboBoostConfig.pickupCount',20,storage));
+const saved=[...data];resetTuning(undefined,storage);for(const [k,v]of saved)data.set(k,v);loadTuning(storage);
+assert.equal(tuningValue('turboBoostConfig.speedBoostPercent'),100);assert.equal(tuningValue('turboBoostConfig.pickupCount'),20);
+resetTuning(undefined,storage);
+console.log('PASS Turbo: defaults, exact duration, refresh without stacking, independent respawns, reset isolation, swept collection/vertical reach, seeded placement and persisted Settings.');

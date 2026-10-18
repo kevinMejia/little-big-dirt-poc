@@ -126,3 +126,39 @@ for(const index of [0,1])for(const ramp of scatteredJumps.features){
  game.dispose();
 }
 console.log('PASS: both vehicles approach, jump and land all four seeded, rotated main-world ramps on actual rolling terrain.');
+
+// Turbo is an overlay on the authoritative controller, not a second solver.
+for(const index of [0,1]){
+ const game=new RapierWorldVehicle(R,{surface:flat,height:()=>0,groundDebris:debris,trees,rocks,limit:10000});
+ game.setVehicle(vehicle(index),cfg(index),index,new THREE.Vector3(0,0,-65),0);
+ const normal=game.cfg.max,normalConfig=JSON.stringify(game.cfg),baseVelocity=normal;
+ assert(game.collectTurbo());assert(Math.abs(game.physics.body.linvel().z-normal*3)<1e-6,'immediate 3x speed');
+ for(let i=0;i<120;i++)game.update(1/120,{throttle:1,steering:.1});
+ assert(game.turbo.remaining>.99 && game.turbo.remaining<1.01);
+ assert(Math.abs(game.physics.state.speed)>normal*2.8,'raised speed cap');
+ game.collectTurbo();assert.equal(game.turbo.remaining,2);assert(game.physics.state.speed<normal*3.1,'no stacking');
+ for(let i=0;i<240;i++)game.update(1/120,{throttle:1});
+ assert(game.turbo.remaining<1e-10);
+ const previous=game.physics.state.speed;game.update(1/120,{throttle:1});
+ assert(previous-game.physics.state.speed<normal*.3,'smooth expiration, no velocity snap');
+ for(let i=0;i<1000;i++)game.update(1/120,{throttle:1});
+ assert(Math.abs(game.physics.state.speed-normal)<.1,'returns to ordinary speed');
+ assert.equal(JSON.stringify(game.cfg),normalConfig,'no permanent vehicle tuning mutation');
+ game.collectTurbo();game.resetAt(new THREE.Vector3(0,0,0),0);assert.equal(game.turbo.remaining,0);assert.equal(game.physics.state.speed,0);
+ game.physics.state.airborne=true;game.physics.body.setLinvel({x:4,y:12,z:8},true);game.collectTurbo();
+ const v=game.physics.body.linvel();assert.equal(v.y,12,'airborne boost preserves vertical momentum');assert(Math.abs(Math.hypot(v.x,v.z)-normal*3)<.001);
+ game.dispose();
+}
+for(const index of [0,1])for(const ramp of scatteredJumps.features){
+ const start=rampPoint(ramp,0,-45),game=new RapierWorldVehicle(R,{surface:scatteredMesh,height:(x,z)=>scatteredJumps.sample(x,z),groundDebris:debris,trees,rocks,limit:320});
+ game.setVehicle(vehicle(index),cfg(index),index,new THREE.Vector3(start.x,scatteredJumps.sample(start.x,start.z),start.z),ramp.angle);
+ game.collectTurbo();let took=false,landed=false;
+ for(let i=0;i<1300;i++){
+  const state=game.update(1/120,{throttle:game.cannonFlight?0:1});
+  for(const e of state.events){if(e.type==='takeoff'&&e.vy>.5)took=true;if(e.type==='landing'&&took)landed=true;}
+  assert([state.position.x,state.position.y,state.position.z,state.speed].every(Number.isFinite));
+  if(took&&landed)break;
+ }
+ assert(took&&landed,`boosted ${index} ${ramp.id} launch and landing`);game.dispose();
+}
+console.log('PASS Turbo both vehicles: immediate 3x, 2-second duration/refill, smooth expiry, no tuning mutation, reset, airborne momentum, and all eight boosted ramp launches/landings.');

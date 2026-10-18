@@ -1456,3 +1456,49 @@ export const jumpVehicleConfig = {
 
   },
 };
+
+// Main-world Turbo Boost. Shared by both vehicles; floating Settings saves overrides.
+export const turboBoostConfig = {
+  // Controls: Enable pickup collection, rendering and boost timers.
+  // Modes: HYBRID main world; lab and Original driving are unchanged.
+  // Units / actual limits: boolean true/false.
+  // Increase/decrease: true enables pickups; false clears boosts and hides pickups.
+  // Examples: true = on; false = off.
+  // Suggested start: true; all Turbo Boost settings apply live.
+  enabled: true,
+  // Controls: Extra speed and acceleration relative to normal vehicle tuning.
+  // Modes: HYBRID main world; applies to Dirty and Stinky.
+  // Units / actual limits: percent 0..300; temporary multiplier = 1 + percent/100.
+  // Increase/decrease: higher gives a stronger immediate boost; lower is gentler.
+  // Examples: 0 = normal; 100 = 2x; 200 = 3x; 300 = 4x speed.
+  // Suggested start: 200; another pickup refreshes duration, never stacks multipliers.
+  speedBoostPercent: 200,
+  // Controls: Active boost duration, refreshed on each collection.
+  // Modes: HYBRID main world; reset/switch clears active boost only.
+  // Units / actual limits: seconds 0..20; 0 disables collection.
+  // Increase/decrease: higher lasts longer; lower returns to normal sooner.
+  // Examples: 1 = brief; 2 = default; 5 = extended.
+  // Suggested start: 2; expiration uses existing smooth speed-limit settling.
+  durationSeconds: 2,
+  // Controls: Independent cooldown before each floating collectible returns.
+  // Modes: Main-world pickups; pedestal stays visible throughout cooldown.
+  // Units / actual limits: seconds 0.1..60.
+  // Increase/decrease: higher waits longer; lower respawns sooner.
+  // Examples: 1 = frequent; 5 = default; 15 = sparse.
+  // Suggested start: 5; editing affects the next collection, not timers already running.
+  respawnSeconds: 5,
+  // Controls: Desired seeded pickup count, with clear terrain placement filters.
+  // Modes: Main world; count changes rebuild pickup slots, not terrain or ramps.
+  // Units / actual limits: integer 0..30; fractional settings round to nearest integer.
+  // Increase/decrease: higher adds pickups; lower removes slots from the end.
+  // Examples: 0 = none; 15 = default; 30 = maximum mobile budget.
+  // Suggested start: 15; retained slots keep their respawn timers when count changes.
+  pickupCount: 15,
+  // Controls: Swept horizontal collection distance from the vehicle origin.
+  // Modes: HYBRID main world; vertical reach is limited to 3.5 m above ground.
+  // Units / actual limits: world units 0.5..6.
+  // Increase/decrease: higher is easier to collect; lower requires closer contact.
+  // Examples: 1 = precise; 2.5 = default; 5 = forgiving.
+  // Suggested start: 2.5; no pickup colliders or rigid bodies are created.
+  pickupRadius: 2.5,
+};

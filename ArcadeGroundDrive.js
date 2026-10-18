@@ -17,11 +17,11 @@ export class ArcadeGroundDrive {
   const wasAir=p.state.airborne;
   if(!wasAir){
    const hill=a.hills.update({x:root.x,z:root.z,heading,speed,thrust:throttle,config:cfg.hill,dt:h});a.grade=hill.grade;
-   const scale=getSpeedMultiplier(cfg.hill.speedAdjustmentPercent),previous=speed;
-   let acceleration=scale*(throttle*(cfg.accel??t.acceleration)*(throttle>0&&speed<0?1.5:1)+(throttle?hill.direction*(cfg.accel??t.acceleration)*hill.modifier:0));
+   const scale=getSpeedMultiplier(cfg.hill.speedAdjustmentPercent),boost=a.turbo?.multiplier??1,previous=speed;
+   let acceleration=scale*boost*(throttle*(cfg.accel??t.acceleration)*(throttle>0&&speed<0?1.5:1)+(throttle?hill.direction*(cfg.accel??t.acceleration)*hill.modifier:0));
    if(input.brake&&!input.emergencyBrake)acceleration-=Math.sign(speed)*Math.min(Math.abs(speed)/h,shared.brakeDeceleration);
    speed+=acceleration*h;speed-=speed*(cfg.drag??t.drag)*h*.08;
-   speed=a.hills.limitSpeed(speed,cfg.max*scale,cfg.reverse*scale,h,previous);
+   speed=a.hills.limitSpeed(speed,cfg.max*scale*boost,cfg.reverse*scale*boost,h,previous);
    if(input.emergencyBrake)speed=Math.sign(speed)*Math.max(0,Math.abs(speed)-shared.emergencyBrakeDeceleration*h);
    if(!throttle)speed=applyReleaseDeceleration(speed,h,cfg.hill);
    heading-=steer*(cfg.turn??t.turn)*Math.min(Math.abs(speed)/t.steeringFullSpeed,1)*h*Math.sign(speed||1)*t.steeringResponse/(1+t.speedSteeringReduction*Math.abs(speed));
@@ -83,6 +83,7 @@ export class ArcadeGroundDrive {
   const v=p.body.linvel(),forward=rotateVector(p.body.rotation(),{x:0,y:0,z:1}),len=Math.hypot(forward.x,forward.z)||1;
   p.state.speed=(v.x*forward.x+v.z*forward.z)/len;p.state.verticalSpeed=v.y;
   if(p.events.length>32)p.events.splice(0,p.events.length-32);
+  a.turbo?.step(h);
   p.capturePose(p.currentPose);for(let i=0;i<p.wheels.length;i++)p.currentPose.suspension[i]=p.rest-p.state.compression[i];
  }
 }
