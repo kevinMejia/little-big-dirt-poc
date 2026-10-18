@@ -4,15 +4,12 @@ Live preview: `index.html?storybook=1`.
 Comparison gallery: `viewer/storybook-review.html` (also linked from Environment
 Workshop → Painted countryside review). Approved October 17, 2026: normal Play
 now uses the painted background. `?storybook=0` retains the original for comparison;
-`?storybook=1` adds review camera controls. Normal Play has no review toolbar.
-Artwork loading failure retains the original background as a fallback.
+`?storybook=1` also uses painted scenery. The former review toolbar is removed
+from all Play URLs. Artwork loading failure retains the original as a fallback.
 
-The comparison gallery contains matching north, east and high-hilltop camera
-captures. In the live preview, the compact view chooser provides north/east/south/
-west and hilltop presets, plus Drive / orbit to return to the normal chase camera.
-Hilltop moves only the camera to a sampled high point on the existing terrain.
-Show Original / Show Painted switches backgrounds without reloading or changing
-the car. Rendering distance is extended only while the painted version is active.
+The gallery preserves matching north, east and high-hilltop captures from visual
+review. Background adjustments remain available in shared Settings.
+
 
 ## Original artwork
 
@@ -53,8 +50,8 @@ Blender was not needed: the actual illustration supplies the visual detail, whil
 the lightweight runtime skirt must follow the existing terrain edge precisely.
 
 The regular terrain, ramps, roads, models, trees, rocks, collision adapters,
-vehicle tuning, lighting and input handlers remain unchanged. Review camera
-presets run only on the explicit review route; grading runs in default Play. Original
+vehicle tuning, lighting and input handlers remain unchanged. Background
+grading runs in default Play. Original
 background fog and camera range are restored when comparing or disposing.
 
 ## Live settings
@@ -102,3 +99,6 @@ passes. No vehicle physics defaults were changed.
 
 Review screenshots are under `assets/backgrounds/storybook-v1/review/`; the combined
 comparison sheet is `docs/screenshots/storybook-comparison.png`.
+
+Update: the review toolbar has been removed from Play, including `?storybook=1`.
+Background adjustments remain in shared Settings; the static comparison gallery remains available.

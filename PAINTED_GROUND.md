@@ -47,6 +47,9 @@ Screenshots in `docs/screenshots/`: `painted-grass-before.png`,
 `painted-grass-landscape.png`, and `painted-grass-portrait.png`.
 
 The approved painted countryside background is now enabled in normal Play. The
-review toolbar stays exclusive to `?storybook=1`; `?storybook=0` keeps the original
+review toolbar is removed from all Play URLs; `?storybook=0` keeps the original
 background for comparison. This does not disable painted ground; use its strength
 setting independently. Gameplay, vehicle tuning and terrain positions are unchanged.
+
+Update: the review toolbar has been removed from Play, including `?storybook=1`.
+Background adjustments remain in shared Settings; the static comparison gallery remains available.
