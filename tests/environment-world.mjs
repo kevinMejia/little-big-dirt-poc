@@ -10,17 +10,33 @@ import {RockInteractionSystem} from '../RockInteractionSystem.js';
 function readGLB(path){
  const data=fs.readFileSync(path),length=data.readUInt32LE(12),g=JSON.parse(data.subarray(20,20+length)),binary=20+length+8;
  const positions=index=>{const a=g.accessors[index],v=g.bufferViews[a.bufferView],out=new Float32Array(a.count*3);for(let i=0;i<a.count;i++)for(let k=0;k<3;k++)out[i*3+k]=data.readFloatLE(binary+(v.byteOffset||0)+(a.byteOffset||0)+i*(v.byteStride||12)+k*4);return out;};
- const materials=g.materials.map(m=>new THREE.MeshStandardMaterial({color:new THREE.Color(...m.pbrMetallicRoughness.baseColorFactor.slice(0,3))}));
+ const materials=g.materials.map(m=>new THREE.MeshStandardMaterial({color:new THREE.Color(...(m.pbrMetallicRoughness.baseColorFactor??[1,1,1,1]).slice(0,3))}));
  const nodes=g.nodes.map(n=>{let o=new THREE.Group();if(n.mesh!==undefined){const meshes=g.meshes[n.mesh].primitives.map(p=>{const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(positions(p.attributes.POSITION),3));return new THREE.Mesh(geo,materials[p.material]);});if(meshes.length===1)o=meshes[0];else for(const mesh of meshes)o.add(mesh);}o.name=n.name;o.userData=n.extras||{};if(n.translation)o.position.fromArray(n.translation);if(n.rotation)o.quaternion.fromArray(n.rotation);if(n.scale)o.scale.fromArray(n.scale);return o;});
  g.nodes.forEach((n,i)=>{for(const j of n.children||[])nodes[i].add(nodes[j]);});const root=new THREE.Group();for(const i of g.scenes[g.scene||0].nodes)root.add(nodes[i]);return root;
 }
 const assets=process.argv[2],library=new EnvironmentAssets();
 for(const [kind,path] of [['tree','trees/cartoon_tree.glb'],['boulder','rocks/cartoon_boulder.glb'],['fractured','rocks/cartoon_boulder_fractured.glb']])library.cache.set(kind,Promise.resolve(readGLB(assets+'/'+path)));
+for(let i=1;i<=5;i++)library.cache.set('Pine_'+i,Promise.resolve(readGLB(assets+'/trees/pines/Pine_'+i+'.glb')));
 assert.equal(library.load('tree'),library.load('tree'),'one cached load per type');
 const scene=new THREE.Scene(),trees=new TreeCollisionSystem(scene),rocks=new RockInteractionSystem(scene);
 const tree=new THREE.Group();tree.position.set(0,0,5);const oldTree=new THREE.Mesh(new THREE.BoxGeometry(.4,3,.4),new THREE.MeshStandardMaterial());tree.add(oldTree);scene.add(tree);const t=trees.addTree(tree,.22,3.5);
+for(let i=1;i<=30;i++){const g=new THREE.Group();g.position.set(i*9,-.08,20);scene.add(g);trees.addTree(g,.22);}
+const layoutBefore=trees.trees.map(t=>[t.x,t.z,t.radius,...t.group.position.toArray()]);
 const rock=rocks.addRock(10,5,1),small=rocks.addRock(20,5,.5);const oldGeometry=rock.mesh.geometry;
 const world=await EnvironmentWorld.connect(scene,library,trees,rocks),r=world.rockRecords[0];
+assert.deepEqual(trees.trees.map(t=>[t.x,t.z,t.radius,...t.group.position.toArray()]),layoutBefore,'layout/colliders unchanged');
+assert.equal(world.treeBatches.length,5,'all five variants instanced');
+for(const record of world.treeRecords){
+ const visual=new THREE.Box3().setFromObject(record.clone);
+ assert.ok(Math.abs(visual.getSize(new THREE.Vector3()).y-record.appearance.height)<1e-5);
+ assert.ok(record.appearance.height>=5.2&&record.appearance.height<=7.2);
+ assert.ok(Math.abs(visual.min.y-record.state.group.position.y-.08)<1e-5,'visual base seated');
+ record.clone.updateWorldMatrix(true,true);
+ let meshIndex=0;record.clone.traverse(o=>{if(!o.isMesh)return;
+  const actual=new THREE.Matrix4();record.batch.group.children[meshIndex++].getMatrixAt(record.slot,actual);
+  assert.ok(actual.elements.every((v,i)=>Math.abs(v-o.matrixWorld.elements[i])<1e-5),'idle/animated transforms match');
+ });
+}
 const slotVisible=(batch,index)=>{const matrix=new THREE.Matrix4();batch.group.children[0].getMatrixAt(index,matrix);return matrix.determinant()!==0;};
 assert.ok(!oldTree.visible&&slotVisible(world.treeBatch,0)&&!world.treeRecords[0].clone.visible);
 assert.notEqual(rock.mesh.geometry,oldGeometry);assert.ok(slotVisible(world.rockBatch,0));

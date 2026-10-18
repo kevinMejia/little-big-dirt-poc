@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
 const urls={
+  ...Object.fromEntries([1,2,3,4,5].map(i=>['Pine_'+i,new URL('./assets/models/trees/pines/Pine_'+i+'.glb',import.meta.url)])),
   tree:new URL('./assets/models/trees/cartoon_tree.glb',import.meta.url),
   boulder:new URL('./assets/models/rocks/cartoon_boulder.glb',import.meta.url),
   fractured:new URL('./assets/models/rocks/cartoon_boulder_fractured.glb',import.meta.url),
@@ -10,12 +11,26 @@ const urls={
 /** Shared geometry/material ownership. Dispose clones by detaching, then dispose
  * this library once all clones and static batches have been removed. */
 export class EnvironmentAssets {
-  constructor(){this.loader=new GLTFLoader();this.cache=new Map();this.disposed=false;}
+  constructor(){this.loader=new GLTFLoader();this.cache=new Map();this.pineMaterials=new Map();this.disposed=false;}
   load(kind){
     if(this.disposed)throw new Error('EnvironmentAssets has been disposed');
     if(!urls[kind])throw new Error('Unknown environment asset: '+kind);
     if(!this.cache.has(kind))this.cache.set(kind,this.loader.loadAsync(urls[kind].href).then(gltf=>{
-      gltf.scene.traverse(o=>{if(o.isMesh)o.castShadow=o.receiveShadow=true;});return gltf.scene;
+      gltf.scene.traverse(o=>{if(o.isMesh){
+        o.castShadow=o.receiveShadow=true;
+        // All five exports use the same two authored materials and three maps.
+        // Canonicalize them across variants as well as across tree instances.
+        if(kind.startsWith('Pine_')){
+          const share=material=>{
+            const shared=this.pineMaterials.get(material.name);
+            if(!shared){this.pineMaterials.set(material.name,material);return material;}
+            const retained=new Set(Object.values(shared).filter(v=>v?.isTexture));
+            for(const value of Object.values(material))if(value?.isTexture&&!retained.has(value))value.dispose();
+            material.dispose();return shared;
+          };
+          o.material=Array.isArray(o.material)?o.material.map(share):share(o.material);
+        }
+      }});return gltf.scene;
     }).catch(error=>{this.cache.delete(kind);throw error;}));
     return this.cache.get(kind);
   }
@@ -42,6 +57,6 @@ export class EnvironmentAssets {
     const results=await Promise.allSettled(this.cache.values()),geometries=new Set(),materials=new Set(),textures=new Set();
     for(const r of results)if(r.status==='fulfilled')r.value.traverse(o=>{if(o.isMesh){geometries.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material])materials.add(m);}});
     for(const m of materials)for(const value of Object.values(m))if(value?.isTexture)textures.add(value);
-    for(const g of geometries)g.dispose();for(const m of materials)m.dispose();for(const t of textures)t.dispose();this.cache.clear();
+    for(const g of geometries)g.dispose();for(const m of materials)m.dispose();for(const t of textures)t.dispose();this.cache.clear();this.pineMaterials.clear();
   }
 }

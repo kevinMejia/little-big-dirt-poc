@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {EnvironmentAssets} from '../EnvironmentAssets.js';
+import {pineKinds,pineHeight,preparePine} from '../PineTreeConfig.js';
 
 const stage=document.querySelector('#stage'),status=document.querySelector('#status');
 const scene=new THREE.Scene();scene.background=new THREE.Color(0xc6e6ec);scene.fog=new THREE.Fog(0xc6e6ec,28,65);
@@ -30,7 +31,18 @@ for(const button of document.querySelectorAll('[data-action]'))button.onclick=()
 document.querySelector('#seams').oninput=event=>{seam=Number(event.target.value)/100;rockMode=seam?'inspect':'intact';rock.visible=!seam;fractured.visible=!!seam;restPieces(seam*.65);document.querySelector('#seamValue').value=Math.round(seam*100)+'%';};
 function resize(){const {width,height}=stage.getBoundingClientRect();renderer.setSize(width,height);camera.aspect=width/height;camera.updateProjectionMatrix();}const observer=new ResizeObserver(resize);observer.observe(stage);resize();
 try{
-  [tree,rock,fractured]=await Promise.all(['tree','boulder','fractured'].map(kind=>library.clone(kind)));
+  const pineTemplates=await Promise.all(pineKinds.map(kind=>library.load(kind)));
+  const dimensions=await (await fetch('../assets/models/trees/pines/dimensions.json')).json();
+  const selectPine=index=>{
+    tree?.removeFromParent();
+
+    // Match the gameplay height band for each silhouette, keeping relative sizes.
+    const height=pineHeight(index);
+    tree=preparePine(THREE,pineTemplates[index],height);tree.position.copy(treeBase);scene.add(tree);treeMode='idle';
+    const d=dimensions[index];document.querySelector('#pineDimensions').textContent=`Source: ${d.width.toFixed(2)} × ${d.height.toFixed(2)} × ${d.depth.toFixed(2)} m (W/H/D). Preview height: ${height.toFixed(1)} m. Dirty: 4.61 m; Stinky: 3.90 m.`;
+  };
+  selectPine(0);document.querySelector('#pineVariant').disabled=false;document.querySelector('#pineVariant').onchange=e=>selectPine(Number(e.target.value));
+  [rock,fractured]=await Promise.all(['boulder','fractured'].map(kind=>library.clone(kind)));
   tree.position.copy(treeBase);rock.position.copy(rockBase);scene.add(tree,rock,fractured);
   // Bevels lift the lowest corner slightly; seat the evaluated GLB on the floor.
   rock.updateMatrixWorld(true);const floorBounds=new THREE.Box3().setFromObject(rock);rockBase.y-=floorBounds.min.y-groundHeight(rockBase.x,rockBase.z);rock.position.copy(rockBase);fractured.position.copy(rockBase);fractured.visible=false;
@@ -39,7 +51,7 @@ try{
   fractured.updateMatrixWorld(true);for(const p of pieces){const b=new THREE.Box3().setFromObject(p.object);p.radius=Math.max(.15,p.object.getWorldPosition(new THREE.Vector3()).y-b.min.y);}
   if(pieces.length!==5)throw new Error('Expected five named imported fracture meshes');
   for(const button of document.querySelectorAll('[data-action]'))button.disabled=false;document.querySelector('#seams').disabled=false;
-  status.textContent='Three Blender GLBs loaded · 1 tree · 1 boulder · 5 reusable fracture pieces';
+  status.textContent='Five pine GLBs loaded · original textured materials · 1 boulder · 5 reusable fracture pieces';
 }catch(error){document.querySelector('#error').textContent='Could not load preview: '+error.message;console.error(error);}
 function animate(){if(disposed)return;requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);
   if(tree){treeTime+=dt;
