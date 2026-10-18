@@ -76,7 +76,7 @@ body[data-lbd-driving-hud="true"] #hud{display:block!important}
 body[data-lbd-controls-guide="true"] #help{display:block!important;max-width:calc(100vw - 32px);white-space:normal;pointer-events:none}
 </style>
 
-<script type="importmap">{"imports":{"./WorldEnvironmentConfig.js":"./WorldEnvironmentConfig.js?v=painted-grass-1","three":"https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/","./TuningStore.js":"./TuningStore.js?v=painted-ground-1","./SettingsPanel.js":"./SettingsPanel.js?v=painted-ground-1"}}</script>
+<script type="importmap">{"imports":{"./WorldEnvironmentConfig.js":"./WorldEnvironmentConfig.js?v=painted-surfaces-3","three":"https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/","./TuningStore.js":"./TuningStore.js?v=painted-surfaces-3","./SettingsPanel.js":"./SettingsPanel.js?v=painted-surfaces-3"}}</script>
 <script type="module" src="./SharedNavigation.js"></script></head>
 
 <body>
@@ -121,7 +121,7 @@ import { DrivingInput } from './DrivingInput.js';
 import { applyReleaseDeceleration, getSpeedMultiplier } from './VehicleMotion.js';
 import { GroundDebrisSystem, DebrisWheelContacts } from './GroundDebrisSystem.js';
 import { createDebrisDebug } from './GroundDebrisDebug.js';
-import { addGroundTextures } from './GroundTextures.js?v=painted-grass-1';
+import { addGroundTextures } from './GroundTextures.js?v=painted-surfaces-3';
 import { createPolishedLighting, ContactShading, polishTerrain, VehicleSurfaceEffects } from './VisualPolish.js';
 import { DirtJumpSystem, playgroundFeatures } from './DirtJumpSystem.js';
 import {playableVehicleConfig,smoothDrivingSteering,hybridDrivingInput,hybridLandingFeedback} from './PlayableVehicleSetup.js';

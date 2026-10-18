@@ -104,6 +104,11 @@ add('Camera and Graphics','visualPolishConfig',[
  ['tireTrackOpacityPercent','Tire track opacity',0,100,1,'%','Both vehicles: ground trail visibility.'],
 ]);
 add('Painted Ground','worldAppearance',[
+ ['dirtTextureStrength','Painted dirt strength',0,100,1,'%','Live in Play: 0 restores previous dirt; higher reveals painted soil brushwork and pebbles.'],
+ ['rockTextureStrength','Stony ground strength',0,100,1,'%','Live in Play: 0 restores old soft rock patches; higher adds embedded stone facets and rough soil.'],
+ ['dirtTextureScale','Dirt texture scale',2,24,.5,'m','Live: width of soil artwork. Higher means broader marks; panel height is twice its width.'],
+ ['rockTextureScale','Stone texture scale',1,16,.25,'m','Live: width of stone artwork. Lower reads as fine gravel; higher as larger embedded chips.'],
+ ['surfaceEdgeVariation','Surface edge variation',0,100,1,'%','Live: irregular brush-scale road and worn-patch edges. Zero keeps prior mask contours; fallback strengths zero bypass this.'],
  ['grassTextureScale','Grass texture scale',2,40,.5,'m','Live in Play: width of the supplied grass artwork. Higher means larger brush marks.'],
  ['grassTextureStrength','Painted grass strength',0,100,1,'%','Live in Play: 0 restores the original procedural ground; higher blends in the supplied painted image.'],
  ['grassTextureSaturation','Grass saturation',0,150,1,'%','Live in Play: 0 grayscale; 100 preserves the artwork saturation.'],

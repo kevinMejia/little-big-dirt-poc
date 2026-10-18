@@ -38,4 +38,22 @@ export const worldAppearance={
   // soft surface mask, 50 softens the grass away from road edges, 100 widest dirt
   // margin. Start 25–60. Does not widen road geometry or modify traction/colliders.
   grassDirtBlending:45,
+  // Play visual-only, live 0–100%. 0 restores the previous dirt rendering exactly;
+  // 40 subtle brushwork, 75 worn painted soil, 100 full artwork. Start 50–80.
+  // Road/ramp placement and traction are unaffected. Coordinate with dirtTextureScale.
+  dirtTextureStrength:75,
+  // Play visual-only, live 0–100%. 0 restores the former soft rock patches;
+  // 50 restrained gravel, 90 distinct stony ground. Start 70–95.
+  // Coordinate with rockTextureScale and surfaceEdgeVariation; no collision change.
+  rockTextureStrength:90,
+  // Play visual-only; live 2–24 metres across the soil atlas panel (height twice width).
+  // 4 fine soil marks, 8 balanced, 16 broad brushwork. Start 6–10.
+  dirtTextureScale:8,
+  // Play visual-only; live 1–16 metres across the stone panel (height twice width).
+  // 2 fine gravel, 4 embedded chips, 8 larger rough marks. Start 2–5.
+  rockTextureScale:4.5,
+  // Play visual-only; live 0–100% irregularity at existing surface-mask edges.
+  // 0 preserves the old contours; 50 gently breaks edges, 100 more ragged patches.
+  // Start 40–70. Has no effect when both dirt/rock texture strengths are zero.
+  surfaceEdgeVariation:60,
 };
