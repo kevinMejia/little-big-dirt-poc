@@ -1,6 +1,20 @@
 // Global Play environment defaults. Saved Settings overrides apply before scene
 // creation. Reload Play to rebuild scenery; vehicle physics is independent.
 export const worldAppearance={
+  // Visual size relative to each existing interactive rock's collision radius.
+  // Reload Play to apply. Both axes and height scale uniformly; density and
+  // physics stay fixed. Keep near 1 so visible edges fit the collision circle.
+  rockMinScale:.96,
+  rockMaxScale:1.04,
+  // Visual burial as a fraction of the existing rock radius. .12 embeds a
+  // radius-1 rock by 12 cm, hiding uneven source bottoms. Reload Play to apply.
+  // Higher sits deeper; colliders, fragment motion and respawn heights stay fixed.
+  rockGroundInset:.12,
+  // Relative selection odds for the three supplied rocks. Equal values give
+  // equal odds; zero excludes a variant. Does not consume the placement seed.
+  rockMedium1Weight:1,
+  rockMedium2Weight:1,
+  rockMedium3Weight:1,
   // Main Play only: full square width AND length, in world metres; clamped 220–880.
   // Reload required. 440 = previous map; 660 = 1.5× width / 2.25× area (default);
   // 880 = 2× width / 4× area, with greater memory/startup/rendering cost.

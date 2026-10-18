@@ -1,0 +1,109 @@
+{
+  "before": {
+    "medianFrameMs": 7,
+    "p95FrameMs": 13.899999999999636,
+    "medianDrawCallsIncludingShadows": 276
+  },
+  "after": {
+    "medianFrameMs": 7,
+    "p95FrameMs": 13.900000000000546,
+    "medianDrawCallsIncludingShadows": 276
+  },
+  "modelNetworkLoads": 3,
+  "assetsAndInteractions": {
+    "materials": 1,
+    "textures": 1,
+    "geometries": 3,
+    "sizes": [
+      [
+        3.2251482009887695,
+        2.259796142578125,
+        2.989135980606079
+      ],
+      [
+        3.0487608909606934,
+        1.898973822593689,
+        2.4790711402893066
+      ],
+      [
+        3.420083999633789,
+        2.316281795501709,
+        3.4761099815368652
+      ]
+    ],
+    "cases": [
+      {
+        "vehicle": "Dirty",
+        "variant": "Rock_Medium_1",
+        "crack": true,
+        "break": true,
+        "scatter": true,
+        "expire": true,
+        "safeRespawn": true
+      },
+      {
+        "vehicle": "Dirty",
+        "variant": "Rock_Medium_2",
+        "crack": true,
+        "break": true,
+        "scatter": true,
+        "expire": true,
+        "safeRespawn": true
+      },
+      {
+        "vehicle": "Dirty",
+        "variant": "Rock_Medium_3",
+        "crack": true,
+        "break": true,
+        "scatter": true,
+        "expire": true,
+        "safeRespawn": true
+      },
+      {
+        "vehicle": "Stinky",
+        "variant": "Rock_Medium_1",
+        "crack": true,
+        "break": true,
+        "scatter": true,
+        "expire": true,
+        "safeRespawn": true
+      },
+      {
+        "vehicle": "Stinky",
+        "variant": "Rock_Medium_2",
+        "crack": true,
+        "break": true,
+        "scatter": true,
+        "expire": true,
+        "safeRespawn": true
+      },
+      {
+        "vehicle": "Stinky",
+        "variant": "Rock_Medium_3",
+        "crack": true,
+        "break": true,
+        "scatter": true,
+        "expire": true,
+        "safeRespawn": true
+      }
+    ]
+  },
+  "layouts": [
+    {
+      "width": 1440,
+      "height": 900,
+      "fixedPreview": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "fixedPreview": true
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "fixedPreview": true
+    }
+  ],
+  "errors": []
+}

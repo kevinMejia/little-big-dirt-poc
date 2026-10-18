@@ -123,6 +123,12 @@ add('Painted Ground','worldAppearance',[
  ['grassDirtBlending','Dirt edge blending',0,100,1,'%','Live in Play: higher protects a wider soft dirt margin around existing roads and ramps. No terrain or collision change.'],
 ],{scope:'environment'});
 add('Environment','worldAppearance',[
+ ['rockMinScale','Minimum rock visual scale',.8,1.2,.01,'×','Reload Play: smallest visual multiplier around the existing rock collision circle. Uniform scale preserves proportions; collision, placement and density stay fixed.'],
+ ['rockMaxScale','Maximum rock visual scale',.8,1.2,.01,'×','Reload Play: largest visual multiplier. Keep near 1 so visible edges fit the unchanged collision circle.'],
+ ['rockGroundInset','Rock ground inset',0,.3,.01,'× radius','Reload Play: bury uneven rock bases slightly. 0 aligns the lowest point to ground; .12 sinks a radius-1 rock by 12 cm. Visual only; colliders and debris physics stay fixed.'],
+ ['rockMedium1Weight','Rock Medium 1 frequency',0,10,1,'weight','Reload Play: relative odds for Rock_Medium_1. Equal weights give equal odds; zero excludes it. All zero falls back to equal odds.'],
+ ['rockMedium2Weight','Rock Medium 2 frequency',0,10,1,'weight','Reload Play: relative odds for Rock_Medium_2; changes visuals only, never positions or physics.'],
+ ['rockMedium3Weight','Rock Medium 3 frequency',0,10,1,'weight','Reload Play: relative odds for Rock_Medium_3; changes visuals only, never positions or physics.'],
  ['worldSize','Playable world size',220,880,20,'m','Main Play full width and length. 440 previous map; 660 is 2.25× area. Reload required. Terrain scale and lab dimensions stay fixed; scenery counts scale with area.'],
  ['treeDensityPercent','Tree density',0,200,5,'%','Play: 100% targets 175 trees per 440m map; counts scale with map area; 0 removes them. Placement/ramp exclusions may reduce counts. Requires reload.'],
  ['rockDensityPercent','Rock density',0,200,5,'%','Play: 100% targets 80 boulders per 440m map; counts scale with map area; 0 removes them. Changes interactive rocks as well as visuals. Requires reload.'],

@@ -1,0 +1,114 @@
+{
+  "blender": "4.5.3 LTS",
+  "models": [
+    {
+      "name": "Rock_Medium_1",
+      "sourceMin": [
+        -1.727287,
+        -0.271131,
+        -1.149883
+      ],
+      "sourceMax": [
+        1.497861,
+        1.988665,
+        1.839253
+      ],
+      "width": 3.225148,
+      "height": 2.2597959999999997,
+      "depth": 2.9891360000000002,
+      "baseOffset": 0.271131,
+      "centerXZ": [
+        -0.11471299999999995,
+        0.344685
+      ],
+      "exportMin": [
+        -1.6125741004943848,
+        0,
+        -1.4945679903030396
+      ],
+      "exportMax": [
+        1.6125741004943848,
+        2.259796142578125,
+        1.4945679903030396
+      ],
+      "triangles": 342,
+      "unit": "OBJ has no unit metadata; imported at scale 1; GLB meters"
+    },
+    {
+      "name": "Rock_Medium_2",
+      "sourceMin": [
+        -1.713642,
+        -0.050841,
+        -1.159125
+      ],
+      "sourceMax": [
+        1.335119,
+        1.848133,
+        1.319946
+      ],
+      "width": 3.048761,
+      "height": 1.898974,
+      "depth": 2.4790710000000002,
+      "baseOffset": 0.050841,
+      "centerXZ": [
+        -0.18926150000000008,
+        0.08041050000000005
+      ],
+      "exportMin": [
+        -1.5243804454803467,
+        0,
+        -1.2395355701446533
+      ],
+      "exportMax": [
+        1.5243804454803467,
+        1.898973822593689,
+        1.2395355701446533
+      ],
+      "triangles": 244,
+      "unit": "OBJ has no unit metadata; imported at scale 1; GLB meters"
+    },
+    {
+      "name": "Rock_Medium_3",
+      "sourceMin": [
+        -1.824279,
+        -0.315644,
+        -0.890462
+      ],
+      "sourceMax": [
+        1.595805,
+        2.000638,
+        2.585648
+      ],
+      "width": 3.420084,
+      "height": 2.3162819999999997,
+      "depth": 3.47611,
+      "baseOffset": 0.315644,
+      "centerXZ": [
+        -0.11423700000000003,
+        0.847593
+      ],
+      "exportMin": [
+        -1.7100419998168945,
+        0,
+        -1.7380549907684326
+      ],
+      "exportMax": [
+        1.7100419998168945,
+        2.316281795501709,
+        1.7380549907684326
+      ],
+      "triangles": 522,
+      "unit": "OBJ has no unit metadata; imported at scale 1; GLB meters"
+    }
+  ],
+  "texture": "Rocks_Diffuse.png",
+  "textureSize": [
+    2048,
+    2048
+  ],
+  "fragmentColorSRGB": [
+    0.3052098989513592,
+    0.3441424409620168,
+    0.26615702006495173
+  ]
+}

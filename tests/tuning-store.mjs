@@ -37,6 +37,14 @@ assert.equal(environment.worldAppearance.treeDensityPercent,50);assert.equal(env
 assert(!exportTuning().includes('export const worldAppearance'),'vehicle export stays compatible with the existing vehicle config');
 resetTuning(undefined,storage);assert.deepEqual(snapshotTuning(),initial,'environment reset restores file defaults without changing vehicle defaults');
 console.log('PASS: environment numeric/boolean overrides use the shared store, survive reload, reset to file defaults and export separately from vehicle tuning.');
+for(const [key,value] of Object.entries({rockMinScale:.98,rockMaxScale:1.02,rockGroundInset:.16,rockMedium1Weight:3,rockMedium2Weight:2,rockMedium3Weight:1})){
+ assert.equal(setTuning('worldAppearance.'+key,value,storage),true);
+ loadTuning(storage);assert.equal(tuningValue('worldAppearance.'+key),value);
+}
+const rockVisualExport=await import('data:text/javascript,'+encodeURIComponent(exportEnvironmentTuning()));
+assert.equal(rockVisualExport.worldAppearance.rockGroundInset,.16);
+assert.deepEqual(snapshotTuning().rockConfig,initial.rockConfig,'rock visual edits never change gameplay settings');
+resetTuning(undefined,storage);assert.deepEqual(snapshotTuning(),initial);
 assert.equal(setTuning('storybookBackgroundConfig.skyTint','not-a-color',storage),false);
 assert.equal(setTuning('storybookBackgroundConfig.skyTint','#abc123',storage),true);
 assert.equal(tuningValue('storybookBackgroundConfig.skyTint'),'#abc123');
