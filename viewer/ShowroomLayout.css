@@ -1,0 +1,74 @@
+/* Shared shell: header + preview + independently scrolling settings.
+   Each viewer supplies a direct header and main containing #stage and aside. */
+html:has(body.showroom-layout) { height: 100%; overflow: hidden; }
+body.showroom-layout {
+  box-sizing: border-box;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+.showroom-layout > header {
+  box-sizing: border-box;
+  min-height: 76px;
+  height: auto;
+  min-width: 0;
+  padding: 10px 16px 10px 76px;
+  gap: 10px;
+}
+.showroom-layout > header > div { min-width: 0; }
+.showroom-layout > main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 58fr) minmax(0, 42fr);
+  height: auto;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+.showroom-layout #stage {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+  max-height: none;
+  overflow: hidden;
+  /* Environment uses section borders for controls; never apply them to preview. */
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.showroom-layout #stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.showroom-layout > main > aside {
+  display: block;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y pinch-zoom;
+  scrollbar-gutter: stable;
+  border-left: 0;
+  border-top: 1px solid #cdd3ca;
+  padding: 16px 20px;
+}
+/* Compact headers and overlays leave room for both panes on landscape phones. */
+@media (max-height: 500px) {
+  .showroom-layout > header { min-height: 64px; padding-top: 5px; padding-bottom: 5px; }
+  .showroom-layout > header h1 { font-size: 18px; }
+  .showroom-layout > header .note,
+  .showroom-layout > header .subtitle { display: none; }
+  .showroom-layout .asset-title { bottom: 30px; left: 16px; }
+  .showroom-layout .asset-title h2 { font-size: 26px; letter-spacing: -1px; }
+  .showroom-layout .asset-title p { display: none; }
+  .showroom-layout .stage-actions { top: 8px; right: 12px; }
+  .showroom-layout #stage .overline { display: none; }
+  .showroom-layout .stage-footer { bottom: 6px; }
+}
+@media (max-width: 480px) {
+  .showroom-layout > header .badge,
+  .showroom-layout > header .prototype { max-width: 115px; white-space: normal; font-size: 9px; }
+  .showroom-layout > header h1 { font-size: 18px; }
+  .showroom-layout > header .eyebrow { font-size: 9px; }
+}

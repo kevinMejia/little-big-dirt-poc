@@ -6,7 +6,6 @@ import {DirtyGLB} from '../assets/dirty/DirtyGLB.js';
 const params=new URLSearchParams(location.search),embedded=params.get('embedded')==='1',isTruck=params.get('vehicle')==='garbage';
 document.body.classList.toggle('embedded',embedded);document.body.classList.toggle('truck',isTruck);
 document.querySelector('h1').textContent=isTruck?'Garbage truck · Explore & play':'Backhoe · Explore & play';
-if(params.get('asset')==='candidate')document.querySelector('#comparisonLink').href='./comparison.html?asset=candidate';
 let active=true;
 const initPromise=embedded?new Promise(resolve=>{const receive=event=>{if(event.origin===location.origin&&event.source===parent&&event.data?.type==='garage:init'){removeEventListener('message',receive);resolve(event.data);}};addEventListener('message',receive);parent.postMessage({type:'garage:ready'},location.origin);}):Promise.resolve(null);
 addEventListener('message',event=>{if(event.origin===location.origin&&event.source===parent&&event.data?.type==='garage:visibility')active=!!event.data.visible;});

@@ -6,7 +6,6 @@ import {StinkyGLB} from '../assets/stinky/StinkyGLB.js';
 const params=new URLSearchParams(location.search),embedded=params.get('embedded')==='1',isTruck=false;
 document.body.classList.toggle('embedded',embedded);document.body.classList.toggle('truck',isTruck);
 document.querySelector('h1').textContent=isTruck?'Garbage truck · Explore & play':'Stinky · Model review';
-if(params.get('asset')==='candidate')document.querySelector('#comparisonLink').href='./comparison.html?asset=candidate';
 let active=true;
 const initPromise=embedded?new Promise(resolve=>{const receive=event=>{if(event.origin===location.origin&&event.source===parent&&event.data?.type==='garage:init'){removeEventListener('message',receive);resolve(event.data);}};addEventListener('message',receive);parent.postMessage({type:'garage:ready'},location.origin);}):Promise.resolve(null);
 addEventListener('message',event=>{if(event.origin===location.origin&&event.source===parent&&event.data?.type==='garage:visibility'){active=!!event.data.visible;if(model&&event.data.pose)for(const key of ['hopper','compactor']){const value=event.data.pose[key];if(Number.isFinite(value)){document.getElementById(key).value=value;document.getElementById(key+'Value').textContent=value+'°';setters[key](value);}}}});

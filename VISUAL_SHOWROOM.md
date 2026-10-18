@@ -34,6 +34,29 @@ or gameplay. Review the asset and exported values before any future integration.
 
 ## Reuse and performance
 
+All four Asset Showroom destinations use `viewer/ShowroomLayout.css`. The shell
+fills the dynamic viewport, reserves safe areas and the navigation header, and
+splits the remaining height 58% preview / 42% settings. Only the settings pane
+scrolls, with scroll chaining contained; the canvas keeps its own orbit/zoom/pan
+handlers. This also applies inside embedded vehicle garages.
+
+New assets registered in `viewer/showroom-assets.js` inherit this shell and its
+controls automatically. A new standalone viewer should load `ShowroomLayout.css`,
+use `body.showroom-layout`, and provide a direct `header` followed by `main` with
+`#stage` and `aside` children. Put the viewer canvas in `#stage` and all settings
+in the labelled, focusable `aside`; do not add page heights or inner scrolling
+containers. Observe the stage size with `ResizeObserver`, as the existing viewers
+do. Register its destination in `navigationItems`'s Asset Showroom children in
+`SharedNavigation.js` so the shared menu groups and highlights it automatically.
+
+`tests/showroom-layout.cjs` runs installed Edge through Playwright at desktop
+1440×900, portrait 390×844, and landscape 844×390. It checks all four loaded
+viewers, slider access, fixed preview bounds during settings scroll, preview
+input and the grouped navigation. Run with Playwright available through
+`NODE_PATH`; the existing CDN imports need network access. Screenshots are saved
+under `docs/screenshots/showroom-*.png`. These are browser viewport checks, not
+physical iPhone Safari testing.
+
 Register future assets in `viewer/showroom-assets.js`; the loader, pedestal,
 camera, controls and cleanup are shared. Optional `displaySize` fits larger GLBs
 to the stage. Manifests identify material color roles and animation pivots.
