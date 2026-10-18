@@ -1,3 +1,5 @@
+import {mainWorldRamps,rampPoint} from '../MainWorldRamps.js';
+import {createSceneryLayout,createTerrainPainter,worldAppearance} from '../WorldAppearance.js';
 import assert from 'node:assert/strict';
 import * as THREE from '../three-test.mjs';
 import R from '../viewer/vendor/rapier/rapier.mjs';
@@ -104,3 +106,23 @@ const empty=new THREE.Vector3(30,0,12),velocity={x:0,z:2};trees.resolveMovement(
 const tree=new THREE.Group();tree.position.set(0,0,5);scene.add(tree);trees.addTree(tree,.3,3);const impact=new THREE.Vector3(0,0,10);trees.resolveMovement(impact,0,0,0,100,.1,{radius:1,rear:-1,front:1},{},velocity);assert(impact.z<3);assert(velocity.z<0);
 trees.dispose();rocks.dispose();
 console.log('PASS: shared adaptive world mesh, original-order Dirty/four and Stinky/six contacts, preserved reset pose/heading, driving/exact stop/hold, both physical cannon flights/landings/single encounter/containment, eight rolling-world ramp jumps/landings, hill stopping, debris force isolation, no duplicate movement and tree rebound; Original speed/yaw parity at default boosted limits, full-speed stable turns, gentle hills/small bumps, and inverted landing recovery.');
+
+const scatteredLayout=createSceneryLayout(createTerrainPainter(base,220),330,worldAppearance,2.25);
+const scatteredJumps=new DirtJumpSystem(base,mainWorldRamps({halfSize:330,height:base,layout:scatteredLayout}));
+const scatteredMesh=scatteredJumps.createWorldSurface(330,2,1.5);
+for(const index of [0,1])for(const ramp of scatteredJumps.features){
+ const start=rampPoint(ramp,0,-48);
+ const game=new RapierWorldVehicle(R,{surface:scatteredMesh,height:(x,z)=>scatteredJumps.sample(x,z),groundDebris:debris,trees,rocks,limit:320});
+ game.setVehicle(vehicle(index),cfg(index),index,new THREE.Vector3(start.x,scatteredJumps.sample(start.x,start.z),start.z),ramp.angle);
+ let took=false,landed=false,reached=false;
+ for(let i=0;i<1600;i++){
+  const p=game.physics.body.translation(),along=scatteredJumps.local(p.x,p.z,ramp).along;
+  const state=game.update(1/120,{throttle:along<70?1:0});
+  if(along>40)reached=true;
+  for(const e of state.events){if(e.type==='takeoff'&&e.vy>.5)took=true;if(e.type==='landing'&&took)landed=true;}
+  assert([state.position.x,state.position.y,state.position.z].every(Number.isFinite));
+ }
+ assert(took&&landed&&reached,`scattered ramp ${index} ${ramp.id} usable: takeoff=${took} landing=${landed} reached=${reached}`);
+ game.dispose();
+}
+console.log('PASS: both vehicles approach, jump and land all four seeded, rotated main-world ramps on actual rolling terrain.');

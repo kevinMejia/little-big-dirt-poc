@@ -1,3 +1,5 @@
+import {mainWorldRamps,rampPoint,rampClearance} from '../MainWorldRamps.js';
+import {DirtJumpSystem,playgroundFeatures} from '../DirtJumpSystem.js';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import * as THREE from '../three-test.mjs';
@@ -62,3 +64,33 @@ assert(flowersOnly.group.children.length>0,'flowers preserved');
 assert(flowersOnly.group.children.every(batch=>batch.name==='Instanced flowers'),'no grass tufts or decorative pebbles spawned');
 flowersOnly.dispose();assert.equal(scene.children.length,0);
 console.log('PASS: flowers-only main-world details preserve flowers and exclude grass/pebbles; reusable defaults still pass.');
+
+const scattered=mainWorldRamps({halfSize:330,height,layout:expandedLayout});
+assert.deepEqual(scattered,mainWorldRamps({halfSize:330,height,layout:expandedLayout}),'stable seeded layout');
+assert.deepEqual(scattered.map(f=>f.id),playgroundFeatures().map(f=>f.id),'all existing ramp types');
+assert(new Set(scattered.map(f=>f.angle)).size===4,'varied orientations');
+for(const f of scattered){
+ const trees=expandedLayout.trees.filter(t=>!scattered.some(r=>rampClearance(r,t.x,t.z,t.scale*.35+3)));
+ assert(!trees.some(t=>rampClearance(f,t.x,t.z,t.scale*.35+3)));
+ const rocks=expandedLayout.rocks.filter(r=>!scattered.some(f=>rampClearance(f,r.x,r.z,r.radius+4)));
+ assert(!rocks.some(r=>rampClearance(f,r.x,r.z,r.radius+4)));
+ for(const other of scattered)if(other!==f)assert(Math.hypot(f.x-other.x,f.z-other.z)>=200,'separate jump corridors');
+ for(let along=-60;along<=95;along+=2)for(const side of [-f.width*.6-6,0,f.width*.6+6]){
+  const p=rampPoint(f,side,along);
+  assert(Math.max(Math.abs(p.x),Math.abs(p.z))<=305,'boundary clearance');
+  assert(Math.abs(p.x-18*Math.sin(p.z*.025))>21,'road clearance');
+ }
+}
+const scatteredTerrain=new DirtJumpSystem(height,scattered),scatteredSurface=scatteredTerrain.createWorldSurface(330,2,1.5);
+assert(scatteredSurface.indices.length/3<450000,'bounded scattered ramp terrain budget');
+console.log('Main-world terrain triangles:',scatteredSurface.indices.length/3);
+for(let i=0;i<scatteredSurface.vertices.length;i+=3){
+ const [x,y,z]=scatteredSurface.vertices.subarray(i,i+3);
+ assert(Math.abs(y-scatteredTerrain.sample(x,z))<.001,'shared render/collider mesh follows scattered ramps');
+}
+for(const f of scattered)for(const along of [-61,96]){
+ const p=rampPoint(f,0,along);assert(Math.abs(scatteredTerrain.sample(p.x,p.z)-height(p.x,p.z))<1e-8,'ramps meet base terrain');
+}
+assert(playgroundFeatures().every(f=>f.z===30&&f.angle===0),'lab remains organized');
+console.log('PASS: seeded main-world ramps, all four types, varied orientations, clear approaches/landings, obstacles/roads/boundaries avoided, shared mesh and terrain joins; lab unchanged.');
+console.log('Scattered ramps:',JSON.stringify(scattered.map(({id,x,z,angle})=>({id,x,z,angle}))));

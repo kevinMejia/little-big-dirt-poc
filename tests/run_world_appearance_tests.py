@@ -9,5 +9,7 @@ with tempfile.TemporaryDirectory(prefix='dirt-appearance-tests-') as folder:
     text=(root/'WorldAppearance.js').read_text(encoding='utf-8').replace("from 'three'","from './three-test.mjs'")
     (work/'WorldAppearance.js').write_text(text,encoding='utf-8');(work/'package.json').write_text('{"type":"module"}')
     shutil.copyfile(root/'WorldEnvironmentConfig.js',work/'WorldEnvironmentConfig.js')
+    for name in ['MainWorldRamps.js','DirtJumpSystem.js','VehicleConfig.js']:
+        shutil.copyfile(root/name,work/name)
     shutil.copyfile(root/'tests/world-appearance.mjs',work/'tests/world-appearance.mjs')
     subprocess.run(['node',str(work/'tests/world-appearance.mjs'),str(root/'index.html')],check=True)
