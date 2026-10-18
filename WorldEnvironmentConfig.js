@@ -23,4 +23,19 @@ export const worldAppearance={
   // Boulder target density, 0–200%; 100% retains the original 80-rock target.
   // Safe placement/ramp exclusions may reduce the resulting count. Requires reload.
   rockDensityPercent:100,
+  // Play rendering only; live. Metres across one supplied grass image, clamped 2–40.
+  // Higher enlarges brush marks; lower adds fine repeats. Examples: 4 fine, 9 balanced,
+  // 18 broad. Start 6–12; adjust strength with scale. Geometry/physics unchanged.
+  grassTextureScale:9,
+  // Play rendering only; live 0–100%. 0 restores original procedural ground exactly;
+  // 50 blends both styles, 85 strongly shows the supplied artwork. Start 60–90.
+  // Independent of existing groundTextureStrengthPercent (procedural microdetail).
+  grassTextureStrength:85,
+  // Play rendering only; live saturation 0–150%. 0 gray, 80 subdued, 100 original art.
+  // Start 75–100; coordinate with terrainColorVariation and background saturation.
+  grassTextureSaturation:90,
+  // Play rendering only; live 0–100% extra dirt-edge protection. 0 uses the original
+  // soft surface mask, 50 softens the grass away from road edges, 100 widest dirt
+  // margin. Start 25–60. Does not widen road geometry or modify traction/colliders.
+  grassDirtBlending:45,
 };

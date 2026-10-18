@@ -1,7 +1,6 @@
 import {tuningFields,fieldPath,tuningValue,defaultTuningValue,setTuning,resetTuning,exportTuning,exportEnvironmentTuning,exportStorybookTuning} from './TuningStore.js';
 import {readGamePreferences,saveGamePreference,resetGamePreference,gamePreferenceStorage} from './GamePreferences.js?v=central-settings-3';
 import {settingsPlacement} from './SettingsPlacement.js';
-import {isStorybookPreview} from './StorybookPreviewMode.js';
 
 let panel;
 export function openSettingsPanel(){
@@ -30,7 +29,7 @@ function createSettingsPanel(){
   $('#context').textContent=`${mode()==='hybrid'?'Main-game hybrid':'Original controller'} tuning. ${isPlay()||isLab()?'Vehicle selection edits tuning; it does not switch or reset the car.':'Preview area: saved driving changes apply when you enter Play or Dirt Jump Lab.'} Shared values are labeled “Both vehicles”.`;
   const main=$('main');main.replaceChildren();
   for(const group of [...new Set(tuningFields.map(field=>field.group))]){
-   const fields=tuningFields.filter(field=>field.group===group&&(field.mode==='both'||field.mode===mode())&&(field.scope!=='storybook'||isStorybookPreview(location.search)));
+   const fields=tuningFields.filter(field=>field.group===group&&(field.mode==='both'||field.mode===mode()));
    if(!fields.length)continue;
    const details=document.createElement('details');details.dataset.group=group;details.open=expanded.has(group)||(first&&group==='Driving');
    const summary=document.createElement('summary');summary.textContent=group;
@@ -43,9 +42,9 @@ function createSettingsPanel(){
     if(isPlay()){const apply=document.createElement('button');apply.textContent='Reload Play to apply environment';apply.onclick=()=>location.reload();section.append(apply);}
     const exportButton=document.createElement('button');exportButton.textContent='Export environment settings';exportButton.onclick=()=>downloadConfiguration('WorldEnvironmentConfig.tuned.js',exportEnvironmentTuning());section.append(exportButton);
    }
-   if(group==='Storybook Preview'){
-    const note=document.createElement('p');note.textContent='Live visual prototype only. Normal Play keeps the original background. Use the review toolbar to compare the same view with the original. These values affect the painted background, not vehicles or lighting on the driving terrain.';section.append(note);
-    const exportButton=document.createElement('button');exportButton.textContent='Export storybook preview settings';exportButton.onclick=()=>downloadConfiguration('StorybookBackgroundConfig.tuned.js',exportStorybookTuning());section.append(exportButton);
+   if(group==='Storybook Background'){
+    const note=document.createElement('p');note.textContent='Live in painted Play. Other areas save these values for Play. The original comparison route (storybook=0) does not render these changes. Controls affect distant scenery, not vehicles or foreground lighting.';section.append(note);
+    const exportButton=document.createElement('button');exportButton.textContent='Export background settings';exportButton.onclick=()=>downloadConfiguration('StorybookBackgroundConfig.tuned.js',exportStorybookTuning());section.append(exportButton);
    }
    const paths=[];
    for(const field of fields){

@@ -4,8 +4,8 @@ import path from 'node:path';
 import * as THREE from '../three-test.mjs';
 import {createStorybookTransition,createStorybookBackground} from '../StorybookBackground.js';
 import {storybookBackgroundConfig as config} from '../StorybookBackgroundConfig.js';
-import {isStorybookPreview} from '../StorybookPreviewMode.js';
-assert.equal(isStorybookPreview(''),false);assert.equal(isStorybookPreview('?storybook=0'),false);assert.equal(isStorybookPreview('?storybook=1'),true);
+import {isStorybookEnabled,isStorybookPreview} from '../StorybookPreviewMode.js';
+assert.equal(isStorybookEnabled(''),true);assert.equal(isStorybookEnabled('?storybook=0'),false);assert.equal(isStorybookEnabled('?storybook=1'),true);assert.equal(isStorybookPreview(''),false);assert.equal(isStorybookPreview('?storybook=0'),false);assert.equal(isStorybookPreview('?storybook=1'),true);
 const height=(x,z)=>4*Math.sin(x*.02)*Math.cos(z*.03),painter={sampleColor:(x,z,target)=>target.set('#79a956')};
 for(const scale of [.75,1,1.5]){
  const geometry=createStorybookTransition(height,painter,220,scale),p=geometry.attributes.position;
@@ -36,7 +36,7 @@ THREE.TextureLoader.prototype.loadAsync=async function(url){if(url.endsWith('pai
 try{await assert.rejects(()=>createStorybookBackground(scene,{height,painter,halfSize:220,camera,original}),/art unavailable/);assert(partialDisposed);assert.equal(original.group.visible,true);assert.equal(camera.far,600);assert.equal(scene.children.length,1,'failed artwork load preserves original scene');}finally{THREE.TextureLoader.prototype.loadAsync=load;}
 const root=process.argv[2];
 const manifest=JSON.parse(fs.readFileSync(path.join(root,'assets/backgrounds/storybook-v1/manifest.json'),'utf8'));
-assert.equal(manifest.approved,false);assert.equal(manifest.defaultEnabled,false);assert.equal(manifest.colliders,0);
+assert.equal(manifest.approved,true);assert.equal(manifest.defaultEnabled,true);assert.equal(manifest.colliders,0);
 for(const name of ['countryside-panorama.png','painted-meadow.png']){
  const bytes=fs.readFileSync(path.join(root,'assets/backgrounds/storybook-v1',name));assert.equal(bytes.subarray(1,4).toString(),'PNG');
  const w=bytes.readUInt32BE(16),h=bytes.readUInt32BE(20);assert(w<=4096&&h<=2048,'mobile texture budget');assert(bytes.length>100000,'actual painted artwork asset');if(name.startsWith('countryside'))assert.equal(w,2*h,'equirectangular 2:1 panorama');

@@ -1,7 +1,7 @@
 {
   "name": "Painted countryside / visual study 01",
-  "approved": false,
-  "defaultEnabled": false,
+  "approved": true,
+  "defaultEnabled": true,
   "previewRoute": "index.html?storybook=1",
   "galleryRoute": "viewer/storybook-review.html",
   "generator": "OpenAI built-in image_gen",
@@ -20,5 +20,6 @@
     }
   },
   "backgroundTriangles": 13184,
-  "colliders": 0
+  "colliders": 0,
+  "approval": "User approved implementation on 2026-10-17."
 }

@@ -103,6 +103,12 @@ add('Camera and Graphics','visualPolishConfig',[
  ['dustIntensityPercent','Dust intensity',0,100,1,'%','Both vehicles: driving and landing dust opacity and emission.'],
  ['tireTrackOpacityPercent','Tire track opacity',0,100,1,'%','Both vehicles: ground trail visibility.'],
 ]);
+add('Painted Ground','worldAppearance',[
+ ['grassTextureScale','Grass texture scale',2,40,.5,'m','Live in Play: width of the supplied grass artwork. Higher means larger brush marks.'],
+ ['grassTextureStrength','Painted grass strength',0,100,1,'%','Live in Play: 0 restores the original procedural ground; higher blends in the supplied painted image.'],
+ ['grassTextureSaturation','Grass saturation',0,150,1,'%','Live in Play: 0 grayscale; 100 preserves the artwork saturation.'],
+ ['grassDirtBlending','Dirt edge blending',0,100,1,'%','Live in Play: higher protects a wider soft dirt margin around existing roads and ramps. No terrain or collision change.'],
+],{scope:'environment'});
 add('Environment','worldAppearance',[
  ['treeDensityPercent','Tree density',0,200,5,'%','Play: 100% targets 175 trees; 0 removes them. Placement/ramp exclusions may reduce counts. Requires reload.'],
  ['rockDensityPercent','Rock density',0,200,5,'%','Play: 100% targets 80 boulders; 0 removes them. Changes interactive rocks as well as visuals. Requires reload.'],
@@ -117,7 +123,7 @@ for(const [key,label,description] of [
  ['fogEnabled','Distant fog','Play: enable distant haze; Haze strength controls its intensity. Requires reload.'],
  ['distantHillsEnabled','Distant hills','Play: decorative horizon hills, without colliders. Requires reload.'],
 ])tuningFields.push({id:'worldAppearance.'+key,root:'worldAppearance',key,label,description,group:'Environment',type:'boolean',mode:'both',scope:'environment',vehicle:false});
-add('Storybook Preview','storybookBackgroundConfig',[
+add('Storybook Background','storybookBackgroundConfig',[
  ['brightness','Background brightness',.4,1.6,.05,'×','Live: exposure of painted scenery only; foreground lighting stays unchanged.'],
  ['saturation','Background saturation',0,1.6,.05,'×','Live: 0 is grayscale; 1 preserves the artwork colors.'],
  ['sunAzimuth','Sun bearing',0,360,1,'°','Live: position of the background sun halo. 0 = +Z, 90 = +X; does not move gameplay lights.'],
@@ -132,7 +138,7 @@ add('Storybook Preview','storybookBackgroundConfig',[
 for(const [key,label,type,description] of [
  ['mountainsVisible','Painted mountains visible','boolean','Live: distant mountain band and transition hills. Does not hide playable terrain.'],
  ['skyTint','Sky color tint','color','Live: multiplies the painted background palette; white preserves the original artwork.'],
-])tuningFields.push({id:'storybookBackgroundConfig.'+key,root:'storybookBackgroundConfig',key,label,type,description,group:'Storybook Preview',scope:'storybook',mode:'both',vehicle:false});
+])tuningFields.push({id:'storybookBackgroundConfig.'+key,root:'storybookBackgroundConfig',key,label,type,description,group:'Storybook Background',scope:'storybook',mode:'both',vehicle:false});
 export function fieldPath(field,vehicle='dirty',mode='hybrid'){
  const name=vehicle==='dirty'?'backhoe':'garbageTruck';
  if(field.root==='drive')return `${mode==='original'?'originalDriveConfig':'arcadeHandlingConfig'}.${vehicle}.${field.key}`;
@@ -174,7 +180,7 @@ export function loadTuning(storage=tuningStorage()){
 }
 export function exportTuning(){return '// Exported current configuration. Review before replacing VehicleConfig.js.\n'+Object.entries(vehicleDefaults).map(([key,value])=>`export const ${key} = ${JSON.stringify(value,null,2)};`).join('\n\n')+'\n';}
 export function exportEnvironmentTuning(){return '// Global environment values. Review before replacing WorldEnvironmentConfig.js.\nexport const worldAppearance = '+JSON.stringify(worldAppearance,null,2)+';\n';}
-export function exportStorybookTuning(){return '// Visual preview values only; does not enable the background in default Play.\nexport const storybookBackgroundConfig = '+JSON.stringify(storybookBackgroundConfig,null,2)+';\n';}
+export function exportStorybookTuning(){return '// Visual background values only; does not change vehicle tuning.\nexport const storybookBackgroundConfig = '+JSON.stringify(storybookBackgroundConfig,null,2)+';\n';}
 export function snapshotTuning(){return clone(config);}
 if(typeof window!=='undefined'){
  loadTuning();

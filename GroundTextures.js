@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {worldAppearance} from './WorldEnvironmentConfig.js';
 import {visualPolishConfig} from './VehicleConfig.js';
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
 const hash=(x,y)=>{const v=Math.sin(x*127.1+y*311.7+37.4)*43758.5453;return v-Math.floor(v);};
@@ -25,12 +26,20 @@ export function addGroundTextures(terrain,painter,halfSize,renderer,config=visua
  const detail=createGroundDetailTexture(),size=256,data=new Uint8Array(size*size*4);detail.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
  for(let y=0;y<size;y++)for(let x=0;x<size;x++){const f=painter.surface((x/(size-1)*2-1)*halfSize,(y/(size-1)*2-1)*halfSize),soil=clamp(Math.max(f.path,f.dirtMask)),rock=clamp(f.rockMask)*(1-soil),i=(y*size+x)*4;data[i]=Math.round(soil*255);data[i+1]=Math.round(rock*255);data[i+2]=0;data[i+3]=255;}
  const mask=new THREE.DataTexture(data,size,size,THREE.RGBAFormat);mask.magFilter=mask.minFilter=THREE.LinearFilter;mask.needsUpdate=true;mask.name='Existing terrain surface blend';
+ let disposed=false,paintedReady=false;
+ const painted=new THREE.TextureLoader().load(new URL('./assets/terrain/painted-grass.png',import.meta.url).href,()=>{if(disposed){painted.dispose();return;}paintedReady=true;},undefined,()=>console.warn('Painted grass unavailable; using original ground.'));
+ painted.wrapS=painted.wrapT=THREE.MirroredRepeatWrapping;painted.colorSpace=THREE.SRGBColorSpace;
+ painted.magFilter=THREE.LinearFilter;painted.minFilter=THREE.LinearMipmapLinearFilter;painted.generateMipmaps=true;painted.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
+ const uniforms={paintedGrass:{value:painted},paintedScale:{value:9},paintedStrength:{value:0},paintedSaturation:{value:.9},paintedDirtBlend:{value:.45}};
+ function update(){uniforms.paintedScale.value=clamp(worldAppearance.grassTextureScale??9,2,40);uniforms.paintedStrength.value=paintedReady?clamp((worldAppearance.grassTextureStrength??85)/100):0;uniforms.paintedSaturation.value=clamp((worldAppearance.grassTextureSaturation??90)/100,0,1.5);uniforms.paintedDirtBlend.value=clamp((worldAppearance.grassDirtBlending??45)/100);}
  const material=terrain.material,previous=material.onBeforeCompile,previousKey=material.customProgramCacheKey;
  material.onBeforeCompile=shader=>{
-  previous.call(material,shader,renderer);Object.assign(shader.uniforms,{groundDetail:{value:detail},groundBlend:{value:mask},groundHalfSize:{value:halfSize},groundTextureStrength:{value:clamp((config.groundTextureStrengthPercent??75)/100)}});
+  previous.call(material,shader,renderer);Object.assign(shader.uniforms,uniforms,{groundDetail:{value:detail},groundBlend:{value:mask},groundHalfSize:{value:halfSize},groundTextureStrength:{value:clamp((config.groundTextureStrengthPercent??75)/100)}});
   shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vGroundPosition;').replace('#include <worldpos_vertex>','#include <worldpos_vertex>\nvGroundPosition=(modelMatrix*vec4(transformed,1.)).xyz;');
   shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>
- varying vec3 vGroundPosition; uniform sampler2D groundDetail; uniform sampler2D groundBlend; uniform float groundHalfSize; uniform float groundTextureStrength;`);
+ varying vec3 vGroundPosition;
+ uniform sampler2D paintedGrass; uniform float paintedScale; uniform float paintedStrength; uniform float paintedSaturation; uniform float paintedDirtBlend;
+ uniform sampler2D groundDetail; uniform sampler2D groundBlend; uniform float groundHalfSize; uniform float groundTextureStrength;`);
   shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>',`#include <map_fragment>
  vec2 blendUV=clamp((vGroundPosition.xz/groundHalfSize+1.)*.5,0.,1.);vec2 cover=texture2D(groundBlend,blendUV).rg;
  vec3 detailA=texture2D(groundDetail,vGroundPosition.xz/7.).rgb;
@@ -38,11 +47,23 @@ export function addGroundTextures(terrain,painter,halfSize,renderer,config=visua
  vec3 weights=vec3(max(0.,1.-cover.r-cover.g),cover.r,cover.g);float detailValue=dot(detailA*.82+detailB*.18,weights);
  float textureDistance=distance(cameraPosition,vGroundPosition);float distanceFade=1.-smoothstep(65.,180.,textureDistance);
  float textureAmount=groundTextureStrength*distanceFade;diffuseColor.rgb*=1.+(detailValue-.5)*1.65*textureAmount;
+ // Mirrored wrapping removes image-edge discontinuities. A rotated, differently
+ // scaled second sample blends gradually over broad regions, hiding the mirror grid.
+ vec2 grassUV=vGroundPosition.xz/paintedScale;
+ vec3 grassA=texture2D(paintedGrass,grassUV).rgb;
+ vec3 grassB=texture2D(paintedGrass,mat2(.8,-.6,.6,.8)*grassUV*.73+vec2(.37,.61)).rgb;
+ float macro=.5+.5*sin(vGroundPosition.x*.023+sin(vGroundPosition.z*.017)*2.);
+ vec3 paintedColor=mix(grassA,grassB,.22+macro*.3);
+ float gray=dot(paintedColor,vec3(.2126,.7152,.0722));paintedColor=mix(vec3(gray),paintedColor,paintedSaturation);
+ float grassWeight=(1.-smoothstep(0.,1.-paintedDirtBlend*.65,cover.r))*(1.-cover.g);
+ // Broad color variation breaks repetition; artwork supplies brush-scale detail.
+ paintedColor*=mix(vec3(.86),vec3(1.08),macro);
+ diffuseColor.rgb=mix(diffuseColor.rgb,paintedColor,paintedStrength*grassWeight);
  float groundRelief=(dot(detailA,weights)-.5)*.045*textureAmount;`);
   shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
  vec3 sx=dFdx(-vViewPosition),sy=dFdy(-vViewPosition);vec3 rx=cross(sy,normal),ry=cross(normal,sx);float determinant=dot(sx,rx);
  vec3 gradient=sign(determinant)*(dFdx(groundRelief)*rx+dFdy(groundRelief)*ry);if(abs(determinant)>1.e-8)normal=normalize(abs(determinant)*normal-gradient);`);
  };
- material.customProgramCacheKey=()=> 'cartoon-ground-textures-v1';material.needsUpdate=true;
- return {detail,mask,dispose(){detail.dispose();mask.dispose();material.onBeforeCompile=previous;material.customProgramCacheKey=previousKey;material.needsUpdate=true;}};
+ material.customProgramCacheKey=()=> 'painted-ground-textures-v2';material.needsUpdate=true;
+ return {detail,mask,painted,update,dispose(){disposed=true;painted.dispose();detail.dispose();mask.dispose();material.onBeforeCompile=previous;material.customProgramCacheKey=previousKey;material.needsUpdate=true;}};
 }

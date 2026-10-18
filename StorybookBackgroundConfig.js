@@ -1,5 +1,5 @@
 // Visual-review defaults only. Used exclusively by ?storybook=1; normal Play is
-// unchanged. All values update live in Settings → Storybook Preview.
+// unchanged. All values update live in Settings → Storybook Background.
 export const storybookBackgroundConfig={
  // Final painted background exposure multiplier; 0.4–1.6. No foreground relighting.
  brightness:1,

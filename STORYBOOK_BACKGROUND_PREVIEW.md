@@ -2,9 +2,10 @@
 
 Live preview: `index.html?storybook=1`.
 Comparison gallery: `viewer/storybook-review.html` (also linked from Environment
-Workshop → Painted countryside review). Normal Play continues using the original
-background. The preview is **not approved** and does not enable itself from saved
-preferences. `?storybook=0` and URLs without the flag use the original scenery.
+Workshop → Painted countryside review). Approved October 17, 2026: normal Play
+now uses the painted background. `?storybook=0` retains the original for comparison;
+`?storybook=1` adds review camera controls. Normal Play has no review toolbar.
+Artwork loading failure retains the original background as a fallback.
 
 The comparison gallery contains matching north, east and high-hilltop camera
 captures. In the live preview, the compact view chooser provides north/east/south/
@@ -53,12 +54,12 @@ the lightweight runtime skirt must follow the existing terrain edge precisely.
 
 The regular terrain, ramps, roads, models, trees, rocks, collision adapters,
 vehicle tuning, lighting and input handlers remain unchanged. Review camera
-presets and background grading run only on the explicit preview route. Original
+presets run only on the explicit review route; grading runs in default Play. Original
 background fog and camera range are restored when comparing or disposing.
 
 ## Live settings
 
-In the preview, shared Settings → Storybook Preview provides brightness,
+Shared Settings → Storybook Background provides brightness,
 saturation, sky/background tint, sun bearing/elevation/glow, mountain visibility,
 background atmosphere, cloud drift, background scale, horizon alignment and
 panorama direction. Defaults and supported units/ranges are documented in
@@ -67,9 +68,9 @@ foreground directional light. Tint grades the whole illustrated palette for a
 cohesive result. Scale rebuilds only the non-collidable transition geometry.
 
 These settings reuse TuningStore's saved overrides, field/category resets and
-validation. Export storybook preview settings downloads a compatible configuration
-module. They neither enable the preview automatically nor change VehicleConfig.js.
-Normal Play/labs hide this experimental settings section. Versioned import-map
+validation. Export background settings downloads a compatible configuration
+module. They do not change VehicleConfig.js.
+All areas expose these shared values; they render live in painted Play only. Versioned import-map
 aliases keep the shared Settings/store modules consistent across cached entry
 pages; all asset URLs remain relative for repository-based GitHub Pages hosting.
 
