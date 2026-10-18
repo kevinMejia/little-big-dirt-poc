@@ -1,7 +1,8 @@
 import * as vehicleDefaults from './VehicleConfig.js';
 import {worldAppearance} from './WorldEnvironmentConfig.js';
 import {storybookBackgroundConfig} from './StorybookBackgroundConfig.js';
-const config={...vehicleDefaults,worldAppearance,storybookBackgroundConfig};
+import {audioConfig,audioDefinitions} from './AudioConfig.js';
+const config={...vehicleDefaults,worldAppearance,storybookBackgroundConfig,audioConfig};
 
 // VehicleConfig.js owns defaults. This module stores only explicit user overrides.
 export const tuningConfig=config;
@@ -12,6 +13,10 @@ const assign=(path,value)=>{const keys=path.split('.'),key=keys.pop();get(config
 export const tuningKey=(base=import.meta.url)=>'little-big-dirt:tuning:'+new URL('.',base).pathname;
 export function tuningStorage(){try{return window.localStorage;}catch{return null;}}
 export const tuningFields=[];
+for(const [key,label] of [...['master','engine','effects','music'].map(key=>[key,key]),...audioDefinitions.map(d=>['sounds.'+d.id,d.label])]){
+ tuningFields.push({id:'audioConfig.'+key+'.volume',root:'audioConfig',key:key+'.volume',label:label+' volume',group:'Audio',scope:'audio',mode:'both',min:0,max:100,step:1,unit:'%',hardMin:0,hardMax:100,description:'Live audio volume; saved automatically.'});
+ tuningFields.push({id:'audioConfig.'+key+'.enabled',root:'audioConfig',key:key+'.enabled',label:'Enable '+label,group:'Audio',scope:'audio',mode:'both',type:'boolean',description:'Live sound switch; saved automatically.'});
+}
 function add(group,root,keys,{vehicle=false,mode='both',scope='driving'}={}){
  for(const [key,label,min,max,step,unit,description,hardMin=min,hardMax=max] of keys)tuningFields.push({id:root+'.'+key,root,key,label,group,min,max,step,unit,description,hardMin,hardMax,vehicle,mode,scope});
 }
@@ -202,6 +207,7 @@ export function exportTuning(){return '// Exported current configuration. Review
 export function exportEnvironmentTuning(){return '// Global environment values. Review before replacing WorldEnvironmentConfig.js.\nexport const worldAppearance = '+JSON.stringify(worldAppearance,null,2)+';\n';}
 export function exportStorybookTuning(){return '// Visual background values only; does not change vehicle tuning.\nexport const storybookBackgroundConfig = '+JSON.stringify(storybookBackgroundConfig,null,2)+';\n';}
 export function snapshotTuning(){return clone(config);}
+export function exportAudioTuning(){return '// Audio defaults only. Sound descriptions and asset labels remain in AudioConfig.js.\nexport const audioConfig = '+JSON.stringify(audioConfig,null,2)+';\n';}
 if(typeof window!=='undefined'){
  loadTuning();
  const refresh=()=>{const changed=loadTuning();if(changed.length)notify(changed);};

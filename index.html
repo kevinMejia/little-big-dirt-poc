@@ -149,6 +149,8 @@ document.querySelector('#loadingRetry').onclick=()=>location.reload();
 <dialog id="vehicleGarage" aria-label="Vehicle garage"><button id="garageClose" type="button">← Back to driving</button><iframe id="garageFrame" title="Vehicle garage controls"></iframe></dialog>
 <script type="module">
 
+import {getGameAudio} from './GameAudio.js';
+const gameAudio=getGameAudio();
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js';
 
 import { BackhoeLoader } from './BackhoeLoader.js';
@@ -284,10 +286,10 @@ addEventListener('pagehide',event=>{if(!event.persisted)contactShading.dispose()
 addEventListener('pagehide',event=>{if(!event.persisted){groundDebris.dispose();}});
 const groundDetails=createGroundDetails(scene,surfaceHeight,world,terrainPainter,sceneryLayout,worldAppearance,{areaScale:mapSettings.areaScale,viewDistance:150,kinds:['flowers']});
 let wordHunt=null;
-if(!handlingCourse)WordHuntSystem.load(scene,{halfSize:world,height:surfaceHeight,trees:sceneryLayout.trees,rocks:sceneryLayout.rocks,ramps:worldJumps.features}).then(system=>wordHunt=system).catch(error=>console.warn('Word Hunt unavailable',error));
+if(!handlingCourse)WordHuntSystem.load(scene,{halfSize:world,height:surfaceHeight,trees:sceneryLayout.trees,rocks:sceneryLayout.rocks,ramps:worldJumps.features,audio:{play:(...args)=>gameAudio.hunt(...args),dispose(){}}}).then(system=>wordHunt=system).catch(error=>console.warn('Word Hunt unavailable',error));
 addEventListener('pagehide',event=>{if(!event.persisted)wordHunt?.dispose();});
 let turboPickups=null;
-const turboReady=handlingCourse?Promise.resolve():TurboPickupSystem.load(scene,{renderer,halfSize:world,height:surfaceHeight,trees:sceneryLayout.trees,rocks:sceneryLayout.rocks,ramps:worldJumps.features}).then(system=>{turboPickups=system;}).catch(error=>{console.warn('Turbo pickups could not load',error);});
+const turboReady=handlingCourse?Promise.resolve():TurboPickupSystem.load(scene,{onCollect:()=>{gameAudio.play('turbo-pickup');gameAudio.play('turbo-active',{intensity:.6});},renderer,halfSize:world,height:surfaceHeight,trees:sceneryLayout.trees,rocks:sceneryLayout.rocks,ramps:worldJumps.features}).then(system=>{turboPickups=system;}).catch(error=>{console.warn('Turbo pickups could not load',error);});
 addEventListener('pagehide',event=>{if(!event.persisted)turboPickups?.dispose();});
 addEventListener('pagehide',event=>{if(!event.persisted)groundDetails.dispose();});
 
@@ -328,6 +330,7 @@ const vehicleVisual=new THREE.Group();vehicleRoot.add(vehicleVisual);
 const bodyFeedback=new VehicleFeedback(),boundaryMotion=new SoftBoundary(),boundaryCannon=new BoundaryCannon();let flight=null;
 function launchFromBoundary(){
  if(!boundaryCannon.launch(position,configs[index].hill.boundaryCannon))return false;
+ gameAudio.play('cannon-boom',{cooldown:.3});audioCannon=true;
  flight=boundaryCannon.flight;hillPhysics.reset();bodyFeedback.reset();boundaryMotion.reset();return true;
 }
 
@@ -432,56 +435,24 @@ if(new URLSearchParams(location.search).get('qa')==='stinky'){
  });
 }
 
-let audio;
-
-function unlockAudio(){try{audio??=new (window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume().catch(()=>{})}catch(e){}}
-
-addEventListener('keydown',unlockAudio);addEventListener('pointerdown',unlockAudio);
-
-function rockImpactSound(strength,kind){
-  if(!audio||audio.state!=='running')return;
-  try{const now=audio.currentTime,osc=audio.createOscillator(),gain=audio.createGain();osc.type='triangle';osc.frequency.setValueAtTime(kind==='break'?180:kind==='crack'?260:140,now);osc.frequency.exponentialRampToValueAtTime(65,now+.18);gain.gain.setValueAtTime(.035,now);gain.gain.exponentialRampToValueAtTime(.0001,now+.24);osc.connect(gain);gain.connect(audio.destination);osc.start(now);osc.stop(now+.25);osc.onended=()=>{osc.disconnect();gain.disconnect()};
-  if(kind!=='bump'){const buffer=audio.createBuffer(1,Math.floor(audio.sampleRate*.22),audio.sampleRate),data=buffer.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*Math.pow(1-i/data.length,2)*(Math.sin(i/audio.sampleRate*65)>0?1:.15);const noise=audio.createBufferSource(),filter=audio.createBiquadFilter(),g=audio.createGain();noise.buffer=buffer;filter.type='lowpass';filter.frequency.value=kind==='break'?900:1600;g.gain.value=.045;noise.connect(filter);filter.connect(g);g.connect(audio.destination);noise.start();noise.onended=()=>{noise.disconnect();filter.disconnect();g.disconnect()};}}catch(e){}
-}
-function treeImpactSound(strength,kind='wobble'){
-
-  if(!audio||audio.state!=='running')return;
-
-  try{
-
-    const now=audio.currentTime,osc=audio.createOscillator(),gain=audio.createGain();
-
-    osc.type=kind==='fall'?'triangle':'sine';osc.frequency.setValueAtTime(kind==='fall'?480:strength<3?220:360,now);osc.frequency.exponentialRampToValueAtTime(85,now+.2);
-
-    gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(.045,now+.008);gain.gain.exponentialRampToValueAtTime(.0001,now+.3);
-
-    osc.connect(gain);gain.connect(audio.destination);osc.start(now);osc.stop(now+.32);osc.onended=()=>{osc.disconnect();gain.disconnect()};
-
-    const buffer=audio.createBuffer(1,Math.floor(audio.sampleRate*.22),audio.sampleRate),data=buffer.getChannelData(0);
-
-    for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*(1-i/data.length);
-
-    const noise=audio.createBufferSource(),filter=audio.createBiquadFilter(),rustle=audio.createGain();noise.buffer=buffer;filter.type='bandpass';filter.frequency.value=kind==='fall'?900:1700;filter.Q.value=.6;rustle.gain.value=kind==='fall'?.024:.016;
-
-    noise.connect(filter);filter.connect(rustle);rustle.connect(audio.destination);noise.start(now);noise.onended=()=>{noise.disconnect();filter.disconnect();rustle.disconnect()};
-
-  }catch(e){}
-
-}
-
-function landingSound(impact){
- if(!audio||audio.state!=='running')return;
- try{const now=audio.currentTime,osc=audio.createOscillator(),gain=audio.createGain();osc.type='sine';osc.frequency.setValueAtTime(95,now);osc.frequency.exponentialRampToValueAtTime(38,now+.22);gain.gain.setValueAtTime(Math.min(.06,impact*.002),now);gain.gain.exponentialRampToValueAtTime(.0001,now+.3);osc.connect(gain);gain.connect(audio.destination);osc.start(now);osc.stop(now+.31);osc.onended=()=>{osc.disconnect();gain.disconnect();};}catch(error){}
-}
-
-function honk(){try{audio??=new (window.AudioContext||window.webkitAudioContext)();const osc=audio.createOscillator(),gain=audio.createGain();osc.type='sawtooth';osc.frequency.value=index===0?310:195;gain.gain.setValueAtTime(.11,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+.24);osc.connect(gain);gain.connect(audio.destination);osc.start();osc.stop(audio.currentTime+.25)}catch(e){}}
+// Gameplay audio routes through one shared mixer. Physics callbacks stay intact.
+function rockImpactSound(strength,kind){gameAudio.rock(strength,kind);}
+function treeImpactSound(strength,kind='wobble'){gameAudio.tree(strength,kind);}
+function landingSound(impact){gameAudio.play(audioCannon?'cannon-land':'ramp-land',{intensity:Math.min(1,.35+impact/20),cooldown:.2});}
+let audioCannon=false,audioAirborne=false,audioBoost=0,audioVehicle=null;
+const treeAudioStates=new WeakMap();
+function honk(){gameAudio.horn();}
 
 document.querySelector('#gameLoading').dataset.phase='turbo-assets';
 await turboReady;
 const turboStatus=document.createElement('div');turboStatus.id='turboStatus';turboStatus.hidden=true;turboStatus.setAttribute('aria-live','off');document.body.append(turboStatus);
+addEventListener('pagehide',()=>gameAudio.dispose(),{once:true});
 const clock=new THREE.Clock(),camTarget=new THREE.Vector3(),targetPos=new THREE.Vector3(),up=new THREE.Vector3(0,1,0);
 
-function update(dt){const previousHeading=heading;const cfg=configs[index];treeCollisions.setVehicles([{position,heading,bounds:cfg.collision,airborne:!!flight}]);treeCollisions.update(dt);rockInteractions.setVehicles([{position,heading,bounds:cfg.collision,airborne:!!flight}]);rockInteractions.update(dt);const pad=navigator.getGamepads?.()[0];const ax=pad?.axes?.[0]||0;
+function update(dt){const previousHeading=heading;
+// Observe state transitions; never alter collision, flight or recovery state.
+for(const tree of treeCollisions.trees){const previous=treeAudioStates.get(tree);if(previous==='FALLING'&&tree.state==='FALLEN')gameAudio.play('tree-thud',{cooldown:.15});treeAudioStates.set(tree,tree.state);}
+const cfg=configs[index];treeCollisions.setVehicles([{position,heading,bounds:cfg.collision,airborne:!!flight}]);treeCollisions.update(dt);rockInteractions.setVehicles([{position,heading,bounds:cfg.collision,airborne:!!flight}]);rockInteractions.update(dt);const pad=navigator.getGamepads?.()[0];const ax=pad?.axes?.[0]||0;
 
 const drivingInput=controls.read(speed,pad);
 const forward=drivingInput.accelerate,back=drivingInput.reverse,brake=drivingInput.brake,emergencyBrake=drivingInput.emergencyBrake;
@@ -545,8 +516,11 @@ if(flight){
 }
 
 }else{
+ const cannonBefore=rapierController.cannonFlight;
  const state=rapierController.update(dt,hybridDrivingInput(drivingInput,steer,rapierController.physics.state.airborne));
  position.set(state.position.x,state.position.y,state.position.z);heading=state.heading;speed=state.speed;slope=state.grade;flight=state.airborne?{kind:'rapier',vy:state.verticalSpeed}:null;
+ if(state.cannon&&!cannonBefore)gameAudio.play('cannon-boom',{cooldown:.3});
+ audioCannon=cannonBefore||state.cannon;
  for(const event of state.events)if(event.type==='landing')hybridLandingFeedback(event,index,cfg,bodyFeedback,surfaceEffects,surfaceHeight,landingSound);
 }
 
@@ -554,6 +528,14 @@ turboPickups?.update(dt,position,physicsMode==='rapier'?rapierController:null);
 const boostRemaining=rapierController?.turbo.remaining??0;
 turboStatus.hidden=physicsMode!=='rapier'||boostRemaining<=0;
 if(!turboStatus.hidden)turboStatus.textContent=`⚡ TURBO ${boostRemaining.toFixed(1)}s`;
+if(audioVehicle!==index){gameAudio.stopAll();audioAirborne=!!flight;audioBoost=boostRemaining;audioCannon=false;audioVehicle=index;}
+if(!audioAirborne&&flight&&!audioCannon)gameAudio.play('ramp-takeoff',{cooldown:.3});
+if(audioBoost>0&&boostRemaining<=0&&physicsMode==='rapier')gameAudio.play('turbo-expire',{cooldown:.3});
+audioBoost=boostRemaining;audioAirborne=!!flight;
+audioCannon=physicsMode==='rapier'?!!rapierController?.cannonFlight:!!boundaryCannon.flight;
+gameAudio.loop('air-wind',audioCannon,{intensity:.35});
+gameAudio.engine(index,speed,cfg.max*getSpeedMultiplier(cfg.hill.speedAdjustmentPercent),forward||back,garage.open||document.hidden||physicsSelector.disabled);
+
 
 if(physicsMode==='original'){
 vehicleRoot.position.copy(position);vehicleRoot.rotation.order='YXZ';vehicleRoot.rotation.y=heading;
@@ -615,7 +597,7 @@ document.querySelector('#speed').innerHTML=Math.round(Math.abs(speed)*2.237)+' <
 physicsSelector.value=preferences.physicsMode;physicsSelector.dispatchEvent(new Event('change'));
 
 let diagnosticFrames=0,diagnosticStart=performance.now();
-function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);wordHunt?.update(dt,physicsMode==='rapier'?vehicleRoot.position:position,garage.open||document.hidden||physicsSelector.disabled);if(!garage.open){update(dt);storybookBackground?.update(dt);groundTextures.update();groundDetails.update(camera.position);renderer.render(scene,camera);if(!physicsSelector.disabled){document.querySelector('#gameLoading').hidden=true;document.querySelector('#gameLoading').dataset.phase='ready';}diagnosticFrames++;const now=performance.now();if(now-diagnosticStart>1000){if(document.body.classList.contains('show-debug'))document.querySelector('#renderTuning').textContent=Math.round(diagnosticFrames*1000/(now-diagnosticStart))+' FPS · '+renderer.info.render.calls+' draws · '+Math.round(renderer.info.render.triangles/1000)+'k triangles';diagnosticFrames=0;diagnosticStart=now;}}}animate();
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);wordHunt?.update(dt,physicsMode==='rapier'?vehicleRoot.position:position,garage.open||document.hidden||physicsSelector.disabled);if(garage.open){gameAudio.stopAll();}if(!garage.open){update(dt);storybookBackground?.update(dt);groundTextures.update();groundDetails.update(camera.position);renderer.render(scene,camera);if(!physicsSelector.disabled){document.querySelector('#gameLoading').hidden=true;document.querySelector('#gameLoading').dataset.phase='ready';}diagnosticFrames++;const now=performance.now();if(now-diagnosticStart>1000){if(document.body.classList.contains('show-debug'))document.querySelector('#renderTuning').textContent=Math.round(diagnosticFrames*1000/(now-diagnosticStart))+' FPS · '+renderer.info.render.calls+' draws · '+Math.round(renderer.info.render.triangles/1000)+'k triangles';diagnosticFrames=0;diagnosticStart=now;}}}animate();
 
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 

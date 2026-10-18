@@ -28,7 +28,7 @@ assert.equal(navigationItems.find(item=>item.id==='settings').action,'settings',
 assert.equal(navigationItems.find(item=>item.id==='settings').path,undefined);
 assert.deepEqual(navigationItems.map(item=>item.id),['play','jumps','assets','settings'],'only four top-level choices');
 const assets=navigationItems.find(item=>item.id==='assets');
-assert.deepEqual(assets.children.map(item=>item.id),['showroom','environment','dirty','stinky']);
+assert.deepEqual(assets.children.map(item=>item.id),['showroom','environment','audio','dirty','stinky']);
 for(const child of assets.children)assert(navigationGroupActive(assets,child.id),'active asset page opens group');
 assert(navigationGroupActive(assets,'dirty-comparison'));assert(navigationGroupActive(assets,'stinky-comparison'));
 assert(!navigationGroupActive(assets,'play'));assert(!navigationGroupActive(assets,'jumps'));

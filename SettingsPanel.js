@@ -1,4 +1,5 @@
 import {appendWordHuntSettings} from './WordHuntSettings.js';
+import {appendAudioSettings} from './AudioSettings.js';
 import {tuningFields,fieldPath,tuningValue,defaultTuningValue,setTuning,resetTuning,exportTuning,exportEnvironmentTuning,exportStorybookTuning} from './TuningStore.js';
 import {readGamePreferences,saveGamePreference,resetGamePreference,gamePreferenceStorage} from './GamePreferences.js?v=central-settings-3';
 import {settingsPlacement} from './SettingsPlacement.js';
@@ -30,6 +31,7 @@ function createSettingsPanel(){
   $('#context').textContent=`${mode()==='hybrid'?'Main-game hybrid':'Original controller'} tuning. ${isPlay()||isLab()?'Vehicle selection edits tuning; it does not switch or reset the car.':'Preview area: saved driving changes apply when you enter Play or Dirt Jump Lab.'} Shared values are labeled “Both vehicles”.`;
   const main=$('main');main.replaceChildren();
   for(const group of [...new Set(tuningFields.map(field=>field.group))]){
+   if(group==='Audio')continue;
    const fields=tuningFields.filter(field=>field.group===group&&(field.mode==='both'||field.mode===mode()));
    if(!fields.length)continue;
    const details=document.createElement('details');details.dataset.group=group;details.open=expanded.has(group)||(first&&group==='Driving');
@@ -79,6 +81,7 @@ function createSettingsPanel(){
    const reset=document.createElement('button');reset.textContent='Reset '+group;reset.addEventListener('click',()=>{report(resetTuning(paths));render();});section.append(reset);
   }
   appendWordHuntSettings(main,expanded.has('Word Hunt'));
+  appendAudioSettings(main,expanded.has('Audio'));
   const display=document.createElement('details');display.dataset.group='Display / HUD';display.open=expanded.has('Display / HUD');display.innerHTML='<summary>Display / HUD</summary><div class="section"></div>';main.append(display);
   for(const [key,label,description] of [
    ['showDrivingHud','Show Driving HUD','Show the existing top-left vehicle, speed, physics and performance panel in Play. Off by default.'],

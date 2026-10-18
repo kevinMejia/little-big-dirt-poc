@@ -61,6 +61,7 @@ export class TurboPickupSystem {
    // the same update in which its cooldown expires.
    if(enabled&&controller&&r.timer.available&&crossesPickup(this.previous??position,position,r.point,this.config.pickupRadius)&&controller.collectTurbo()){
     r.timer.collect(this.config.respawnSeconds);r.flashTime=.35;
+    this.options.onCollect?.();
    }else r.timer.step(dt);
    r.flashTime=Math.max(0,r.flashTime-dt);r.flash.material.opacity=r.flashTime/.35;r.flash.visible=r.flashTime>0;
    const nearby=Math.hypot(position.x-r.point.x,position.z-r.point.z)<120;

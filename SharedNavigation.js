@@ -9,6 +9,7 @@ export const navigationItems = [
  {id:'assets',label:'Asset Showroom',children:[
   {id:'showroom',label:'Turbo & Collectibles',path:'viewer/showroom.html'},
   {id:'environment',label:'Environment Workshop',path:'viewer/environment.html'},
+  {id:'audio',label:'Audio Auditions',path:'viewer/audio.html'},
   {id:'dirty',label:'Dirty Garage',path:'viewer/dirty.html'},
   {id:'stinky',label:'Stinky Garage',path:'viewer/stinky.html'},
  ]},

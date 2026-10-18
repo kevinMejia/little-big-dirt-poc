@@ -1,0 +1,34 @@
+{
+  "audio": {
+    "decoded": 23,
+    "cached": true,
+    "distinctEngineBuffers": true,
+    "idleRate": 1,
+    "fastRate": 1.4931093454360962,
+    "oneEngineSourcePerDemo": true,
+    "cannonBoomsPerDemo": 1,
+    "stopCancelsScheduledVoices": true,
+    "unapproved": true
+  },
+  "layouts": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 900,
+      "fixedPlayer": true
+    },
+    {
+      "name": "portrait",
+      "width": 390,
+      "height": 844,
+      "fixedPlayer": true
+    },
+    {
+      "name": "landscape",
+      "width": 844,
+      "height": 390,
+      "fixedPlayer": true
+    }
+  ],
+  "errors": []
+}
