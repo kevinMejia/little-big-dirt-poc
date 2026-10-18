@@ -43,3 +43,14 @@ const sparse=createSceneryLayout(painter,220,{...worldAppearance,treeDensityPerc
 const dense=createSceneryLayout(painter,220,{...worldAppearance,treeDensityPercent:200,rockDensityPercent:200});assert.equal(dense.trees.length,350);assert.equal(dense.rocks.length,160);
 assert.deepEqual(createSceneryLayout(painter,220,{...worldAppearance,treeDensityPercent:500,rockDensityPercent:500}),dense,'density capped at 200%');
 console.log('PASS: unchanged original counts at defaults; zero/half/double density and supported upper cap affect actual scenery counts.');
+
+const expandedLayout=createSceneryLayout(painter,330,worldAppearance,2.25);
+assert.equal(expandedLayout.trees.length,394);assert.equal(expandedLayout.rocks.length,180);
+assert(expandedLayout.trees.some(t=>Math.abs(t.x)>220||Math.abs(t.z)>220),'new terrain populated');
+const chunked=createGroundDetails(scene,height,330,painter,expandedLayout,{...worldAppearance,grassDetailDensity:2},{areaScale:2.25,viewDistance:150});
+assert.equal(chunked.group.userData.budgets.grass,450);assert(chunked.group.children.length>3,'spatial detail batches');
+chunked.update(new THREE.Vector3(0,0,0));assert(chunked.group.children.some(c=>!c.visible),'distant cells culled');
+chunked.update(new THREE.Vector3(300,0,300));assert(chunked.group.children.some(c=>c.visible),'details follow vehicle/camera in extension');
+const shader={vertexShader:'#include <begin_vertex>'};chunked.group.children[0].material.onBeforeCompile(shader);assert(shader.vertexShader.includes('smoothstep(110.,150.'));
+chunked.dispose();assert.equal(scene.children.length,0);
+console.log('PASS: area-scaled scenery/detail counts, populated outer region, spatial culling, gentle distance shrink and cleanup.');

@@ -76,7 +76,7 @@ body[data-lbd-driving-hud="true"] #hud{display:block!important}
 body[data-lbd-controls-guide="true"] #help{display:block!important;max-width:calc(100vw - 32px);white-space:normal;pointer-events:none}
 </style>
 
-<script type="importmap">{"imports":{"./WorldEnvironmentConfig.js":"./WorldEnvironmentConfig.js?v=painted-surfaces-3","three":"https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/","./TuningStore.js":"./TuningStore.js?v=painted-surfaces-3","./SettingsPanel.js":"./SettingsPanel.js?v=painted-surfaces-3"}}</script>
+<script type="importmap">{"imports":{"./WorldEnvironmentConfig.js":"./WorldEnvironmentConfig.js?v=expanded-map-1","three":"https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/","./TuningStore.js":"./TuningStore.js?v=expanded-map-1","./SettingsPanel.js":"./SettingsPanel.js?v=expanded-map-1"}}</script>
 <script type="module" src="./SharedNavigation.js"></script></head>
 
 <body>
@@ -111,17 +111,18 @@ import { EnvironmentAssets } from './EnvironmentAssets.js';
 import { EnvironmentWorld } from './EnvironmentWorld.js';
 // Apply shared saved overrides before constructing any environment objects.
 import './TuningStore.js';
+import {mainWorldSettings} from './MainWorldSettings.js?v=expanded-1';
 import {isStorybookEnabled} from './StorybookPreviewMode.js?v=approved-1';
-import { worldAppearance, createWorldAtmosphere, createTerrainPainter, createSceneryLayout, createGroundDetails } from './WorldAppearance.js?v=environment-settings-1';
+import { worldAppearance, createWorldAtmosphere, createTerrainPainter, createSceneryLayout, createGroundDetails } from './WorldAppearance.js?v=expanded-1';
 
 import { cameraSettings, groundDebrisConfig, jumpConfig } from './VehicleConfig.js';
 
 import { HillSpeedPhysics } from './HillSpeedPhysics.js';
 import { DrivingInput } from './DrivingInput.js';
 import { applyReleaseDeceleration, getSpeedMultiplier } from './VehicleMotion.js';
-import { GroundDebrisSystem, DebrisWheelContacts } from './GroundDebrisSystem.js';
+import { GroundDebrisSystem, DebrisWheelContacts } from './GroundDebrisSystem.js?v=expanded-1';
 import { createDebrisDebug } from './GroundDebrisDebug.js';
-import { addGroundTextures } from './GroundTextures.js?v=painted-surfaces-3';
+import { addGroundTextures } from './GroundTextures.js?v=expanded-map-1';
 import { createPolishedLighting, ContactShading, polishTerrain, VehicleSurfaceEffects } from './VisualPolish.js';
 import { DirtJumpSystem, playgroundFeatures } from './DirtJumpSystem.js';
 import {playableVehicleConfig,smoothDrivingSteering,hybridDrivingInput,hybridLandingFeedback} from './PlayableVehicleSetup.js';
@@ -158,14 +159,14 @@ function surfaceHeight(x,z){return worldJumps.sample(x,z);}
 
 function groundNormal(x,z){const e=.7;return new THREE.Vector3(surfaceHeight(x-e,z)-surfaceHeight(x+e,z),2*e,surfaceHeight(x,z-e)-surfaceHeight(x,z+e)).normalize()}
 
-// Map distances are in world units. The terrain spans -220 to +220 on each axis.
+// Full width is configurable; procedural coordinates and ramp dimensions stay fixed.
 
-const mapSettings={halfSize:220,boundaryInset:15};
+const mapSettings=mainWorldSettings();
 
 const world=mapSettings.halfSize,worldSurface=worldJumps.createWorldSurface(world);
 const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(worldSurface.vertices,3));geo.setIndex(new THREE.BufferAttribute(worldSurface.indices,1));const pos=geo.attributes.position,colors=[];
 
-const terrainPainter=createTerrainPainter(surfaceHeight,world),terrainColor=new THREE.Color();
+const terrainPainter=createTerrainPainter(surfaceHeight,220),terrainColor=new THREE.Color();
 const baseSurface=terrainPainter.surface,baseColor=terrainPainter.sampleColor,rampSoil=new THREE.Color(0xb59057);
 terrainPainter.surface=(x,z)=>{const field=baseSurface(x,z),ramp=worldJumps.dirtMask(x,z);return {...field,ramp,path:Math.max(field.path,ramp),dirtMask:Math.max(field.dirtMask,ramp)};};
 terrainPainter.sampleColor=(x,z,target=new THREE.Color())=>baseColor(x,z,target).lerp(rampSoil,worldJumps.dirtMask(x,z)*.9);
@@ -205,7 +206,7 @@ function makeTree(x,z,scale=1){const g=new THREE.Group();g.position.set(x,surfac
 
 let seed=3184;function rand(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
 
-const originalLayout=createSceneryLayout(createTerrainPainter(height,world),world);
+const originalLayout=createSceneryLayout(createTerrainPainter(height,220),world,worldAppearance,mapSettings.areaScale);
 const sceneryLayout={trees:(handlingCourse?[]:originalLayout.trees).filter(t=>!worldJumps.contains(t.x,t.z,5)),rocks:(handlingCourse?[]:originalLayout.rocks).filter(r=>!worldJumps.contains(r.x,r.z,6))};
 polishTerrain(terrain,terrainPainter,sceneryLayout,world);
 const groundTextures=addGroundTextures(terrain,terrainPainter,world,renderer);
@@ -216,7 +217,7 @@ const rockInteractions=new RockInteractionSystem(scene,{groundHeight:surfaceHeig
 function makeRock(x,z,s){rockInteractions.addRock(x,z,s);rand();rand();rand()}
 
 for(const {x,z,radius} of sceneryLayout.rocks)makeRock(x,z,radius);
-const groundDebris=new GroundDebrisSystem(scene,surfaceHeight,world,terrainPainter,sceneryLayout,groundDebrisConfig);
+const groundDebris=new GroundDebrisSystem(scene,surfaceHeight,world,terrainPainter,sceneryLayout,groundDebrisConfig,mapSettings.areaScale);
 const debrisContacts=new DebrisWheelContacts();
 const surfaceEffects=new VehicleSurfaceEffects(scene,surfaceHeight,terrainPainter);
 addEventListener('pagehide',event=>{if(!event.persisted)surfaceEffects.dispose();});
@@ -224,7 +225,7 @@ const contactShading=new ContactShading(scene,surfaceHeight,sceneryLayout,rockIn
 addEventListener('pagehide',event=>{if(!event.persisted)contactShading.dispose();});
 const debrisDebug=createDebrisDebug(scene,groundDebris,debrisContacts);
 addEventListener('pagehide',event=>{if(!event.persisted){debrisDebug?.dispose();groundDebris.dispose();}});
-const groundDetails=createGroundDetails(scene,surfaceHeight,world,terrainPainter,sceneryLayout);
+const groundDetails=createGroundDetails(scene,surfaceHeight,world,terrainPainter,sceneryLayout,worldAppearance,{areaScale:mapSettings.areaScale,viewDistance:150});
 addEventListener('pagehide',event=>{if(!event.persisted)groundDetails.dispose();});
 
 const environmentAssets=new EnvironmentAssets();let environmentWorld=null;
@@ -543,7 +544,7 @@ document.querySelector('#speed').innerHTML=Math.round(Math.abs(speed)*2.237)+' <
 physicsSelector.value=preferences.physicsMode;physicsSelector.dispatchEvent(new Event('change'));
 
 let diagnosticFrames=0,diagnosticStart=performance.now();
-function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);if(!garage.open){update(dt);storybookBackground?.update(dt);groundTextures.update();renderer.render(scene,camera);diagnosticFrames++;const now=performance.now();if(now-diagnosticStart>1000){if(document.body.classList.contains('show-debug'))document.querySelector('#renderTuning').textContent=Math.round(diagnosticFrames*1000/(now-diagnosticStart))+' FPS · '+renderer.info.render.calls+' draws · '+Math.round(renderer.info.render.triangles/1000)+'k triangles';diagnosticFrames=0;diagnosticStart=now;}}}animate();
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);if(!garage.open){update(dt);storybookBackground?.update(dt);groundTextures.update();groundDetails.update(camera.position);renderer.render(scene,camera);diagnosticFrames++;const now=performance.now();if(now-diagnosticStart>1000){if(document.body.classList.contains('show-debug'))document.querySelector('#renderTuning').textContent=Math.round(diagnosticFrames*1000/(now-diagnosticStart))+' FPS · '+renderer.info.render.calls+' draws · '+Math.round(renderer.info.render.triangles/1000)+'k triangles';diagnosticFrames=0;diagnosticStart=now;}}}animate();
 
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 

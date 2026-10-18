@@ -23,7 +23,7 @@ export function createGroundDetailTexture(size=512){
  const texture=new THREE.DataTexture(data,size,size,THREE.RGBAFormat);texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.magFilter=THREE.LinearFilter;texture.minFilter=THREE.LinearMipmapLinearFilter;texture.generateMipmaps=true;texture.needsUpdate=true;texture.name='Grass / soil / rocky detail';return texture;
 }
 export function addGroundTextures(terrain,painter,halfSize,renderer,config=visualPolishConfig){
- const detail=createGroundDetailTexture(),size=256,data=new Uint8Array(size*size*4);detail.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
+ const detail=createGroundDetailTexture(),size=Math.min(512,Math.max(256,Math.round(256*halfSize/220))),data=new Uint8Array(size*size*4);detail.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
  for(let y=0;y<size;y++)for(let x=0;x<size;x++){const f=painter.surface((x/(size-1)*2-1)*halfSize,(y/(size-1)*2-1)*halfSize),soil=clamp(Math.max(f.path,f.dirtMask)),rock=clamp(f.rockMask)*(1-soil),i=(y*size+x)*4;data[i]=Math.round(soil*255);data[i+1]=Math.round(rock*255);data[i+2]=0;data[i+3]=255;}
  const mask=new THREE.DataTexture(data,size,size,THREE.RGBAFormat);mask.magFilter=mask.minFilter=THREE.LinearFilter;mask.needsUpdate=true;mask.name='Existing terrain surface blend';
  let disposed=false,paintedReady=false,surfaceReady=false;

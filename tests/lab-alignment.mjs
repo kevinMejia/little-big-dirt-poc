@@ -14,6 +14,7 @@ import {TreeCollisionSystem} from '../TreeCollisionSystem.js';
 import {RockInteractionSystem} from '../RockInteractionSystem.js';
 import {mergeDrivingInput,PointerInputState} from '../DrivingInput.js';
 import {arcadeHandlingConfig,vehicleConfig,jumpConfig,jumpVehicleConfig,originalDriveConfig} from '../VehicleConfig.js';
+import {mainWorldSettings} from '../MainWorldSettings.js';
 import {setTuning,resetTuning} from '../TuningStore.js';
 await R.init();
 const tuningSnapshot=JSON.stringify({arcadeHandlingConfig,vehicleConfig,jumpConfig,jumpVehicleConfig,originalDriveConfig});
@@ -137,4 +138,35 @@ const touch=new PointerInputState();touch.set(1,'back');assert(mergeDrivingInput
 assert(!mergeDrivingInput(new Set(),touch,null,10).reverse);assert(mergeDrivingInput(new Set(),touch,null,0).reverse);
 assert(mergeDrivingInput(new Set(),new PointerInputState(),{axes:[.5],buttons:Array.from({length:8},(_,i)=>({value:i===7?1:0}))},0).accelerate);
 assert.equal(JSON.stringify({arcadeHandlingConfig,vehicleConfig,jumpConfig,jumpVehicleConfig,originalDriveConfig}),tuningSnapshot,'approved tuning was not changed');
+// Expanded MAIN world: actual exported Dirty/Stinky, approved controller/tuning,
+// shared render/collider vertices, and cannon launches/landings at all four new edges.
+const expanded=mainWorldSettings();assert.equal(expanded.worldSize,660);assert.equal(expanded.halfSize,330);assert.equal(expanded.areaScale,2.25);
+assert.equal(mainWorldSettings({worldSize:440}).halfSize,220);assert.equal(mainWorldSettings({worldSize:99999}).worldSize,880);
+const expandedTerrain=new DirtJumpSystem(rolling,playgroundFeatures()),expandedSurface=expandedTerrain.createWorldSurface(expanded.halfSize);
+assert.equal(expandedSurface.vertices.reduce((max,value,i)=>i%3===0?Math.max(max,value):max,-Infinity),330);
+assert(expandedSurface.indices.length/3<600000,'expanded render/collider mesh stays bounded without stretching grid');
+for(let i=0;i<expandedSurface.vertices.length;i+=129){const x=expandedSurface.vertices[i],z=expandedSurface.vertices[i+2];assert(Math.abs(expandedSurface.vertices[i+1]-expandedTerrain.sample(x,z))<.0001);}
+const expandedHeight=(x,z)=>expandedTerrain.sample(x,z),edge=expanded.halfSize-expanded.boundaryInset;
+for(const index of [0,1]){
+ const scene=new THREE.Scene(),model=exportedModel(index),config=playableVehicleConfig(index),trees=new TreeCollisionSystem(scene,{groundHeight:expandedHeight}),rocks=new RockInteractionSystem(scene,{groundHeight:expandedHeight});
+ const controller=new RapierWorldVehicle(R,{surface:expandedSurface,height:expandedHeight,groundDebris:{getWheelHeightAt:()=>0},trees,rocks,limit:edge});
+ controller.setVehicle(model.group,config,index,new THREE.Vector3(0,expandedHeight(0,0),0),0);
+ for(const [x,z,heading] of [[0,edge-24,0],[edge-24,0,Math.PI/2],[0,-edge+24,Math.PI],[-edge+24,0,-Math.PI/2]]){
+  controller.resetAt(new THREE.Vector3(x,expandedHeight(x,z)-.09,z),heading);
+  let launched=false,landed=false,driven=false,launches=0,wasCannon=false;
+  for(let frame=0;frame<1800;frame++){
+   const state=controller.update(1/120,{throttle:launched?0:1});
+   if(state.cannon&&!wasCannon){launched=true;launches++;}wasCannon=state.cannon;
+   driven ||= Math.hypot(state.position.x-x,state.position.z-z)>8;
+   if(launched&&state.events.some(event=>event.type==='landing'))landed=true;
+   assert(Number.isFinite(state.position.y)&&Math.abs(state.position.x)<330&&Math.abs(state.position.z)<330,'new-edge flights remain inside collider extent');
+   if(landed)break;
+  }
+  assert(driven&&launched&&landed,'real vehicle drives, launches and lands on new edge '+index+'/'+heading);assert.equal(launches,1);
+ }
+ controller.resetAt(new THREE.Vector3(0,expandedHeight(0,0)-.09,0),0);const resetPose=controller.rootPose({position:controller.physics.body.translation(),rotation:controller.physics.body.rotation()});assert(Math.hypot(resetPose.x,resetPose.z)<.001,'reset remains at original spawn');let settled;for(let i=0;i<120;i++)settled=controller.update(1/120,{});assert(Number.isFinite(settled.position.y)&&Math.hypot(settled.position.x,settled.position.z)<2,'reset settles near spawn');controller.dispose();trees.dispose();rocks.dispose();model.dispose();
+}
+assert(fs.readFileSync(path.join(process.argv[2],'viewer/jump-lab.js'),'utf8').includes('const halfSize=220,boundaryLimit=205'),'lab dimensions remain fixed');
+assert.equal(JSON.stringify({arcadeHandlingConfig,vehicleConfig,jumpConfig,jumpVehicleConfig,originalDriveConfig}),tuningSnapshot,'approved vehicle physics unchanged');
+console.log('PASS: expanded 660m main-world mesh/collider; actual Dirty and Stinky drive, cannon-jump and land at all four new edges, reset correctly; original scale and fixed lab bounds retained.');
 console.log(`PASS: ${scenarios} real-model main/lab comparisons; Dirty four/Stinky six contacts, flat/rolling acceleration/top speed/turns/brakes/reverse, eight ramps, controlled flight/cannons/landings, identical wheel/body/dust feedback, touch/gamepad inputs, shared tuning edits and legacy override isolation; configuration unchanged.`);

@@ -12,9 +12,9 @@ export function debrisHeight(x,z,o){
 }
 
 export class GroundDebrisSystem {
-  constructor(scene,height,halfSize,painter,layout,config){
+  constructor(scene,height,halfSize,painter,layout,config,areaScale=1){
     Object.assign(this,{scene,height,halfSize,painter,layout,config});
-    this.group=new THREE.Group();this.group.name='Stationary ground debris';scene.add(this.group);
+    this.areaScale=areaScale;this.group=new THREE.Group();this.group.name='Stationary ground debris';scene.add(this.group);
     this.grid=new Map();this.objects=[];this.focus={x:0,z:0};this.cellSize=4;this.regenerate();
   }
   clear(){this.group.traverse(o=>{if(o.isMesh||o.isLineSegments){o.geometry.dispose();o.material.dispose();o.dispose?.();}});this.group.clear();this.grid.clear();this.objects.length=0;}
@@ -23,7 +23,7 @@ export class GroundDebrisSystem {
     let seed=79231;const random=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/4294967296);
     const weights=kinds.map(k=>Math.max(0,Number(this.config[k+'Percent'])||0)),total=weights.reduce((a,b)=>a+b,0);
     if(!total)return;
-    const budget=Math.round(1000*pct(this.config.densityPercent)),dummy=new THREE.Object3D(),color=new THREE.Color();
+    const budget=Math.round(1000*this.areaScale*pct(this.config.densityPercent)),dummy=new THREE.Object3D(),color=new THREE.Color();
     const obstacles=[...this.layout.trees.map(t=>({...t,r:t.scale*.35+.5})),...this.layout.rocks.map(r=>({...r,r:r.radius+.6}))];
     for(let tries=0;tries<budget*30&&this.objects.length<budget;tries++){
       let roll=random()*total,kind=kinds[0];for(let i=0;i<kinds.length;i++){roll-=weights[i];if(roll<=0){kind=kinds[i];break;}}

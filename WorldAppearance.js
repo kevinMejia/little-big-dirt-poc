@@ -47,12 +47,12 @@ export function createTerrainPainter(height,halfSize,config=worldAppearance){
 }
 
 function seeded(seed){return ()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};}
-export function createSceneryLayout(painter,halfSize,config=worldAppearance){
+export function createSceneryLayout(painter,halfSize,config=worldAppearance,areaScale=1){
   const random=seeded(3184),cluster=pct(config.vegetationClusteringPercent),treeLimit=halfSize-18,rockLimit=halfSize-35;
-  const treeTarget=Math.round(175*clamp(config.treeDensityPercent??100,0,200)/100),rockTarget=Math.round(80*clamp(config.rockDensityPercent??100,0,200)/100);
+  const treeTarget=Math.round(175*areaScale*clamp(config.treeDensityPercent??100,0,200)/100),rockTarget=Math.round(80*areaScale*clamp(config.rockDensityPercent??100,0,200)/100);
   const centers=[],rockCenters=[],trees=[],rocks=[];
-  for(let i=0;i<12;i++)centers.push({x:(random()-.5)*treeLimit*1.65,z:(random()-.5)*treeLimit*1.65});
-  for(let tries=0;tries<1500&&rockCenters.length<8;tries++){
+  for(let i=0;i<Math.ceil(12*areaScale);i++)centers.push({x:(random()-.5)*treeLimit*1.65,z:(random()-.5)*treeLimit*1.65});
+  for(let tries=0;tries<1500&&rockCenters.length<Math.ceil(8*areaScale);tries++){
     const x=(random()*2-1)*rockLimit*.85,z=(random()*2-1)*rockLimit*.85;
     if(landscapeFields(x,z).rock>=painter.rockThreshold&&rockCenters.every(p=>Math.hypot(p.x-x,p.z-z)>24))rockCenters.push({x,z});
   }
@@ -61,7 +61,7 @@ export function createSceneryLayout(painter,halfSize,config=worldAppearance){
     if(random()<cluster){const center=centers[Math.floor(random()*centers.length)],angle=random()*Math.PI*2,radius=Math.sqrt(random())*(13+random()*15);return {x:clamp(center.x+Math.cos(angle)*radius,-limit,limit),z:clamp(center.z+Math.sin(angle)*radius,-limit,limit)};}
     return {x:(random()*2-1)*limit,z:(random()*2-1)*limit};
   };
-  for(let tries=0;tries<20000&&trees.length<treeTarget;tries++){
+  for(let tries=0;tries<20000*Math.max(1,areaScale)&&trees.length<treeTarget;tries++){
     const p=point(treeLimit,centers),field=landscapeFields(p.x,p.z);
     if(Math.hypot(p.x,p.z)<25||pathDistance(p.x,p.z)<8.5)continue;
     if(random()>1-cluster+cluster*(.12+.88*smooth((field.woods-.25)/.5)))continue;
@@ -70,7 +70,7 @@ export function createSceneryLayout(painter,halfSize,config=worldAppearance){
     if(trees.some(t=>Math.hypot(t.x-p.x,t.z-p.z)<2.1+scale+t.scale))continue;
     trees.push({...p,scale});
   }
-  for(let tries=0;tries<16000&&rocks.length<rockTarget;tries++){
+  for(let tries=0;tries<16000*Math.max(1,areaScale)&&rocks.length<rockTarget;tries++){
     const p=point(rockLimit,rockCenters),radius=.45+random()*1.2;
     if(Math.hypot(p.x,p.z)<22||pathDistance(p.x,p.z)<7.5)continue;
     if(rocks.some(r=>Math.hypot(r.x-p.x,r.z-p.z)<r.radius+radius+1))continue;
@@ -138,9 +138,9 @@ function plantGeometry(flower=false){
   const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));geometry.computeVertexNormals();return geometry;
 }
 
-export function createGroundDetails(scene,height,halfSize,painter,layout,config=worldAppearance){
+export function createGroundDetails(scene,height,halfSize,painter,layout,config=worldAppearance,{areaScale=1,viewDistance=0}={}){
   const group=new THREE.Group();group.name='Non-collidable meadow details';scene.add(group);
-  const density=pct(config.grassDetailDensity),random=seeded(9071),budgets={grass:Math.round(10000*density),flowers:Math.round(700*density),pebbles:Math.round(450*density)};
+  const density=pct(config.grassDetailDensity),random=seeded(9071),budgets={grass:Math.round(10000*density*areaScale),flowers:Math.round(700*density*areaScale),pebbles:Math.round(450*density*areaScale)};
   const cells=new Map(),key=(x,z)=>`${Math.floor(x/4)},${Math.floor(z/4)}`;
   for(const o of [...layout.trees.map(t=>({x:t.x,z:t.z,r:t.scale*.35+.35})),...layout.rocks.map(r=>({x:r.x,z:r.z,r:r.radius+.3}))]){const k=key(o.x,o.z);if(!cells.has(k))cells.set(k,[]);cells.get(k).push(o);}
   const occupied=(x,z)=>{const ix=Math.floor(x/4),iz=Math.floor(z/4);for(let i=ix-1;i<=ix+1;i++)for(let j=iz-1;j<=iz+1;j++)for(const o of cells.get(`${i},${j}`)||[])if((o.x-x)**2+(o.z-z)**2<o.r*o.r)return true;return false;};
@@ -169,6 +169,26 @@ export function createGroundDetails(scene,height,halfSize,painter,layout,config=
     }
     batch.count=count;batch.instanceMatrix.needsUpdate=true;if(batch.instanceColor)batch.instanceColor.needsUpdate=true;batch.computeBoundingSphere();group.add(batch);
   }
+  const chunks=[];
+  if(viewDistance>0){
+    // Share geometry/materials, but split draw bounds into 64m cells for frustum
+    // and distance culling. No changes to placement or interaction data.
+    const matrix=new THREE.Matrix4(),point=new THREE.Vector3(),tint=new THREE.Color();
+    for(const source of [...group.children]){
+      const cells=new Map();
+      for(let i=0;i<source.count;i++){source.getMatrixAt(i,matrix);point.setFromMatrixPosition(matrix);const key=Math.floor(point.x/64)+','+Math.floor(point.z/64);if(!cells.has(key))cells.set(key,[]);cells.get(key).push(i);}
+      source.material.onBeforeCompile=shader=>{shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>
+       vec3 detailCenter=(modelMatrix*instanceMatrix*vec4(0.,0.,0.,1.)).xyz;
+       transformed*=1.-smoothstep(110.,150.,length(detailCenter.xz-cameraPosition.xz));`);};
+      source.material.customProgramCacheKey=()=> 'meadow-distance-v1';
+      for(const slots of cells.values()){
+        const chunk=new THREE.InstancedMesh(source.geometry,source.material,slots.length);chunk.name=source.name;chunk.receiveShadow=true;
+        slots.forEach((slot,i)=>{source.getMatrixAt(slot,matrix);chunk.setMatrixAt(i,matrix);source.getColorAt(slot,tint);chunk.setColorAt(i,tint);});
+        chunk.computeBoundingSphere();chunks.push(chunk);group.add(chunk);
+      }
+      source.removeFromParent();source.dispose();
+    }
+  }
   group.userData.budgets=budgets;
-  return {group,dispose(){group.removeFromParent();group.traverse(o=>{if(o.isInstancedMesh){o.dispose();o.geometry.dispose();o.material.dispose();}});}};
+  return {group,update(position){for(const chunk of chunks){const sphere=chunk.boundingSphere;chunk.visible=Math.hypot(position.x-sphere.center.x,position.z-sphere.center.z)<viewDistance+sphere.radius;}},dispose(){group.removeFromParent();const geometries=new Set(),materials=new Set();group.traverse(o=>{if(o.isInstancedMesh){o.dispose();geometries.add(o.geometry);materials.add(o.material);}});for(const geometry of geometries)geometry.dispose();for(const material of materials)material.dispose();}};
 }

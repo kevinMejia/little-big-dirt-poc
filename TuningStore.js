@@ -115,9 +115,10 @@ add('Painted Ground','worldAppearance',[
  ['grassDirtBlending','Dirt edge blending',0,100,1,'%','Live in Play: higher protects a wider soft dirt margin around existing roads and ramps. No terrain or collision change.'],
 ],{scope:'environment'});
 add('Environment','worldAppearance',[
- ['treeDensityPercent','Tree density',0,200,5,'%','Play: 100% targets 175 trees; 0 removes them. Placement/ramp exclusions may reduce counts. Requires reload.'],
- ['rockDensityPercent','Rock density',0,200,5,'%','Play: 100% targets 80 boulders; 0 removes them. Changes interactive rocks as well as visuals. Requires reload.'],
- ['grassDetailDensity','Grass and detail density',0,100,1,'%','Play: scales decorative grass, flowers and pebbles together. 100% budgets 10,000 grass, 700 flowers and 450 pebbles. Requires reload.'],
+ ['worldSize','Playable world size',220,880,20,'m','Main Play full width and length. 440 previous map; 660 is 2.25× area. Reload required. Terrain scale and lab dimensions stay fixed; scenery counts scale with area.'],
+ ['treeDensityPercent','Tree density',0,200,5,'%','Play: 100% targets 175 trees per 440m map; counts scale with map area; 0 removes them. Placement/ramp exclusions may reduce counts. Requires reload.'],
+ ['rockDensityPercent','Rock density',0,200,5,'%','Play: 100% targets 80 boulders per 440m map; counts scale with map area; 0 removes them. Changes interactive rocks as well as visuals. Requires reload.'],
+ ['grassDetailDensity','Grass and detail density',0,100,1,'%','Play: scales decorative grass, flowers and pebbles together. 100% budgets 10,000 grass, 700 flowers and 450 pebbles per 440m map; scales with map area. Requires reload.'],
  ['vegetationClusteringPercent','Vegetation clustering',0,100,1,'%','Play: higher groups trees and rocks into patches; lower distributes them more evenly. Requires reload.'],
  ['terrainColorVariation','Terrain color variation',0,100,1,'%','Play: higher varies grass colors more strongly. Does not change terrain height. Requires reload.'],
  ['dirtPatchPercent','Dirt patch coverage',0,100,1,'%','Play: dirt-colored coverage; roads and steep slopes also contribute. Requires reload.'],

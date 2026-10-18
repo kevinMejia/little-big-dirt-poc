@@ -1,6 +1,14 @@
 // Global Play environment defaults. Saved Settings overrides apply before scene
 // creation. Reload Play to rebuild scenery; vehicle physics is independent.
 export const worldAppearance={
+  // Main Play only: full square width AND length, in world metres; clamped 220–880.
+  // Reload required. 440 = previous map; 660 = 1.5× width / 2.25× area (default);
+  // 880 = 2× width / 4× area, with greater memory/startup/rendering cost.
+  // Start 440–660 for phones. Terrain/texture scales and ramp coordinates stay fixed.
+  // Tree/rock/grass/debris target counts scale by (worldSize/440)², in addition to
+  // their existing density controls. Boundaries stay 15m inside each terrain edge.
+  // Does not affect Dirt Jump Lab dimensions, vehicle tuning, spawn or reset.
+  worldSize:660,
   // Distant fog toggle; only affects scenery beyond 350 m. Requires reload.
   fogEnabled:false,
   // Decorative horizon geometry, without driving colliders. Requires reload.
@@ -11,16 +19,16 @@ export const worldAppearance={
   dirtPatchPercent:15,
   // Rocky ground color coverage, 0–100%; not boulder count. Requires reload.
   rockyGroundPercent:8,
-  // Decorative grass/flowers/pebbles, 0–100%; maximum budgets 10,000/700/450.
+  // Decorative grass/flowers/pebbles, 0–100%; budgets 10,000/700/450 per 440m map, scaled by area.
   grassDetailDensity:60,
   // Clustering of trees/rocks, 0–100%; higher gathers them into groups.
   vegetationClusteringPercent:60,
   // Fog strength, 0–100%; requires fogEnabled. Near distance remains 350 m.
   hazeStrengthPercent:8,
-  // Tree target density, 0–200%; 100% retains the original 175-tree target.
+  // Tree target density, 0–200%; 100% targets 175 trees per 440m map, scaled by area.
   // Safe placement/ramp exclusions may reduce the resulting count. Requires reload.
   treeDensityPercent:100,
-  // Boulder target density, 0–200%; 100% retains the original 80-rock target.
+  // Boulder target density, 0–200%; 100% targets 80 rocks per 440m map, scaled by area.
   // Safe placement/ramp exclusions may reduce the resulting count. Requires reload.
   rockDensityPercent:100,
   // Play rendering only; live. Metres across one supplied grass image, clamped 2–40.

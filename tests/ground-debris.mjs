@@ -32,3 +32,8 @@ const began=performance.now();for(let i=0;i<100000;i++)debris.getWheelHeightAt((
 debris.showFootprints(true);debris.regenerate();debris.dispose();assert(!scene.children.includes(debris.group));
 console.log('PASS: deterministic four-batch stationary debris; smooth ellipse/branch profiles, tire footprint; independent front/rear/reverse/parked contacts, paired mound, 20–144 Hz bounded springs/settling, zero effect, flight reset, six-wheel switch and cleanup.');
 
+
+const expandedDebris=new GroundDebrisSystem(scene,flat,330,painter,layout,config,2.25);
+assert.equal(expandedDebris.objects.length,1125,'same density on 2.25x map area');
+assert(expandedDebris.objects.some(o=>Math.abs(o.x)>220||Math.abs(o.z)>220),'outer area has debris');
+assert.equal(expandedDebris.group.children.length,4,'four instanced batches retained');expandedDebris.dispose();
