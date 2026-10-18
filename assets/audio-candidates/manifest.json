@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "approvalStatus": "awaiting-user-review",
-  "integrated": false,
+  "approvalStatus": "approved-for-gameplay",
+  "integrated": true,
   "checkedOn": "2026-10-18",
   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
   "candidates": [
@@ -28,7 +28,7 @@
         "Excerpt 0.000–5.100 seconds of downloaded source.",
         "150 ms cyclic linear crossfade; loop seam still subject to listening approval."
       ],
-      "approved": false
+      "approved": true
     },
     {
       "author": "kyles",
@@ -53,7 +53,7 @@
         "Excerpt 15.000–21.000 seconds of downloaded source.",
         "150 ms cyclic linear crossfade; loop seam still subject to listening approval."
       ],
-      "approved": false
+      "approved": true
     },
     {
       "author": "Kenney",
@@ -76,7 +76,7 @@
         "Mono 44.1 kHz AAC-LC audition at 96 kb/s; conservative level matching.",
         "Silence trimmed with short edge fades."
       ],
-      "approved": false
+      "approved": true
     },
     {
       "author": "Kenney",
@@ -99,7 +99,7 @@
         "Mono 44.1 kHz AAC-LC audition at 96 kb/s; conservative level matching.",
         "Silence trimmed with short edge fades."
       ],
-      "approved": false
+      "approved": true
     },
     {
       "author": "Independent.nu (submitted by qubodup)",
@@ -122,7 +122,7 @@
         "Mono 44.1 kHz AAC-LC audition at 96 kb/s; conservative level matching.",
         "Silence trimmed with short edge fades."
       ],
-      "approved": false
+      "approved": true
     },
     {
       "author": "Independent.nu (submitted by qubodup)",
@@ -145,7 +145,7 @@
         "Mono 44.1 kHz AAC-LC audition at 96 kb/s; conservative level matching.",
         "Silence trimmed with short edge fades."
       ],
-      "approved": false
+      "approved": true
     },
     {
       "author": "ericnorcross81",
@@ -170,7 +170,7 @@
         "Excerpt 31.000–31.450 seconds of downloaded source.",
         "Silence trimmed with short edge fades."
       ],
-      "approved": false
+      "approved": true
     },
     {
       "author": "Kenney",
@@ -193,7 +193,7 @@
         "Mono 44.1 kHz AAC-LC audition at 96 kb/s; conservative level matching.",
         "Silence trimmed with short edge fades."
       ],
-      "approved": false
+      "approved": true
     },
     {
       "author": "Kenney",
@@ -216,7 +216,7 @@
         "Mono 44.1 kHz AAC-LC audition at 96 kb/s; conservative level matching.",
         "Silence trimmed with short edge fades."
       ],
-      "approved": false
+      "approved": true
     },
     {
       "author": "Luke.RUSTLTD",
@@ -240,7 +240,7 @@
         "Excerpt 12.000–18.000 seconds of downloaded source.",
         "150 ms cyclic linear crossfade; loop seam still subject to listening approval."
       ],
-      "approved": false
+      "approved": true
     },
     {
       "author": "Kenney",
@@ -263,7 +263,7 @@
         "Mono 44.1 kHz AAC-LC audition at 96 kb/s; conservative level matching.",
         "Silence trimmed with short edge fades."
       ],
-      "approved": false
+      "approved": true
     },
     {
       "author": "Kenney",
@@ -286,7 +286,7 @@
         "Mono 44.1 kHz AAC-LC audition at 96 kb/s; conservative level matching.",
         "Silence trimmed with short edge fades."
       ],
-      "approved": false
+      "approved": true
     },
     {
       "author": "Kenney",
@@ -309,7 +309,7 @@
         "Mono 44.1 kHz AAC-LC audition at 96 kb/s; conservative level matching.",
         "Silence trimmed with short edge fades."
       ],
-      "approved": false
+      "approved": true
     },
     {
       "author": "Kenney",
@@ -332,7 +332,7 @@
         "Mono 44.1 kHz AAC-LC audition at 96 kb/s; conservative level matching.",
         "Silence trimmed with short edge fades."
       ],
-      "approved": false
+      "approved": true
     },
     {
       "author": "Kenney",
@@ -355,7 +355,7 @@
         "Mono 44.1 kHz AAC-LC audition at 96 kb/s; conservative level matching.",
         "Silence trimmed with short edge fades."
       ],
-      "approved": false
+      "approved": true
     },
     {
       "author": "Kenney",
@@ -378,7 +378,7 @@
         "Mono 44.1 kHz AAC-LC audition at 96 kb/s; conservative level matching.",
         "Silence trimmed with short edge fades."
       ],
-      "approved": false
+      "approved": true
     },
     {
       "author": "Kenney",
@@ -401,7 +401,7 @@
         "Mono 44.1 kHz AAC-LC audition at 96 kb/s; conservative level matching.",
         "Silence trimmed with short edge fades."
       ],
-      "approved": false
+      "approved": true
     },
     {
       "author": "Kenney",
@@ -424,7 +424,7 @@
         "Mono 44.1 kHz AAC-LC audition at 96 kb/s; conservative level matching.",
         "Silence trimmed with short edge fades."
       ],
-      "approved": false
+      "approved": true
     },
     {
       "author": "Kenney",
@@ -447,7 +447,7 @@
         "Mono 44.1 kHz AAC-LC audition at 96 kb/s; conservative level matching.",
         "Silence trimmed with short edge fades."
       ],
-      "approved": false
+      "approved": true
     },
     {
       "author": "Kenney",
@@ -470,7 +470,7 @@
         "Mono 44.1 kHz AAC-LC audition at 96 kb/s; conservative level matching.",
         "Silence trimmed with short edge fades."
       ],
-      "approved": false
+      "approved": true
     },
     {
       "author": "Kenney",
@@ -493,7 +493,7 @@
         "Mono 44.1 kHz AAC-LC audition at 96 kb/s; conservative level matching.",
         "Silence trimmed with short edge fades."
       ],
-      "approved": false
+      "approved": true
     },
     {
       "author": "artisticdude",
@@ -516,7 +516,7 @@
         "Mono 44.1 kHz AAC-LC audition at 96 kb/s; conservative level matching.",
         "Silence trimmed with short edge fades."
       ],
-      "approved": false
+      "approved": true
     },
     {
       "author": "Kenney",
@@ -539,7 +539,7 @@
         "Mono 44.1 kHz AAC-LC audition at 96 kb/s; conservative level matching.",
         "Silence trimmed with short edge fades."
       ],
-      "approved": false
+      "approved": true
     }
   ]
 }

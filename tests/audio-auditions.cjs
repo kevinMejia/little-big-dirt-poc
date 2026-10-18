@@ -9,14 +9,14 @@ const fs=require('node:fs');
   const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[],audioRequests=[];
   page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(r.url().includes('/audio-candidates/'))audioRequests.push(r.url());});
   await page.goto('http://127.0.0.1:8000/');await page.waitForSelector('#gameLoading',{state:'hidden',timeout:90000});
-  assert.equal(audioRequests.length,0,'Play never requests unapproved candidate audio');
+  assert.equal(audioRequests.length,0,'Play loads audio only after a user gesture');
   await page.goto('http://127.0.0.1:8000/viewer/audio.html');await page.waitForSelector('.candidate');
   assert.equal(await page.locator('.candidate').count(),23);assert.equal(audioRequests.filter(u=>u.endsWith('.m4a')).length,0,'audio loads only after audition');
   await page.click('#play');await page.waitForFunction(()=>document.querySelector('#playbackStatus').textContent.startsWith('Playing'));
   await page.click('#stop');
   report.audio=await page.evaluate(async()=>{
    const {AudioPreview}=await import('./AudioPreview.js');const manifest=await (await fetch('../assets/audio-candidates/manifest.json')).json();
-   if(manifest.integrated||manifest.candidates.some(c=>c.approved))throw new Error('Approval gate violated');
+   if(!manifest.integrated||manifest.candidates.some(c=>!c.approved))throw new Error('Approved library metadata mismatch');
    const p=new AudioPreview(manifest.candidates),ids=new WeakMap(),starts=[];await p.unlock();
    for(const entry of manifest.candidates){
     const buffer=await p.buffer(entry.id);ids.set(buffer,entry.id);
@@ -38,7 +38,7 @@ const fs=require('node:fs');
     const sequenceStart=starts.length;await p.sequence('cannon');const cannon=starts.slice(sequenceStart);if(cannon.filter(c=>c.id==='cannon-boom').length!==1||cannon.length!==3)throw new Error('Launch demo must schedule exactly one boom');
     p.stop();await wait(100);if(p.voices.size)throw new Error('Scheduled sequence not canceled');
     p.enginesEnabled=false;let rejected=false;try{await p.play('dirty-diesel');}catch{rejected=true;}if(!rejected)throw new Error('Engine disable failed');
-    return {decoded:p.buffers.size,cached:true,distinctEngineBuffers:await p.buffer('dirty-diesel')!==await p.buffer('stinky-diesel'),idleRate:idle,fastRate:fast,oneEngineSourcePerDemo:true,cannonBoomsPerDemo:1,stopCancelsScheduledVoices:true,unapproved:true};
+    return {decoded:p.buffers.size,cached:true,distinctEngineBuffers:await p.buffer('dirty-diesel')!==await p.buffer('stinky-diesel'),idleRate:idle,fastRate:fast,oneEngineSourcePerDemo:true,cannonBoomsPerDemo:1,stopCancelsScheduledVoices:true,approved:true};
    }finally{AudioBufferSourceNode.prototype.start=original;p.dispose();}
   });
   await page.selectOption('#group','Trees');assert.equal(await page.locator('.candidate').count(),6);

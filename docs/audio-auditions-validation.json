@@ -4,11 +4,11 @@
     "cached": true,
     "distinctEngineBuffers": true,
     "idleRate": 1,
-    "fastRate": 1.4931093454360962,
+    "fastRate": 1.4932308197021484,
     "oneEngineSourcePerDemo": true,
     "cannonBoomsPerDemo": 1,
     "stopCancelsScheduledVoices": true,
-    "unapproved": true
+    "approved": true
   },
   "layouts": [
     {

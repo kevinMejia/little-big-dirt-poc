@@ -5,7 +5,7 @@ const response=await fetch(new URL('../assets/audio-candidates/manifest.json',im
 if(!response.ok)throw new Error('Audio candidate manifest could not load.');
 const manifest=await response.json(),entries=manifest.candidates,selected=new Set();let current=entries[0];
 const status=(text,error=false)=>{$('#playbackStatus').textContent=text;$('#playbackStatus').dataset.error=String(error);};
-const player=new AudioPreview(entries,{onState:state=>{status(state.playing?'Playing '+state.label+' · '+state.duration.toFixed(1)+' s':'Stopped · candidates remain unapproved.');}});
+const player=new AudioPreview(entries,{onState:state=>{status(state.playing?'Playing '+state.label+' · '+state.duration.toFixed(1)+' s':'Stopped · game volumes are in Settings → Audio.');}});
 const safely=promise=>promise.catch(error=>status(error.message,true));
 const sourceLink=(label,url)=>{const a=document.createElement('a');a.textContent=label;a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
 function choose(entry){
@@ -46,7 +46,7 @@ $('#enginesEnabled').onchange=event=>{player.enginesEnabled=event.target.checked
 for(const button of document.querySelectorAll('[data-sequence]'))button.onclick=()=>safely(player.sequence(button.dataset.sequence));
 $('#exportReview').onclick=()=>{
  const review={format:'little-big-dirt-audio-review',approved:false,integrated:false,selectedCandidates:entries.filter(e=>selected.has(e.id)).map(({id,label,sourceUrl,license,licenseUrl})=>({id,label,sourceUrl,license,licenseUrl}))};
- const url=URL.createObjectURL(new Blob([JSON.stringify(review,null,2)+'\n'],{type:'application/json'})),link=document.createElement('a');link.href=url;link.download='little-big-dirt-audio-shortlist.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);status('Shortlist exported for review. Approval and game integration remain pending.');
+ const url=URL.createObjectURL(new Blob([JSON.stringify(review,null,2)+'\n'],{type:'application/json'})),link=document.createElement('a');link.href=url;link.download='little-big-dirt-audio-shortlist.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);status('Shortlist exported for review. Game settings are unchanged.');
 };
 document.addEventListener('visibilitychange',()=>{if(document.hidden)player.stop();});
 addEventListener('pagehide',()=>player.dispose(),{once:true});

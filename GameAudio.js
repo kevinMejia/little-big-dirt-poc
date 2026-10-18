@@ -6,9 +6,14 @@ const clamp=value=>Math.max(0,Math.min(1,value));
 export class GameAudio {
  constructor(){
   this.buffers=new Map();this.pending=new Map();this.voices=new Set();this.loops=new Map();this.wanted=new Map();this.last=new Map();this.variation=0;this.disposed=false;
+  // Capture touch completion too: iPhone audio activation can differ from pointerdown.
+  // Capture runs even when the driving controls stop event propagation.
+  this.gestureEvents=['pointerdown','pointerup','touchend','keydown'];
   this.unlockGesture=()=>{this.unlock().catch(()=>{});};
-  this.changed=()=>this.refresh();this.visibility=()=>{if(document.hidden){this.stopAll();this.context?.suspend().catch(()=>{});}else if(this.context)this.context.resume().catch(()=>{});};
-  window.addEventListener('pointerdown',this.unlockGesture);window.addEventListener('keydown',this.unlockGesture);
+  this.changed=()=>this.refresh();this.visibility=()=>{if(document.hidden){this.stopAll(true);this.context?.suspend().catch(()=>{});}else if(this.context)this.resume();};
+  this.pageshow=()=>{if(this.context&&!document.hidden)this.resume();};
+  for(const event of this.gestureEvents)window.addEventListener(event,this.unlockGesture,{capture:true,passive:true});
+  window.addEventListener('pageshow',this.pageshow);
   window.addEventListener('lbd:tuning-change',this.changed);document.addEventListener('visibilitychange',this.visibility);
  }
  async unlock(){
@@ -19,10 +24,23 @@ export class GameAudio {
    this.master.connect(this.limiter);this.limiter.connect(this.context.destination);this.buses={};
    for(const name of ['engine','effects','music']){const bus=this.context.createGain();bus.connect(this.master);this.buses[name]=bus;}
    this.refresh();
+   // Start one silent frame synchronously inside the gesture, before fetching/awaiting.
+   const prime=this.context.createBufferSource();prime.buffer=this.context.createBuffer(1,1,this.context.sampleRate);prime.connect(this.master);prime.onended=()=>prime.disconnect();prime.start();
   }
-  await this.context.resume();
-  this.preloaded??=Promise.allSettled(audioDefinitions.filter(d=>d.file).map(d=>this.load(d.id)));
+  // A pending Safari resume must not block downloading/decoding the sounds.
+  this.resume();
+  if(!this.preloaded){
+   const missing=audioDefinitions.filter(d=>d.file&&!this.buffers.has(d.id));let next=0;
+   // Bound fetch/decode work on phones; retry failed clips on the next gesture.
+   this.preloaded=Promise.all(Array.from({length:Math.min(4,missing.length)},async()=>{
+    while(next<missing.length){const d=missing[next++];try{await this.load(d.id);}catch{/* Retry after another gesture; successful buffers stay cached. */}}
+   })).finally(()=>{this.preloaded=null;});
+  }
   return this.preloaded;
+ }
+ resume(){
+  // Call synchronously from each gesture; do not await a previous blocked resume.
+  if(this.context&&this.context.state!=='running'&&this.context.state!=='closed'&&!document.hidden)this.context.resume().catch(()=>{});
  }
  load(id){
   if(this.buffers.has(id))return Promise.resolve(this.buffers.get(id));
@@ -66,7 +84,7 @@ export class GameAudio {
   const load=clamp(Math.abs(speed)/Math.max(1,maxSpeed)),rate=.85+load*.6+(throttle?.08:0),intensity=.42+load*.3+(throttle?.08:0);
   this.loop('dirty-diesel',!paused&&index===0,{rate,intensity});this.loop('stinky-diesel',!paused&&index===1,{rate:rate*.92,intensity});
  }
- tree(strength,kind){if(kind==='fall'){this.play(this.variation%2?'wood-crack-a':'wood-crack-b',{cooldown:.2});this.play('foliage',{cooldown:.25});}else{this.play(strength<4?'wood-bump':'wood-creak',{cooldown:.25,intensity:clamp(strength/8+.3)});}}
+ tree(strength,kind){if(kind==='fall'){this.treeVariant=(this.treeVariant??0)+1;this.play(this.treeVariant%2?'wood-crack-a':'wood-crack-b',{cooldown:.2});this.play('foliage',{cooldown:.25});}else{this.play(strength<4?'wood-bump':'wood-creak',{cooldown:.25,intensity:clamp(strength/8+.3)});}}
  rock(strength,kind){this.play(kind==='break'?'rock-break':'rock-crack',{cooldown:.2,intensity:clamp(strength/12+.3)});if(kind==='break')this.play('rock-scatter',{cooldown:.3,intensity:.5});}
  hunt(progress,complete,record,huntConfig){if(huntConfig.muted||!huntConfig.soundVolume)return;const intensity=clamp(huntConfig.soundVolume);this.play(progress%4?'letter-a':'letter-b',{intensity,rate:1+Math.min(.2,progress*.015)});if(complete)this.play('word-complete',{intensity,cooldown:.5});if(record)this.play('record-fanfare',{intensity,cooldown:.5});}
  horn(){
@@ -76,8 +94,10 @@ export class GameAudio {
   gain.gain.setValueAtTime(config.sounds.horn.volume/100*.15,t);gain.gain.exponentialRampToValueAtTime(.0001,t+.24);
   const voice={id:'horn',source,gain,intensity:.15,ending:false};this.voices.add(voice);source.onended=()=>{source.disconnect();gain.disconnect();this.voices.delete(voice);};source.start();source.stop(t+.25);return true;
  }
- stopAll(){this.wanted.clear();this.loops.clear();for(const voice of this.voices)this.end(voice);}
- dispose(){this.stopAll();this.disposed=true;window.removeEventListener('pointerdown',this.unlockGesture);window.removeEventListener('keydown',this.unlockGesture);window.removeEventListener('lbd:tuning-change',this.changed);document.removeEventListener('visibilitychange',this.visibility);this.context?.close();}
+ stopAll(immediate=false){this.wanted.clear();this.loops.clear();for(const voice of this.voices){
+  if(immediate){try{voice.source.stop();}catch{}voice.source.disconnect();voice.gain.disconnect();this.voices.delete(voice);}else this.end(voice);
+ }}
+ dispose(){this.stopAll();this.disposed=true;for(const event of this.gestureEvents)window.removeEventListener(event,this.unlockGesture,true);window.removeEventListener('pageshow',this.pageshow);window.removeEventListener('lbd:tuning-change',this.changed);document.removeEventListener('visibilitychange',this.visibility);this.context?.close();}
 }
 let shared;
 export function getGameAudio(){if(!shared||shared.disposed)shared=new GameAudio();return shared;}

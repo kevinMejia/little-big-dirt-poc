@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {tuningFields,fieldPath,tuningValue,defaultTuningValue,setTuning,resetTuning,loadTuning,tuningKey,exportTuning,exportEnvironmentTuning,snapshotTuning,tuningDefaults} from '../TuningStore.js';
+import {tuningFields,fieldPath,tuningValue,defaultTuningValue,setTuning,resetTuning,loadTuning,tuningKey,exportTuning,exportEnvironmentTuning,exportAudioTuning,snapshotTuning,tuningDefaults} from '../TuningStore.js';
 const map=new Map(),storage={getItem:key=>map.get(key)??null,setItem:(key,value)=>map.set(key,value)};
 assert.deepEqual(snapshotTuning(),tuningDefaults,'no saved settings preserves every file default, including out-of-range values');
 const field=tuningFields.find(field=>field.id==='drive.acceleration');
@@ -50,3 +50,15 @@ assert.equal(setTuning('storybookBackgroundConfig.skyTint','#abc123',storage),tr
 assert.equal(tuningValue('storybookBackgroundConfig.skyTint'),'#abc123');
 loadTuning(storage);assert.equal(tuningValue('storybookBackgroundConfig.skyTint'),'#abc123');
 resetTuning(undefined,storage);assert.deepEqual(snapshotTuning(),initial,'preview settings reset without changing defaults');
+
+setTuning('audioConfig.sounds.dirty-diesel.volume',23,storage);
+setTuning('audioConfig.sounds.stinky-diesel.enabled',false,storage);
+loadTuning(storage);
+assert.equal(tuningValue('audioConfig.sounds.dirty-diesel.volume'),23);
+assert.equal(tuningValue('audioConfig.sounds.stinky-diesel.enabled'),false);
+const audioExport=await import('data:text/javascript,'+encodeURIComponent(exportAudioTuning()));
+assert.equal(audioExport.audioConfig.sounds['dirty-diesel'].volume,23);
+assert.equal(audioExport.audioConfig.sounds['stinky-diesel'].enabled,false);
+assert.deepEqual(snapshotTuning().rockConfig,initial.rockConfig);
+resetTuning(undefined,storage);assert.deepEqual(snapshotTuning(),initial);
+console.log('PASS: individual audio volume/switch persistence, executable export and reset.');
