@@ -4,13 +4,13 @@
 
 <head>
 
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 
 <title>Little Big Dirt | Driving Sandbox</title>
 
 <style>
 
-*{box-sizing:border-box}body{margin:0;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;background:#a8d9f1;color:#fff}canvas{display:block}
+html{touch-action:pan-x pan-y}body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}*{box-sizing:border-box}body{margin:0;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;background:#a8d9f1;color:#fff}canvas{display:block}
 
 #hud{position:absolute;top:20px;left:20px;background:#132f34c9;border:1px solid #ffffff30;border-radius:18px;padding:16px 19px;min-width:210px;backdrop-filter:blur(9px);pointer-events:none}
 
@@ -104,7 +104,7 @@ to{transform:translate3d(-8px,-26px,0) rotate(-18deg) scale(.95,1.09)}
 </style>
 
 <script type="importmap">{"imports":{"./WorldEnvironmentConfig.js":"./WorldEnvironmentConfig.js?v=expanded-map-1","three":"https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/","./TuningStore.js":"./TuningStore.js?v=turbo-integration-1","./SettingsPanel.js":"./SettingsPanel.js?v=turbo-integration-1","./VehicleConfig.js":"./VehicleConfig.js?v=turbo-integration-1","./RapierWorldVehicle.js":"./RapierWorldVehicle.js?v=turbo-integration-1","./ArcadeGroundDrive.js":"./ArcadeGroundDrive.js?v=turbo-integration-1","./VisualPolish.js":"./VisualPolish.js?v=turbo-integration-1","./TurboBoost.js":"./TurboBoost.js?v=turbo-integration-1","./TurboPickupSystem.js":"./TurboPickupSystem.js?v=turbo-integration-1","./DirtJumpSystem.js":"./DirtJumpSystem.js?v=turbo-integration-1","./WorldAppearance.js?v=expanded-1":"./WorldAppearance.js?v=turbo-integration-1","./GroundDebrisSystem.js?v=expanded-1":"./GroundDebrisSystem.js?v=turbo-integration-1","./RapierWorldVehicle.js?v=rapier-world-5":"./RapierWorldVehicle.js?v=turbo-integration-1"}}</script>
-<script type="module" src="./SharedNavigation.js"></script></head>
+<script type="module" src="./SharedNavigation.js?v=touch-ui-1"></script></head>
 
 <body>
 <div id="gameLoading" role="status" aria-live="polite" aria-label="Loading Little Big Dirt">

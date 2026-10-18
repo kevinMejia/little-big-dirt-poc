@@ -63,3 +63,9 @@ the same room environment as the showroom, without replacing world lighting.
 
 Browser checks use emulated viewports. Physical iPhone Safari performance and
 handling feel still need hands-on review. Nothing is pushed or merged by this work.
+
+The entry-point import maps version the updated config/controller/settings modules,
+including the old explicit hybrid-controller query URL. This avoids mixing cached
+pre-Turbo exports with the new pickup code. Startup failure diagnostics are retained
+on the loading screen's data attributes; the initial paint yield uses a timer so
+loading does not wait on an animation frame in a background tab.

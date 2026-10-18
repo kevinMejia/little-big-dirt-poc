@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import {TurboBoost,TurboPickupTimer,crossesPickup} from '../TurboBoost.js';
 import {turboBoostConfig} from '../VehicleConfig.js';
 import {turboPickupLayout} from '../TurboPickupLayout.js';
@@ -25,4 +26,9 @@ assert(setTuning('turboBoostConfig.speedBoostPercent',100,storage));assert(setTu
 const saved=[...data];resetTuning(undefined,storage);for(const [k,v]of saved)data.set(k,v);loadTuning(storage);
 assert.equal(tuningValue('turboBoostConfig.speedBoostPercent'),100);assert.equal(tuningValue('turboBoostConfig.pickupCount'),20);
 resetTuning(undefined,storage);
+const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
+const imports=JSON.parse(html.match(/<script type="importmap">(.*?)<\/script>/s)[1]).imports;
+assert(imports['./VehicleConfig.js'].includes('?v='),'invalidate cached config when adding an export');
+assert.equal(imports['./RapierWorldVehicle.js?v=rapier-world-5'],imports['./RapierWorldVehicle.js'],'old explicit controller URL resolves to the same updated module');
+assert(imports['./TuningStore.js'].includes('turbo-integration'),'cached settings receive new fields');
 console.log('PASS Turbo: defaults, exact duration, refresh without stacking, independent respawns, reset isolation, swept collection/vertical reach, seeded placement and persisted Settings.');

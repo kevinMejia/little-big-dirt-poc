@@ -1,3 +1,4 @@
+import './TouchInteraction.js';
 import {openSettingsPanel} from './SettingsPanel.js';
 import {readGamePreferences,gamePreferenceStorage} from './GamePreferences.js?v=central-settings-3';
 // Paths are relative to this module, so local hosting and GitHub project Pages work.
