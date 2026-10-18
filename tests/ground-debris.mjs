@@ -37,3 +37,19 @@ const expandedDebris=new GroundDebrisSystem(scene,flat,330,painter,layout,config
 assert.equal(expandedDebris.objects.length,1125,'same density on 2.25x map area');
 assert(expandedDebris.objects.some(o=>Math.abs(o.x)>220||Math.abs(o.z)>220),'outer area has debris');
 assert.equal(expandedDebris.group.children.length,4,'four instanced batches retained');expandedDebris.dispose();
+
+// Main-world retirement: even enabled saved settings cannot override the local gate.
+const retired=new GroundDebrisSystem(scene,flat,330,painter,layout,{...config,enabled:false},2.25);
+assert.equal(retired.objects.length,0);
+assert.equal(retired.grid.size,0,'no invisible bump footprints');
+assert.equal(retired.group.children.length,0,'no rendered temporary debris');
+retired.getWheelHeightAt=()=>{throw new Error('disabled debris must not sample bumps');};
+const retiredContacts=new DebrisWheelContacts();
+assert.deepEqual(retiredContacts.sample(truck,root,retired,settings),{heave:0,pitch:0,roll:0});
+assert.equal(retiredContacts.wheels.length,6,'tire shadows/dust retain wheel descriptors');
+assert(retiredContacts.wheels.every(w=>w.bump===0));
+retiredContacts.ground(root,flat,feedback);
+assert(retiredContacts.wheels.every(w=>Number.isFinite(w.pivot.position.y)),'ordinary terrain grounding retained');
+retired.regenerate();assert.equal(retired.grid.size,0);assert.equal(retired.objects.length,0);
+retired.dispose();
+console.log('PASS: retired debris has no meshes, placements, bump grid or wheel queries; terrain wheel grounding retained.');

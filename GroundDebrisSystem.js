@@ -72,6 +72,12 @@ export class DebrisWheelContacts {
   constructor(){this.vehicle=null;this.wheels=[];this.targets={heave:0,pitch:0,roll:0};}
   sample(vehicle,root,debris,config,airborne=false){
     if(this.vehicle!==vehicle){this.vehicle=vehicle;const model=vehicle.userData.controller;this.wheels=(model?.wheels?model.wheels.map(w=>w.steering||w):vehicle.children).filter(p=>p.userData.wheel).map(pivot=>({pivot,point:new THREE.Vector3(),bump:0,compression:0}));}
+    // Preserve ordinary terrain wheel grounding without decorative footprint queries.
+    if(!debris.config.enabled){
+      for(const contact of this.wheels)contact.bump=0;
+      this.targets.heave=this.targets.pitch=this.targets.roll=0;
+      return this.targets;
+    }
     root.updateMatrixWorld(true);debris.setFocus(root.position.x,root.position.z);
     let sum=0,left=0,right=0,front=0,rear=0,nl=0,nr=0,nf=0,nb=0,minX=Infinity,maxX=-Infinity,minZ=Infinity,maxZ=-Infinity;
     for(const contact of this.wheels){const w=contact.pivot.userData.wheel;contact.point.set(w.x,0,w.z);root.localToWorld(contact.point);contact.bump=airborne?0:debris.getWheelHeightAt(contact.point.x,contact.point.z,w.r);sum+=contact.bump;

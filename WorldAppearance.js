@@ -138,14 +138,15 @@ function plantGeometry(flower=false){
   const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));geometry.computeVertexNormals();return geometry;
 }
 
-export function createGroundDetails(scene,height,halfSize,painter,layout,config=worldAppearance,{areaScale=1,viewDistance=0}={}){
+export function createGroundDetails(scene,height,halfSize,painter,layout,config=worldAppearance,{areaScale=1,viewDistance=0,kinds=['grass','flowers','pebbles']}={}){
   const group=new THREE.Group();group.name='Non-collidable meadow details';scene.add(group);
   const density=pct(config.grassDetailDensity),random=seeded(9071),budgets={grass:Math.round(10000*density*areaScale),flowers:Math.round(700*density*areaScale),pebbles:Math.round(450*density*areaScale)};
+  for(const kind of Object.keys(budgets))if(!kinds.includes(kind))budgets[kind]=0;
   const cells=new Map(),key=(x,z)=>`${Math.floor(x/4)},${Math.floor(z/4)}`;
   for(const o of [...layout.trees.map(t=>({x:t.x,z:t.z,r:t.scale*.35+.35})),...layout.rocks.map(r=>({x:r.x,z:r.z,r:r.radius+.3}))]){const k=key(o.x,o.z);if(!cells.has(k))cells.set(k,[]);cells.get(k).push(o);}
   const occupied=(x,z)=>{const ix=Math.floor(x/4),iz=Math.floor(z/4);for(let i=ix-1;i<=ix+1;i++)for(let j=iz-1;j<=iz+1;j++)for(const o of cells.get(`${i},${j}`)||[])if((o.x-x)**2+(o.z-z)**2<o.r*o.r)return true;return false;};
   const dummy=new THREE.Object3D(),up=new THREE.Vector3(0,1,0),normal=new THREE.Vector3(),color=new THREE.Color(),grassHighlight=new THREE.Color(0x82a94f);
-  for(const kind of ['grass','flowers','pebbles']){
+  for(const kind of kinds){
     const budget=budgets[kind];if(!budget)continue;
     const geometry=kind==='pebbles'?new THREE.IcosahedronGeometry(.12,0):plantGeometry(kind==='flowers');
     if(kind==='pebbles')geometry.translate(0,.105,0);

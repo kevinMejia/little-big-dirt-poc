@@ -54,3 +54,11 @@ chunked.update(new THREE.Vector3(300,0,300));assert(chunked.group.children.some(
 const shader={vertexShader:'#include <begin_vertex>'};chunked.group.children[0].material.onBeforeCompile(shader);assert(shader.vertexShader.includes('smoothstep(110.,150.'));
 chunked.dispose();assert.equal(scene.children.length,0);
 console.log('PASS: area-scaled scenery/detail counts, populated outer region, spatial culling, gentle distance shrink and cleanup.');
+
+const flowersOnly=createGroundDetails(scene,height,220,painter,layout,worldAppearance,{kinds:['flowers'],viewDistance:150});
+assert.equal(flowersOnly.group.userData.budgets.grass,0);
+assert.equal(flowersOnly.group.userData.budgets.pebbles,0);
+assert(flowersOnly.group.children.length>0,'flowers preserved');
+assert(flowersOnly.group.children.every(batch=>batch.name==='Instanced flowers'),'no grass tufts or decorative pebbles spawned');
+flowersOnly.dispose();assert.equal(scene.children.length,0);
+console.log('PASS: flowers-only main-world details preserve flowers and exclude grass/pebbles; reusable defaults still pass.');

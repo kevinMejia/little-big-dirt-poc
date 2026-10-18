@@ -121,7 +121,6 @@ import { HillSpeedPhysics } from './HillSpeedPhysics.js';
 import { DrivingInput } from './DrivingInput.js';
 import { applyReleaseDeceleration, getSpeedMultiplier } from './VehicleMotion.js';
 import { GroundDebrisSystem, DebrisWheelContacts } from './GroundDebrisSystem.js?v=expanded-1';
-import { createDebrisDebug } from './GroundDebrisDebug.js';
 import { addGroundTextures } from './GroundTextures.js?v=expanded-map-1';
 import { createPolishedLighting, ContactShading, polishTerrain, VehicleSurfaceEffects } from './VisualPolish.js';
 import { DirtJumpSystem, playgroundFeatures } from './DirtJumpSystem.js';
@@ -217,15 +216,16 @@ const rockInteractions=new RockInteractionSystem(scene,{groundHeight:surfaceHeig
 function makeRock(x,z,s){rockInteractions.addRock(x,z,s);rand();rand();rand()}
 
 for(const {x,z,radius} of sceneryLayout.rocks)makeRock(x,z,radius);
-const groundDebris=new GroundDebrisSystem(scene,surfaceHeight,world,terrainPainter,sceneryLayout,groundDebrisConfig,mapSettings.areaScale);
+// Retain the reusable placement system, but retire temporary meshes and bumps.
+// A local override also prevents saved tuning values from restoring placeholders.
+const groundDebris=new GroundDebrisSystem(scene,surfaceHeight,world,terrainPainter,sceneryLayout,{...groundDebrisConfig,enabled:false},mapSettings.areaScale);
 const debrisContacts=new DebrisWheelContacts();
 const surfaceEffects=new VehicleSurfaceEffects(scene,surfaceHeight,terrainPainter);
 addEventListener('pagehide',event=>{if(!event.persisted)surfaceEffects.dispose();});
 const contactShading=new ContactShading(scene,surfaceHeight,sceneryLayout,rockInteractions);
 addEventListener('pagehide',event=>{if(!event.persisted)contactShading.dispose();});
-const debrisDebug=createDebrisDebug(scene,groundDebris,debrisContacts);
-addEventListener('pagehide',event=>{if(!event.persisted){debrisDebug?.dispose();groundDebris.dispose();}});
-const groundDetails=createGroundDetails(scene,surfaceHeight,world,terrainPainter,sceneryLayout,worldAppearance,{areaScale:mapSettings.areaScale,viewDistance:150});
+addEventListener('pagehide',event=>{if(!event.persisted){groundDebris.dispose();}});
+const groundDetails=createGroundDetails(scene,surfaceHeight,world,terrainPainter,sceneryLayout,worldAppearance,{areaScale:mapSettings.areaScale,viewDistance:150,kinds:['flowers']});
 addEventListener('pagehide',event=>{if(!event.persisted)groundDetails.dispose();});
 
 const environmentAssets=new EnvironmentAssets();let environmentWorld=null;
@@ -292,7 +292,7 @@ document.querySelector('#touchToggle').addEventListener('click',()=>saveGamePref
 function applyControlPreference(){const saved=readGamePreferences(preferenceStorage),enabled=typeof saved.touchControls==='boolean'?saved.touchControls:navigator.maxTouchPoints>0||matchMedia('(any-pointer: coarse)').matches;if(enabled!==controls.enabled)controls.setEnabled(enabled);}
 addEventListener('lbd:preferences-change',applyControlPreference);
 addEventListener('storage',applyControlPreference);
-addEventListener('lbd:tuning-change',event=>{for(let i=0;i<configs.length;i++)Object.assign(configs[i],playableVehicleConfig(i,configs[i].collision));if(event.detail.paths.some(path=>path.startsWith('groundDebrisConfig.')))groundDebris.regenerate();});
+addEventListener('lbd:tuning-change',event=>{for(let i=0;i<configs.length;i++)Object.assign(configs[i],playableVehicleConfig(i,configs[i].collision));});
 // Only the active controller is stepped; navigation reuses this existing selector.
 const physicsSelector=document.querySelector('#physicsMode');
 physicsSelector.addEventListener('change',async()=>{
@@ -509,15 +509,13 @@ if(model){model.setSteering(-steer*.35);if(!emergencyBrake)model.setWheelRotatio
 for(const {pivot} of debrisContacts.wheels){const w=pivot.userData.wheel;if(!w)continue;if(flight){const center=vehicleRoot.localToWorld(new THREE.Vector3(w.x,w.r-.12,w.z));pivot.position.copy(pivot.parent.worldToLocal(center));}else {/* Independent contacts grounded below. */}if(!model){pivot.rotation.y=w.z>0?-steer*.35:0;if(!emergencyBrake)pivot.userData.roll.rotation.x+=speed*dt/w.r}}
 
 if(!flight)debrisContacts.ground(vehicleRoot,surfaceHeight,bodyFeedback);
-debrisDebug?.update(dt,vehicleRoot,bodyFeedback);
 if(model)model.update(dt);
 }else{
  if(!flight)bodyFeedback.update(dt,{speed,yawRate:(heading-previousHeading)/Math.max(dt,.001),groundY:0,groundPitch:0,groundRoll:0,config:configs[index].hill});
  rapierController.render(vehicleRoot,vehicleVisual,bodyFeedback,dt);
+ // Keep wheel descriptors for tire shadows/dust; disabled debris does no bump queries.
  debrisContacts.sample(vehicle,vehicleRoot,groundDebris,configs[index].hill,!!flight);
- // Debug readings follow real suspension; never ground wheels with the old helper.
  for(let i=0;i<debrisContacts.wheels.length;i++)debrisContacts.wheels[i].compression=rapierController.physics.state.compression[i]??0;
- debrisDebug?.update(dt,vehicleRoot,bodyFeedback);
 }
 
 stinkyQA?.update(performance.now());
