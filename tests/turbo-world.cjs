@@ -11,10 +11,10 @@ const fs=require('node:fs');
   await page.route('**/index.html*',async route=>{
    const source=fs.readFileSync('index.html','utf8');
    const probe=`window.turboQA={
-    ready:()=>physicsMode==='rapier'&&!!turboPickups,
+    ready:()=>physicsMode==='rapier'&&!!turboPickups&&!document.querySelector('#rallyCarBtn').disabled,
     place:(slot,car,offset=-1)=>{choose(car);const p=turboPickups.records[slot].point;position.set(p.x,surfaceHeight(p.x,p.z+offset)-.09,p.z+offset);heading=0;rapierController.resetAt(position,0);turboPickups.resetVehicle();},
     reset:()=>reset(),
-    status:()=>({boost:rapierController?.turbo.remaining,count:turboPickups.records.length,calls:renderer.info.render.calls,
+    status:()=>({speed:rapierController?.physics.state.speed,normal:rapierController?.cfg.max*(1+rapierController.cfg.hill.speedAdjustmentPercent/100),boost:rapierController?.turbo.remaining,count:turboPickups.records.length,calls:renderer.info.render.calls,
      available:turboPickups.records.map(r=>r.timer.available),cooldowns:turboPickups.records.map(r=>r.timer.remaining),
      effects:turboPickups.records.map(r=>r.effects.visible),
      pedestal:turboPickups.batches.filter(b=>b.part==='pedestal').map(({batch})=>{const m=new THREE.Matrix4();batch.getMatrixAt(0,m);return m.determinant();}),
@@ -30,18 +30,22 @@ const fs=require('node:fs');
   await page.evaluate(()=>turboQA.place(0,0));
   await page.waitForFunction(()=>turboQA.status().cooldowns[0]>4);
   let state=await page.evaluate(()=>turboQA.status());
-  assert(state.boost>1.5);assert(!state.effects[0]);assert(state.pedestal.every(x=>x>.5));assert(state.floating.every(x=>x===0));
+  assert(state.boost>1.5);assert(state.speed>state.normal*2.5,'pickup accelerates the vehicle');assert(!state.effects[0]);assert(state.pedestal.every(x=>x>.5));assert(state.floating.every(x=>x===0));
   await page.screenshot({path:'docs/screenshots/turbo-world-collected'+(mobile?'-mobile':'')+'.png'});
   await page.evaluate(()=>turboQA.reset());
   state=await page.evaluate(()=>turboQA.status());assert.equal(state.boost,0);assert(!state.available[0]);
   await page.evaluate(()=>turboQA.place(1,1));
   await page.waitForFunction(()=>turboQA.status().cooldowns[1]>4);
-  state=await page.evaluate(()=>turboQA.status());assert(state.boost>1.5);assert(state.cooldowns[0]<state.cooldowns[1]);
+  state=await page.evaluate(()=>turboQA.status());assert(state.boost>1.5);assert(state.speed>state.normal*2.5,'truck receives full turbo acceleration');assert(state.cooldowns[0]<state.cooldowns[1]);
   await page.evaluate(()=>turboQA.reset());
   await page.waitForFunction(()=>turboQA.status().available[0]&&turboQA.status().available[1],{timeout:12000});
+  await page.evaluate(()=>turboQA.place(2,2));
+  await page.waitForFunction(()=>turboQA.status().cooldowns[2]>4);
+  state=await page.evaluate(()=>turboQA.status());assert(state.boost>1.5);assert(state.speed>state.normal*2.5,'rally car receives full turbo acceleration');
+  await page.evaluate(()=>turboQA.reset());
   await page.getByRole('button',{name:'Open navigation menu'}).click();
   await page.getByRole('button',{name:'Settings',exact:false}).click();
-  await page.getByText('Turbo Boost',{exact:true}).click();
+  await page.locator('summary').filter({hasText:/^Turbo Boost$/}).click();
   await page.getByRole('slider',{name:'Extra boost speed',exact:true}).waitFor({state:'visible'});
   const count=page.getByRole('spinbutton',{name:'Pickup count value'});await count.fill('12');await count.press('Tab');
   await page.waitForFunction(()=>turboQA.status().count===12);
@@ -53,6 +57,6 @@ const fs=require('node:fs');
   await showroom.goto('http://127.0.0.1:8000/viewer/showroom.html');
   await showroom.waitForFunction(()=>!document.querySelector('#visualSettings').disabled);
   assert.equal(await showroom.locator('#stage canvas').count(),1);
-  console.log('PASS world: one GLB load, 15 slots, both cars collect, only floating assembly hides, pedestal remains, independent cooldowns/respawn, reset isolation, live Settings count, showroom works.');
+  console.log('PASS world: one GLB load, 15 slots, all three vehicles collect and accelerate, only floating assembly hides, pedestal remains, independent cooldowns/respawn, reset isolation, live Settings count, showroom works.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
