@@ -1,0 +1,9 @@
+{
+  "generator": "tools/blender/build_mountains.py",
+  "license": "CC0-1.0",
+  "layers": 3,
+  "triangles": 23040,
+  "textures": 0,
+  "collision": "none",
+  "blender": "4.2.3 LTS"
+}

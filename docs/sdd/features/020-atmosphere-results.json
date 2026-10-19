@@ -1,0 +1,47 @@
+{
+  "browser": "155.0.4283.62",
+  "platform": "win32",
+  "views": [
+    {
+      "name": "desktop",
+      "calls": 382,
+      "triangles": 3899000,
+      "cpuSubmitMs": 121,
+      "far": 600,
+      "backdropDraws": 7
+    },
+    {
+      "name": "east",
+      "calls": 324,
+      "triangles": 3865871,
+      "cpuSubmitMs": 339.69999999925494,
+      "far": 600,
+      "backdropDraws": 7
+    },
+    {
+      "name": "west",
+      "calls": 290,
+      "triangles": 3834939,
+      "cpuSubmitMs": 66.90000000037253,
+      "far": 600,
+      "backdropDraws": 7
+    },
+    {
+      "name": "high",
+      "calls": 342,
+      "triangles": 3849251,
+      "cpuSubmitMs": 66.79999999888241,
+      "far": 600,
+      "backdropDraws": 7
+    },
+    {
+      "name": "mobile",
+      "calls": 225,
+      "triangles": 3834059,
+      "cpuSubmitMs": 16.5,
+      "far": 600,
+      "backdropDraws": 7
+    }
+  ],
+  "errors": []
+}

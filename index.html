@@ -251,9 +251,16 @@ geo.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));geo.compute
 
 const worldAtmosphere=createWorldAtmosphere(scene,surfaceHeight,world,worldAppearance,terrainPainter,worldSurface.bounds);
 addEventListener('pagehide',event=>{if(!event.persisted)worldAtmosphere.dispose();});
-// Approved painted scenery by default.
+// Crisp geometry backdrop; painted review remains available via ?storybook=1.
+const {environmentConfig}=await import('./AtmosphericEnvironmentConfig.js');
+let atmosphericEnvironment=null;
+if(environmentConfig.enabled&&new URLSearchParams(location.search).get('storybook')!=='1'){
+ try{const {createAtmosphericEnvironment}=await import('./AtmosphericEnvironment.js');atmosphericEnvironment=await createAtmosphericEnvironment({scene,camera,renderer,bounds:worldSurface.bounds,halfSize:world});}
+ catch(error){console.error('Atmospheric environment unavailable; using existing scenery',error);}
+}
+addEventListener('pagehide',event=>{if(!event.persisted)atmosphericEnvironment?.dispose();});
 let storybookBackground=null;
-if(isStorybookEnabled(location.search)){
+if(!atmosphericEnvironment&&isStorybookEnabled(location.search)){
  try{
   const {createStorybookBackground}=await import('./StorybookBackground.js?v=painted-2');
   storybookBackground=await createStorybookBackground(scene,{height:surfaceHeight,painter:terrainPainter,halfSize:world,camera,original:worldAtmosphere,bounds:worldSurface.bounds});
@@ -311,7 +318,7 @@ if(!handlingCourse)try{
   blocked:(x,z,r)=>{const near=rallyLandscape?.nearest(x,z);return !!near&&near.distance<near.width/2+7+r||worldJumps.features.some(f=>rampClearance(f,x,z,r+3));}});
 }catch(error){console.warn('Decorative debris unavailable',error);}
 addEventListener('pagehide',event=>{if(!event.persisted)decorativeDebris?.dispose();});
-if(new URLSearchParams(location.search).has('debrisQA'))window.debrisQA={system:decorativeDebris,get shading(){return contactShading;},get effects(){return surfaceEffects;},get rattle(){return equipmentRattle;},get vehicle(){return vehicle;},layout:sceneryLayout,painter:terrainPainter,get contacts(){return debrisContacts;},get root(){return vehicleRoot;},terrain,scene,renderer,camera,config:proceduralDebrisConfig};
+if(new URLSearchParams(location.search).has('debrisQA'))window.debrisQA={get environment(){return atmosphericEnvironment;},system:decorativeDebris,get shading(){return contactShading;},get effects(){return surfaceEffects;},get rattle(){return equipmentRattle;},get vehicle(){return vehicle;},layout:sceneryLayout,painter:terrainPainter,get contacts(){return debrisContacts;},get root(){return vehicleRoot;},terrain,scene,renderer,camera,config:proceduralDebrisConfig};
 const debrisContacts=new DebrisWheelContacts();
 const surfaceEffects=new VehicleSurfaceEffects(scene,surfaceHeight,terrainPainter);
 addEventListener('pagehide',event=>{if(!event.persisted)surfaceEffects.dispose();});
@@ -591,7 +598,7 @@ if(window.rallyQA&&new URLSearchParams(location.search).has('driveProbe')){
 }
 // END temporary uphill driving probe
 let diagnosticFrames=0,diagnosticStart=performance.now();
-function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);wordHunt?.update(dt,vehicleRoot.position,garage.open||document.hidden);if(garage.open){gameAudio.stopAll();}if(!garage.open){update(dt);storybookBackground?.update(dt);groundTextures.update();groundDetails.update(camera.position);decorativeDebris?.update(camera.position);equipmentRattle.apply(vehicle,dt,{speed,bump:Math.max(0,...debrisContacts.wheels.map(c=>c.bump)),airborne:!!flight,reducedMotion:reducedMotion.matches});try{renderer.render(scene,camera);}finally{equipmentRattle.restore();}document.querySelector('#gameLoading').hidden=true;document.querySelector('#gameLoading').dataset.phase='ready';diagnosticFrames++;const now=performance.now();if(now-diagnosticStart>1000){if(document.body.classList.contains('show-debug'))document.querySelector('#renderTuning').textContent=Math.round(diagnosticFrames*1000/(now-diagnosticStart))+' FPS · '+renderer.info.render.calls+' draws · '+Math.round(renderer.info.render.triangles/1000)+'k triangles';diagnosticFrames=0;diagnosticStart=now;}}}animate();
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);wordHunt?.update(dt,vehicleRoot.position,garage.open||document.hidden);if(garage.open){gameAudio.stopAll();}if(!garage.open){update(dt);storybookBackground?.update(dt);groundTextures.update();groundDetails.update(camera.position);decorativeDebris?.update(camera.position);equipmentRattle.apply(vehicle,dt,{speed,bump:Math.max(0,...debrisContacts.wheels.map(c=>c.bump)),airborne:!!flight,reducedMotion:reducedMotion.matches});try{if(atmosphericEnvironment)atmosphericEnvironment.render(dt);else renderer.render(scene,camera);}finally{equipmentRattle.restore();}document.querySelector('#gameLoading').hidden=true;document.querySelector('#gameLoading').dataset.phase='ready';diagnosticFrames++;const now=performance.now();if(now-diagnosticStart>1000){if(document.body.classList.contains('show-debug'))document.querySelector('#renderTuning').textContent=Math.round(diagnosticFrames*1000/(now-diagnosticStart))+' FPS · '+renderer.info.render.calls+' draws · '+Math.round(renderer.info.render.triangles/1000)+'k triangles';diagnosticFrames=0;diagnosticStart=now;}}}animate();
 
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 
