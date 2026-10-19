@@ -11,17 +11,17 @@ export async function loadWorldPhysics(){rapierPromise??=import('./viewer/vendor
 export class RapierWorldVehicle {
  constructor(RAPIER,{surface,height,groundDebris,trees,rocks,limit=205}){if(typeof trees?.resolveMovement!=='function'||typeof rocks?.resolveMovement!=='function')throw new Error('Rapier requires current tree/rock collision adapters. Reload the game to refresh cached modules.');Object.assign(this,{RAPIER,surface,height,groundDebris,trees,rocks,limit});this.hills=new HillSpeedPhysics(height);this.turbo=new TurboBoost();this.point=new THREE.Vector3();this.rotation=new THREE.Quaternion();this.normal=new THREE.Vector3();this.cannonArmed=true;this.cannonFlight=false;this.cameraHeading=null;}
  setVehicle(vehicle,cfg,index,position,heading){
-  this.physics?.dispose();this.vehicle=vehicle;const tuning=arcadeHandlingConfig[index?'stinky':'dirty'];this.cfg={...cfg,accel:tuning.acceleration,max:tuning.topSpeed,reverse:tuning.reverseSpeed,turn:tuning.turn,drag:tuning.drag};this.index=index;
+  this.physics?.dispose();this.vehicle=vehicle;const tuning=(cfg.handling??arcadeHandlingConfig[index?'stinky':'dirty']);this.cfg={...cfg,accel:tuning.acceleration,max:tuning.topSpeed,reverse:tuning.reverseSpeed,turn:tuning.turn,drag:tuning.drag};this.index=index;
   const model=vehicle.userData.controller,pivots=(model?.wheels?model.wheels.map(w=>w.steering||w):vehicle.children).filter(w=>w.userData.wheel);
   this.pivots=pivots;const wheels=pivots.map(p=>{const w=p.userData.wheel;return {x:w.x,z:w.z,r:w.r,front:w.z>0};});
-  this.physics=new JumpVehiclePrototype(this.RAPIER,this.surface,{vehicle:index===0?'dirty':'stinky',wheels,safetyWalls:false,wheelFilterGroups:0x00040003,chassisHalfExtents:index===0?{x:1,y:.45,z:1.5}:{x:1.2,y:.45,z:2.7},afterStep:(p,h)=>this.afterStep(p,h)});
+  this.physics=new JumpVehiclePrototype(this.RAPIER,this.surface,{vehicle:index===1?'stinky':'dirty',tuning:cfg.physics,wheels,safetyWalls:false,wheelFilterGroups:0x00040003,chassisHalfExtents:cfg.chassisHalfExtents??(index===0?{x:1,y:.45,z:1.5}:{x:1.2,y:.45,z:2.7}),afterStep:(p,h)=>this.afterStep(p,h)});
   this.arcade=new ArcadeGroundDrive(this);this.physics.step=(h,input)=>this.arcade.step(h,input);
   this.resetAt(position,heading);
  }
- resetAt(position,heading){this.turbo.reset();this.physics.reset(position.x,position.z,position.y-.12,heading);this.physics.hasGrounded=true;this.hills.reset();this.cannonFlight=false;this.cannonArmed=true;this.cameraHeading=heading;}
+ resetAt(position,heading){if(this.arcade)this.arcade.slip=0;this.turbo.reset();this.physics.reset(position.x,position.z,position.y-.12,heading);this.physics.hasGrounded=true;this.hills.reset();this.cannonFlight=false;this.cannonArmed=true;this.cameraHeading=heading;}
  collectTurbo(){
   if(!this.turbo.activate())return false;
-  const p=this.physics,t=arcadeHandlingConfig[this.index?'stinky':'dirty'];
+  const p=this.physics,t=(this.cfg.handling??arcadeHandlingConfig[this.index?'stinky':'dirty']);
   const sign=Math.sign(p.state.speed)||1;
   const normal=(sign<0?t.reverseSpeed:t.topSpeed)*getSpeedMultiplier(this.cfg.hill.speedAdjustmentPercent);
   const v=p.body.linvel(),q=p.body.rotation(),f=rotateVector(q,{x:0,y:0,z:1});
@@ -58,7 +58,7 @@ export class RapierWorldVehicle {
   const v=p.body.linvel(),edge=this.limit+4;if(current.x>edge&&v.x>0||current.x<-edge&&v.x<0)p.body.setLinvel({...v,x:-Math.sign(current.x)*Math.abs(v.x)},true);if(current.z>edge&&v.z>0||current.z<-edge&&v.z<0)p.body.setLinvel({...p.body.linvel(),z:-Math.sign(current.z)*Math.abs(v.z)},true);
  }
  update(dt,input){
-  const tuning=arcadeHandlingConfig[this.index?'stinky':'dirty'];
+  const tuning=(this.cfg.handling??arcadeHandlingConfig[this.index?'stinky':'dirty']);
   Object.assign(this.cfg,{accel:tuning.acceleration,max:tuning.topSpeed,reverse:tuning.reverseSpeed,turn:tuning.turn,drag:tuning.drag});
   this.input=input;
   const p=this.physics;this.grade=0;p.update(dt,input);

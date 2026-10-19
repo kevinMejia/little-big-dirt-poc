@@ -1,3 +1,4 @@
+import {audiConfig} from './AudiConfig.js';
 import './TuningStore.js';
 import {vehicleConfig,originalDriveConfig,jumpConfig,jumpVehicleConfig} from './VehicleConfig.js';
 import {stinkyCollision} from './StinkyEquipment.js';
@@ -5,6 +6,7 @@ import {stinkyCollision} from './StinkyEquipment.js';
 // Shared main-game/lab configuration assembly. Numbers below describe the
 // existing collision envelope, not another set of handling parameters.
 export function playableVehicleConfig(index,collision){
+ if(index===2)return audiConfig();
  const drive=originalDriveConfig[index===0?'dirty':'stinky'];
  return {...drive,hill:vehicleConfig[index===0?'backhoe':'garbageTruck'],
   accel:drive.acceleration,max:drive.topSpeed,reverse:drive.reverseSpeed,
@@ -26,7 +28,7 @@ export function hybridDrivingInput(input,steering,airborne){
 // Keep the existing main-game landing behavior, including per-vehicle scaling,
 // cannon-specific bounce, body feedback, dust and optional main-game audio.
 export function hybridLandingFeedback(event,index,config,feedback,effects,height,sound=()=>{}){
- feedback.landingImpact(config.hill,event.impact,event.bounce??jumpConfig.landingBouncePercent*jumpVehicleConfig[index===0?'dirty':'stinky'].landingBounceScalePercent/100);
+ feedback.landingImpact(config.hill,event.impact,event.bounce??config.landingBouncePercent??jumpConfig.landingBouncePercent*jumpVehicleConfig[index===0?'dirty':'stinky'].landingBounceScalePercent/100);
  if(jumpConfig.landingDustPercent>0)effects.puff(event.x,height(event.x,event.z)+.2,event.z,event.impact*jumpConfig.landingDustPercent/100);
  sound(event.impact);
 }

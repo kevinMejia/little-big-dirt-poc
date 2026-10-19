@@ -67,6 +67,11 @@ export class GameAudio {
  }
  play(id,{cooldown=.12,intensity=1,rate=null,seconds=null}={}){
   if(id==='horn')return this.horn();
+  if(id==='audi-electric'||id==='audi-tires'){
+   this.rallyVoice(id,true,id==='audi-electric'?360:200,.15);
+   const voice=this.loops.get(id);if(!voice)return false;
+   voice.source.stop(this.context.currentTime+1);return true;
+  }
   if(!this.allowed(id)||this.context?.state!=='running')return false;
   const now=this.context.currentTime;if(now-(this.last.get(id)??-Infinity)<cooldown)return false;
   if([...this.voices].filter(v=>v.id===id&&!v.ending).length>=2)return false;
@@ -79,9 +84,28 @@ export class GameAudio {
   if(voice){if(Math.abs((voice.rate??1)-rate)>.005){voice.source.playbackRate.setTargetAtTime(rate,this.context.currentTime,.16);voice.rate=rate;}if(Math.abs(voice.intensity-intensity)>.005){voice.intensity=intensity;voice.gain.gain.setTargetAtTime(config.sounds[id].volume/100*intensity,this.context.currentTime,.12);}return;}
   const next=this.create(id,{loop:true,rate,intensity});if(next)this.loops.set(id,next);
  }
- engine(index,speed,maxSpeed,throttle,paused=false){
+ // Two bounded synthesized voices share existing mute, volume and lifecycle controls.
+ rallyVoice(id,on,frequency,intensity){
+  let voice=this.loops.get(id);
+  if(!on||!this.allowed(id)||this.context?.state!=='running'){if(voice){this.end(voice);this.loops.delete(id);}return;}
+  const t=this.context.currentTime;
+  if(!voice){
+   if(this.voices.size>=12)return;
+   const gain=this.context.createGain();let source;
+   if(id==='audi-electric'){source=this.context.createOscillator();source.type='triangle';}
+   else{source=this.context.createBufferSource();if(!this.tireNoise){this.tireNoise=this.context.createBuffer(1,this.context.sampleRate,this.context.sampleRate);const data=this.tireNoise.getChannelData(0);let previous=0;for(let i=0;i<data.length;i++){previous=(previous+Math.random()*.08-.04)/1.04;data[i]=previous;}}source.buffer=this.tireNoise;source.loop=true;}
+   gain.gain.value=0;source.connect(gain);gain.connect(this.buses[definitions.get(id).bus]);voice={id,source,gain,intensity,ending:false};this.voices.add(voice);this.loops.set(id,voice);
+   source.onended=()=>{source.disconnect();gain.disconnect();this.voices.delete(voice);if(this.loops.get(id)===voice)this.loops.delete(id);};source.start();
+  }
+  voice.intensity=intensity;voice.gain.gain.setTargetAtTime(config.sounds[id].volume/100*intensity,t,.12);
+  if(voice.source.frequency)voice.source.frequency.setTargetAtTime(frequency,t,.15);
+  else voice.source.playbackRate.setTargetAtTime(frequency/200,t,.15);
+ }
+ engine(index,speed,maxSpeed,throttle,paused=false,airborne=false){
   this.vehicle=index;
   const load=clamp(Math.abs(speed)/Math.max(1,maxSpeed)),rate=.85+load*.6+(throttle?.08:0),intensity=.42+load*.3+(throttle?.08:0);
+  this.rallyVoice('audi-electric',index===2&&!paused,110+load*650+(throttle?55:0),.035+load*.08);
+  this.rallyVoice('audi-tires',index===2&&!paused&&!airborne&&Math.abs(speed)>2,150+load*100,load*.6);
   this.loop('dirty-diesel',!paused&&index===0,{rate,intensity});this.loop('stinky-diesel',!paused&&index===1,{rate:rate*.92,intensity});
  }
  tree(strength,kind){if(kind==='fall'){this.treeVariant=(this.treeVariant??0)+1;this.play(this.treeVariant%2?'wood-crack-a':'wood-crack-b',{cooldown:.2});this.play('foliage',{cooldown:.25});}else{this.play(strength<4?'wood-bump':'wood-creak',{cooldown:.25,intensity:clamp(strength/8+.3)});}}

@@ -8,8 +8,8 @@ import {arcadeHandlingConfig,jumpConfig,groundDebrisConfig,originalDriveConfig} 
 export class ArcadeGroundDrive {
  constructor(adapter){this.adapter=adapter;this.euler=new THREE.Euler(0,0,0,'YXZ');this.q=new THREE.Quaternion();}
  step(h,input={}){
-  const a=this.adapter,p=a.physics,cfg=a.cfg,t=arcadeHandlingConfig[a.index?'stinky':'dirty'];
-  const throttle=input.throttle??0,steer=input.steering??0,shared=originalDriveConfig[a.index?'stinky':'dirty'];
+  const a=this.adapter,p=a.physics,cfg=a.cfg,t=cfg.handling??arcadeHandlingConfig[a.index?'stinky':'dirty'];
+  const throttle=input.throttle??0,steer=input.steering??0,shared=cfg.rally?cfg:originalDriveConfig[a.index?'stinky':'dirty'];
   p.copyPose();
   let root=a.rootPose({position:p.body.translation(),rotation:p.body.rotation()});
   const f=rotateVector(p.body.rotation(),{x:0,y:0,z:1});
@@ -25,7 +25,12 @@ export class ArcadeGroundDrive {
    if(input.emergencyBrake)speed=Math.sign(speed)*Math.max(0,Math.abs(speed)-shared.emergencyBrakeDeceleration*h);
    if(!throttle)speed=applyReleaseDeceleration(speed,h,cfg.hill);
    heading-=steer*(cfg.turn??t.turn)*Math.min(Math.abs(speed)/t.steeringFullSpeed,1)*h*Math.sign(speed||1)*t.steeringResponse/(1+t.speedSteeringReduction*Math.abs(speed));
-   const dx=Math.sin(heading)*speed*h,dz=Math.cos(heading)*speed*h;
+   let dx=Math.sin(heading)*speed*h,dz=Math.cos(heading)*speed*h;
+   if(cfg.rally){
+    const velocity=p.body.linvel(),side=velocity.x*Math.cos(heading)-velocity.z*Math.sin(heading);
+    this.slip=THREE.MathUtils.damp(this.slip??0,input.emergencyBrake?steer*Math.abs(speed)*.32:side*Math.exp(-7*h), input.emergencyBrake?5:9,h);
+    dx+=Math.cos(heading)*this.slip*h;dz-=Math.sin(heading)*this.slip*h;
+   }
    const ground=a.height(root.x+dx,root.z+dz)-.09;
    // Predict the next support height from the current tangent. Sharp convex
    // ramp lips release the body; ordinary terrain curvature stays attached.

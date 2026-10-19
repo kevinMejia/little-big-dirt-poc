@@ -12,7 +12,7 @@ export function bindVehicleGarage({buttons,onSelect,onOpen,holdMilliseconds=650}
     on(button,'contextmenu',e=>e.preventDefault());
     on(button,'click',e=>{if(e.detail===0)onSelect(index);});
   }
-  on(window,'keydown',e=>{const i=['Digit1','Digit2'].indexOf(e.code);if(i<0||e.repeat||['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))return;e.preventDefault();start(e.code,i,buttons[i]);});
+  on(window,'keydown',e=>{const i=buttons.map((_,i)=>'Digit'+(i+1)).indexOf(e.code);if(i<0||e.repeat||['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))return;e.preventDefault();start(e.code,i,buttons[i]);});
   on(window,'keyup',e=>{const h=cancel(e.code);if(h&&!h.opened)onSelect(h.index);});
   const clear=()=>{for(const id of [...holds.keys()])cancel(id);};
   on(window,'blur',clear);on(document,'visibilitychange',()=>{if(document.hidden)clear();});
