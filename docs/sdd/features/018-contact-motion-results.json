@@ -1,0 +1,52 @@
+{
+  "browser": "155.0.4283.62",
+  "platform": "win32",
+  "viewport": [
+    1280,
+    720
+  ],
+  "before": {
+    "dustEmitted": 2,
+    "dustPool": 48,
+    "trackPool": 192,
+    "terrain": "7d550ce2db639995744e5c734a27497b604b1686a59810938fe64f6caefc1372",
+    "collision": "62a66fe82c090e06815a303004d1988cc9dceecc1f19543b58cb998b4a97e302",
+    "debris": 6336,
+    "drawCalls": 278,
+    "triangles": 2265731,
+    "medianMs": 7,
+    "p95Ms": 7.100000000000364,
+    "startupMs": 12497,
+    "travel": 98.36735429157095
+  },
+  "after": {
+    "dustEmitted": 4,
+    "dustPool": 48,
+    "trackPool": 192,
+    "terrain": "7d550ce2db639995744e5c734a27497b604b1686a59810938fe64f6caefc1372",
+    "collision": "62a66fe82c090e06815a303004d1988cc9dceecc1f19543b58cb998b4a97e302",
+    "debris": 6336,
+    "drawCalls": 276,
+    "triangles": 2266599,
+    "medianMs": 7,
+    "p95Ms": 7.100000000000364,
+    "startupMs": 11495,
+    "travel": 98.36735429157095,
+    "equipment": [
+      {
+        "index": 0,
+        "angle": 0.00023658287338643746,
+        "error": 0,
+        "physicsUnchanged": true,
+        "reduced": true
+      },
+      {
+        "index": 1,
+        "angle": 0.00023658287338643746,
+        "error": 0,
+        "physicsUnchanged": true,
+        "reduced": true
+      }
+    ]
+  }
+}

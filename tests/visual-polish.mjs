@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import * as THREE from '../three-test.mjs';
 import {worldAppearance} from '../WorldEnvironmentConfig.js';
 import {createGroundDetailTexture,addGroundTextures} from '../GroundTextures.js';
-import {createPolishedLighting,ContactShading,polishTerrain,VehicleSurfaceEffects} from '../VisualPolish.js';
+import {createPolishedLighting,ContactShading,polishTerrain,VehicleSurfaceEffects,EquipmentRattle} from '../VisualPolish.js';
 const scene=new THREE.Scene(),config={shadowQuality:'medium',contactShadowStrengthPercent:35,terrainColorVariationPercent:20,dirtBlendSoftnessPercent:65,dustIntensityPercent:35,tireTrackOpacityPercent:25};
 const renderer={shadowMap:{}},lighting=createPolishedLighting(scene,renderer,config);assert.equal(lighting.sun.shadow.mapSize.x,2048);assert.equal(lighting.sun.shadow.camera.right,65);assert.equal(renderer.outputColorSpace,THREE.SRGBColorSpace);lighting.update(new THREE.Vector3(150,5,100));assert(lighting.sun.target.position.distanceTo(new THREE.Vector3(150,5,100))<.1);lighting.dispose();assert.equal(scene.children.length,0);
 const height=(x,z)=>Math.sin(x*.1)*.4+z*.02,painter={surface:()=>({path:1,dirtMask:.3}),sampleColor:(x,z,target=new THREE.Color())=>target.set(0x79a956)},layout={trees:[{x:1,z:1,scale:1}],rocks:[{x:8,z:8,radius:1}]};
@@ -27,3 +27,15 @@ const shader={uniforms:{},vertexShader:'#include <common>\n#include <worldpos_ve
 console.log('PASS: deterministic packed grass/soil/rock textures, mipmaps/filtering, capped anisotropy, blend mask, material shader integration and cleanup; terrain positions unchanged.');
 
 THREE.TextureLoader.prototype.load=oldLoad;
+
+// Contact strength follows real clearance rather than leaving dark floating tires.
+const clearance=new ContactShading(scene,()=>0,{trees:[]},{rocks:[]},config);
+root.position.set(0,0,0);pivot.position.set(-1,.665,-2);root.updateMatrixWorld(true);clearance.update(root,contacts,false);assert.ok(clearance.alpha.getX(0)>.99);
+pivot.position.y=1.1;root.updateMatrixWorld(true);clearance.update(root,contacts,false);assert.equal(clearance.alpha.getX(0),0);clearance.dispose();
+// Shake is temporary and uses existing joint poses without writing simulation state.
+const equipment=new THREE.Group(),joint=new THREE.Group();joint.name='FrontBucketPivot';equipment.add(joint);joint.rotation.x=.35;let hydraulicUpdates=0;equipment.userData.controller={update(){hydraulicUpdates++;}};
+const shake=new EquipmentRattle(),rest=joint.quaternion.clone();shake.apply(equipment,1/60,{speed:18,bump:.04});assert.ok(rest.angleTo(joint.quaternion)>0);assert.ok(rest.angleTo(joint.quaternion)<.005);shake.restore();assert.ok(rest.angleTo(joint.quaternion)<1e-7);
+for(let i=0;i<100;i++){shake.apply(equipment,1/60,{speed:18});shake.restore();}assert.ok(rest.angleTo(joint.quaternion)<1e-7);
+shake.apply(equipment,1/60,{speed:18,reducedMotion:true});assert.ok(rest.angleTo(joint.quaternion)<1e-7);assert.equal(shake.amplitude,0);shake.apply(equipment,1/60,{speed:18,airborne:true});assert.equal(shake.amplitude,0);assert.ok(hydraulicUpdates>2);shake.dispose();
+const landing=new VehicleSurfaceEffects(scene,()=>0,painter,config);config.dustIntensityPercent=35;landing.puff(0,0,0,20);assert.ok(landing.dust.items.filter(p=>p.life>0).every(p=>Math.hypot(p.vx,p.vz)>0));landing.reset();assert.ok(landing.dust.items.every(p=>p.life===0));landing.dispose();
+console.log('PASS tire clearance fading, bounded equipment vibration, exact pose restoration, reduced motion/airborne suppression, radial landing drift and reset cleanup.');

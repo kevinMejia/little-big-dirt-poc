@@ -9,6 +9,15 @@ export const worldPolish={
   // Distance color softening, 0–1, from 140 to 600m; nearby driving stays clear.
   haze:.18,
 };
+// Visual-only contact/motion defaults. No storage; reload file edits.
+export const contactMotionPolish={
+  // Contact patch density multiplier, 0–1. Existing contact-shadow slider scales it.
+  contactStrength:.85,
+  // Equipment joint shake, 0–1; zero disables; reduced-motion also disables it.
+  vibrationStrength:.6,
+  // Horizontal particle drift multiplier, 0–2. Dust pool size stays fixed.
+  dustDrift:1,
+};
 export const worldAppearance={
   // Visual size relative to each existing interactive rock's collision radius.
   // Reload Play to apply. Both axes and height scale uniformly; density and
