@@ -1,0 +1,9 @@
+{
+  "generator": "tools/blender/build_debris.py",
+  "seed": 48271,
+  "units": "metres",
+  "variantsPerType": 3,
+  "collision": "none",
+  "license": "CC0-1.0",
+  "blender": "4.2.3 LTS"
+}

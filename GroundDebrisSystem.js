@@ -83,7 +83,7 @@ export class DebrisWheelContacts {
     for(const contact of this.wheels){const w=contact.pivot.userData.wheel;contact.point.set(w.x,0,w.z);root.localToWorld(contact.point);contact.bump=airborne?0:debris.getWheelHeightAt(contact.point.x,contact.point.z,w.r);sum+=contact.bump;
       if(w.x<0){left+=contact.bump;nl++;}else{right+=contact.bump;nr++;}if(w.z>0){front+=contact.bump;nf++;}else{rear+=contact.bump;nb++;}minX=Math.min(minX,w.x);maxX=Math.max(maxX,w.x);minZ=Math.min(minZ,w.z);maxZ=Math.max(maxZ,w.z);
     }
-    const strength=pct(debris.config.suspensionEffectPercent),bounce=pct(config.suspensionBouncePercent),t=this.targets;
+    const strength=debris.config.bumps?1:pct(debris.config.suspensionEffectPercent),bounce=pct(config.suspensionBouncePercent),t=this.targets;
     t.heave=sum/Math.max(1,this.wheels.length)*strength*bounce;
     t.pitch=Math.atan2(rear/Math.max(1,nb)-front/Math.max(1,nf),Math.max(1,maxZ-minZ))*strength*pct(config.bodyPitchPercent);
     t.roll=Math.atan2(right/Math.max(1,nr)-left/Math.max(1,nl),Math.max(1,maxX-minX))*strength*pct(config.bodyRollPercent);return t;

@@ -171,6 +171,8 @@ import { TreeCollisionSystem } from './TreeCollisionSystem.js?v=rapier-world-2';
 import { RockInteractionSystem } from './RockInteractionSystem.js';
 import { EnvironmentAssets } from './EnvironmentAssets.js';
 import { EnvironmentWorld } from './EnvironmentWorld.js';
+import {ProceduralDebrisSystem} from './ProceduralDebrisSystem.js';
+import {proceduralDebrisConfig} from './ProceduralDebrisConfig.js';
 // Apply shared saved overrides before constructing any environment objects.
 import './TuningStore.js';
 import {mainWorldSettings} from './MainWorldSettings.js?v=expanded-1';
@@ -298,6 +300,15 @@ for(const {x,z,radius} of sceneryLayout.rocks)makeRock(x,z,radius);
 // Retain the reusable placement system, but retire temporary meshes and bumps.
 // A local override also prevents saved tuning values from restoring placeholders.
 const groundDebris=new GroundDebrisSystem(scene,surfaceHeight,world,terrainPainter,sceneryLayout,{...groundDebrisConfig,enabled:false},mapSettings.areaScale);
+let decorativeDebris=null;
+if(!handlingCourse)try{
+ decorativeDebris=await ProceduralDebrisSystem.create(scene,{terrain,halfSize:world,bounds:worldSurface.bounds,painter:terrainPainter,
+  trees:[...sceneryLayout.trees,...rallyPlacements.filter(p=>p.kind==='tree')],rocks:[...sceneryLayout.rocks,...rallyPlacements.filter(p=>p.kind==='rock').map(p=>({...p,radius:p.scale}))],
+  edgeDistance:(x,z)=>{const near=rallyLandscape?.nearest(x,z);return near?near.distance-near.width/2:Infinity;},
+  blocked:(x,z,r)=>{const near=rallyLandscape?.nearest(x,z);return !!near&&near.distance<near.width/2+7+r||worldJumps.features.some(f=>rampClearance(f,x,z,r+3));}});
+}catch(error){console.warn('Decorative debris unavailable',error);}
+addEventListener('pagehide',event=>{if(!event.persisted)decorativeDebris?.dispose();});
+if(new URLSearchParams(location.search).has('debrisQA'))window.debrisQA={system:decorativeDebris,get contacts(){return debrisContacts;},get root(){return vehicleRoot;},terrain,scene,renderer,camera,config:proceduralDebrisConfig};
 const debrisContacts=new DebrisWheelContacts();
 const surfaceEffects=new VehicleSurfaceEffects(scene,surfaceHeight,terrainPainter);
 addEventListener('pagehide',event=>{if(!event.persisted)surfaceEffects.dispose();});
@@ -500,11 +511,14 @@ gameAudio.loop('air-wind',audioCannon,{intensity:.35});
 gameAudio.engine(index,speed,cfg.max*getSpeedMultiplier(cfg.hill.speedAdjustmentPercent),forward||back,garage.open||document.hidden,!!flight);
 
 
- if(!flight)bodyFeedback.update(dt,{speed,yawRate:(heading-previousHeading)/Math.max(dt,.001),groundY:0,groundPitch:0,groundRoll:0,config:configs[index].hill});
+ // Reuse legacy footprint/contact feedback with the new authored debris only.
+ const debrisFeedback=debrisContacts.sample(vehicle,vehicleRoot,decorativeDebris??groundDebris,configs[index].hill,!!flight);
+ if(!flight)bodyFeedback.update(dt,{speed,yawRate:(heading-previousHeading)/Math.max(dt,.001),groundY:0,groundPitch:0,groundRoll:0,config:configs[index].hill,debris:debrisFeedback});
  rapierController.render(vehicleRoot,vehicleVisual,bodyFeedback,dt);
- // Keep wheel descriptors for tire shadows/dust; disabled debris does no bump queries.
- debrisContacts.sample(vehicle,vehicleRoot,groundDebris,configs[index].hill,!!flight);
- for(let i=0;i<debrisContacts.wheels.length;i++)debrisContacts.wheels[i].compression=rapierController.physics.state.compression[i]??0;
+ for(let i=0;i<debrisContacts.wheels.length;i++){
+  const c=debrisContacts.wheels[i];c.compression=(rapierController.physics.state.compression[i]??0)+c.bump;
+  if(c.bump){c.pivot.getWorldPosition(c.point);c.point.y+=c.bump;c.pivot.position.copy(c.pivot.parent.worldToLocal(c.point));}
+ }
 
 stinkyQA?.update(performance.now());
 environmentWorld?.update();
@@ -569,7 +583,7 @@ if(window.rallyQA&&new URLSearchParams(location.search).has('driveProbe')){
 }
 // END temporary uphill driving probe
 let diagnosticFrames=0,diagnosticStart=performance.now();
-function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);wordHunt?.update(dt,vehicleRoot.position,garage.open||document.hidden);if(garage.open){gameAudio.stopAll();}if(!garage.open){update(dt);storybookBackground?.update(dt);groundTextures.update();groundDetails.update(camera.position);renderer.render(scene,camera);document.querySelector('#gameLoading').hidden=true;document.querySelector('#gameLoading').dataset.phase='ready';diagnosticFrames++;const now=performance.now();if(now-diagnosticStart>1000){if(document.body.classList.contains('show-debug'))document.querySelector('#renderTuning').textContent=Math.round(diagnosticFrames*1000/(now-diagnosticStart))+' FPS · '+renderer.info.render.calls+' draws · '+Math.round(renderer.info.render.triangles/1000)+'k triangles';diagnosticFrames=0;diagnosticStart=now;}}}animate();
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);wordHunt?.update(dt,vehicleRoot.position,garage.open||document.hidden);if(garage.open){gameAudio.stopAll();}if(!garage.open){update(dt);storybookBackground?.update(dt);groundTextures.update();groundDetails.update(camera.position);decorativeDebris?.update(camera.position);renderer.render(scene,camera);document.querySelector('#gameLoading').hidden=true;document.querySelector('#gameLoading').dataset.phase='ready';diagnosticFrames++;const now=performance.now();if(now-diagnosticStart>1000){if(document.body.classList.contains('show-debug'))document.querySelector('#renderTuning').textContent=Math.round(diagnosticFrames*1000/(now-diagnosticStart))+' FPS · '+renderer.info.render.calls+' draws · '+Math.round(renderer.info.render.triangles/1000)+'k triangles';diagnosticFrames=0;diagnosticStart=now;}}}animate();
 
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 

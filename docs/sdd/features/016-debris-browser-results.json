@@ -1,0 +1,80 @@
+{
+  "browser": "155.0.4283.62",
+  "platform": "win32",
+  "off": {
+    "count": 0,
+    "extensionCount": 0,
+    "batches": 0,
+    "drawCalls": 194,
+    "triangles": 2247119,
+    "frames": 430,
+    "medianFrameMs": 7,
+    "p95FrameMs": 7.100000000000364,
+    "groundError": 0,
+    "penetration": 0,
+    "maxContactGap": 0,
+    "routeViolations": 0,
+    "driveDistance": 100.74645631584646,
+    "finite": true,
+    "disposal": {
+      "expected": 0,
+      "freed": 0,
+      "detached": true,
+      "empty": true
+    }
+  },
+  "desktop": {
+    "count": 6336,
+    "extensionCount": 2690,
+    "batches": 1304,
+    "drawCalls": 290,
+    "triangles": 2266363,
+    "frames": 432,
+    "medianFrameMs": 7,
+    "p95FrameMs": 7,
+    "groundError": 1.7763568394002505e-15,
+    "penetration": 0.00001563242404145626,
+    "maxContactGap": 0.00001563242404145626,
+    "routeViolations": 0,
+    "driveDistance": 100.74645631584646,
+    "finite": true,
+    "culled": true,
+    "bumpFeedback": {
+      "bump": 0.049,
+      "disabled": true
+    },
+    "disposal": {
+      "expected": 26,
+      "freed": 26,
+      "detached": true,
+      "empty": true
+    }
+  },
+  "mobile": {
+    "count": 2220,
+    "extensionCount": 924,
+    "batches": 873,
+    "drawCalls": 211,
+    "triangles": 2252191,
+    "frames": 432,
+    "medianFrameMs": 7,
+    "p95FrameMs": 7.100000000000364,
+    "groundError": 1.7763568394002505e-15,
+    "penetration": 0.00001563242404145626,
+    "maxContactGap": 0.00001563242404145626,
+    "routeViolations": 0,
+    "driveDistance": 100.74645631584646,
+    "finite": true,
+    "culled": true,
+    "bumpFeedback": {
+      "bump": 0.049,
+      "disabled": true
+    },
+    "disposal": {
+      "expected": 26,
+      "freed": 26,
+      "detached": true,
+      "empty": true
+    }
+  }
+}
