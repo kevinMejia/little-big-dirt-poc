@@ -63,9 +63,9 @@ assert.deepEqual(snapshotTuning().rockConfig,initial.rockConfig);
 resetTuning(undefined,storage);assert.deepEqual(snapshotTuning(),initial);
 console.log('PASS: individual audio volume/switch persistence, executable export and reset.');
 
-const audi=fieldPath(field,'audi');const dirtyBefore=tuningValue(dirty),stinkyBefore=tuningValue(stinky);
-setTuning(audi,31,storage);assert.equal(tuningValue(audi),31);assert.equal(tuningValue(dirty),dirtyBefore);assert.equal(tuningValue(stinky),stinkyBefore);
-resetTuning([audi],{setItem(){}});loadTuning(storage);assert.equal(tuningValue(audi),31,'Audi independent override survives reload');
-for(const mode of ['hybrid','original'])for(const f of tuningFields){const path=fieldPath(f,'audi',mode);assert.notEqual(tuningValue(path),undefined,'Audi field resolves: '+path);}
-resetTuning([audi],storage);assert.equal(tuningValue(audi),defaultTuningValue(audi));
-console.log('PASS independent Audi tuning paths, save/load and reset.');
+const rallyCar=fieldPath(field,'rally-car');const dirtyBefore=tuningValue(dirty),stinkyBefore=tuningValue(stinky);
+setTuning(rallyCar,31,storage);assert.equal(tuningValue(rallyCar),31);assert.equal(tuningValue(dirty),dirtyBefore);assert.equal(tuningValue(stinky),stinkyBefore);
+resetTuning([rallyCar],{setItem(){}});loadTuning(storage);assert.equal(tuningValue(rallyCar),31,'Rally Car independent override survives reload');
+for(const mode of ['hybrid','original'])for(const f of tuningFields){const path=fieldPath(f,'rally-car',mode);assert.notEqual(tuningValue(path),undefined,'Rally Car field resolves: '+path);}
+resetTuning([rallyCar],storage);assert.equal(tuningValue(rallyCar),defaultTuningValue(rallyCar));
+console.log('PASS independent Rally Car tuning paths, save/load and reset.');

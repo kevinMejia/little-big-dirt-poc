@@ -9,8 +9,8 @@ export const audioConfig={
   effects:{enabled:true,volume:80}, // Impacts, collectibles, jumps and cannon.
   music:{enabled:true,volume:70}, // Completion/record jingles (no background music).
   sounds:{
-    "audi-electric":{enabled:true,volume:55},
-    "audi-tires":{enabled:true,volume:45},
+    "rally-car-electric":{enabled:true,volume:55},
+    "rally-car-tires":{enabled:true,volume:45},
     // Original vehicle horn. Routed through Master/Effects like every new effect.
     horn:{enabled:true,volume:55},
     // Dirty · mechanical diesel idle — A prepared slow-idle engine loop. Audition against the heavier truck below; not a verified backhoe recording.
@@ -64,8 +64,8 @@ export const audioConfig={
 
 // Asset/event labels for Settings; volumes above are the editable defaults.
 export const audioDefinitions=[
-  {id:"audi-electric",label:"Audi electric drivetrain",group:"Vehicle",bus:"engine",file:null,loop:true},
-  {id:"audi-tires",label:"Audi dirt tires",group:"Vehicle",bus:"effects",file:null,loop:true},
+  {id:"rally-car-electric",label:"Rally Car electric drivetrain",group:"Vehicle",bus:"engine",file:null,loop:true},
+  {id:"rally-car-tires",label:"Rally Car dirt tires",group:"Vehicle",bus:"effects",file:null,loop:true},
   {id:"horn",label:"Vehicle horn (original)",group:"Vehicle",bus:"effects",file:null,loop:false},
   {
     "id": "dirty-diesel",

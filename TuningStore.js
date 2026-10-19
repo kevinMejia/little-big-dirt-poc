@@ -1,9 +1,9 @@
-import {audiTuning} from './AudiConfig.js';
+import {rallyCarTuning} from './RallyCarConfig.js';
 import * as vehicleDefaults from './VehicleConfig.js';
 import {worldAppearance} from './WorldEnvironmentConfig.js';
 import {storybookBackgroundConfig} from './StorybookBackgroundConfig.js';
 import {audioConfig,audioDefinitions} from './AudioConfig.js';
-const config={audiTuning,...vehicleDefaults,worldAppearance,storybookBackgroundConfig,audioConfig};
+const config={rallyCarTuning,...vehicleDefaults,worldAppearance,storybookBackgroundConfig,audioConfig};
 
 // VehicleConfig.js owns defaults. This module stores only explicit user overrides.
 export const tuningConfig=config;
@@ -166,13 +166,14 @@ for(const [key,label,type,description] of [
  ['skyTint','Sky color tint','color','Live: multiplies the painted background palette; white preserves the original artwork.'],
 ])tuningFields.push({id:'storybookBackgroundConfig.'+key,root:'storybookBackgroundConfig',key,label,type,description,group:'Storybook Background',scope:'storybook',mode:'both',vehicle:false});
 export function fieldPath(field,vehicle='dirty',mode='hybrid'){
- if(vehicle==='audi'){
-  if(field.root==='drive')return `audiTuning.${mode==='original'?'':'handling.'}${field.key}`;
-  if(field.root==='originalDriveConfig')return `audiTuning.${field.key}`;
-  if(field.root==='arcadeHandlingConfig')return `audiTuning.handling.${field.key}`;
-  if(field.root==='vehicleConfig')return `audiTuning.hill.${field.key}`;
-  if(field.root==='cannon')return `audiTuning.hill.boundaryCannon.${field.key}`;
-  if(field.root==='jumpVehicleConfig')return `audiTuning.${field.key}`;
+ if(vehicle==='audi')vehicle='rally-car'; // Legacy consumer compatibility.
+ if(vehicle==='rally-car'){
+  if(field.root==='drive')return `rallyCarTuning.${mode==='original'?'':'handling.'}${field.key}`;
+  if(field.root==='originalDriveConfig')return `rallyCarTuning.${field.key}`;
+  if(field.root==='arcadeHandlingConfig')return `rallyCarTuning.handling.${field.key}`;
+  if(field.root==='vehicleConfig')return `rallyCarTuning.hill.${field.key}`;
+  if(field.root==='cannon')return `rallyCarTuning.hill.boundaryCannon.${field.key}`;
+  if(field.root==='jumpVehicleConfig')return `rallyCarTuning.${field.key}`;
  }
  const name=vehicle==='dirty'?'backhoe':'garbageTruck';
  if(field.root==='drive')return `${mode==='original'?'originalDriveConfig':'arcadeHandlingConfig'}.${vehicle}.${field.key}`;
@@ -180,7 +181,7 @@ export function fieldPath(field,vehicle='dirty',mode='hybrid'){
  return `${field.root}${field.vehicle?'.'+(field.root==='vehicleConfig'?name:vehicle):''}.${field.key}`;
 }
 const allowed=new Map();
-for(const field of tuningFields)for(const vehicle of ['dirty','stinky','audi'])for(const mode of ['hybrid','original'])allowed.set(fieldPath(field,vehicle,mode),field);
+for(const field of tuningFields)for(const vehicle of ['dirty','stinky','rally-car'])for(const mode of ['hybrid','original'])allowed.set(fieldPath(field,vehicle,mode),field);
 export const tuningValue=path=>get(config,path);
 export const defaultTuningValue=path=>get(tuningDefaults,path);
 let overrides={};
@@ -203,7 +204,7 @@ export function loadTuning(storage=tuningStorage()){
  const before=new Map([...allowed.keys()].map(path=>[path,tuningValue(path)]));
  // Clear old overrides before accepting a replacement from another page/tab.
  for(const path of Object.keys(overrides))assign(path,defaultTuningValue(path));overrides={};
- try{const saved=JSON.parse(storage.getItem(tuningKey()));if(saved?.version===1)for(const [path,value] of Object.entries(saved.overrides??{})){
+ try{const saved=JSON.parse(storage.getItem(tuningKey()));if(saved?.version===1)for(const [path,value] of Object.entries(migrateTuningOverrides(saved.overrides??{}))){
   const field=allowed.get(path);if(!field)continue;
   if(field.type==='boolean'){if(typeof value!=='boolean')continue;assign(path,value);overrides[path]=value;continue;}
   if(field.type==='color'){if(typeof value!=='string'||!/^#[0-9a-f]{6}$/i.test(value))continue;assign(path,value);overrides[path]=value;continue;}
@@ -211,6 +212,16 @@ export function loadTuning(storage=tuningStorage()){
   const bounded=Math.max(field.hardMin??-Infinity,Math.min(field.hardMax??Infinity,value));assign(path,bounded);overrides[path]=bounded;
  }}catch{/* Unavailable or corrupt storage leaves file defaults intact. */}
  return [...allowed.keys()].filter(path=>before.get(path)!==tuningValue(path));
+}
+// Read legacy saved names without overwriting explicit new-name values. Persist
+// only canonical paths on the next edit; reading does not rewrite browser data.
+export function migrateTuningOverrides(saved){
+ const result={...saved};
+ for(const [path,value] of Object.entries(saved)){
+  const canonical=path.replace(/^audiTuning\./,'rallyCarTuning.').replace(/^audioConfig\.sounds\.audi-(electric|tires)\./,'audioConfig.sounds.rally-car-$1.');
+  if(canonical!==path){if(!Object.hasOwn(saved,canonical))result[canonical]=value;delete result[path];}
+ }
+ return result;
 }
 export function exportTuning(){return '// Exported current configuration. Review before replacing VehicleConfig.js.\n'+Object.entries(vehicleDefaults).map(([key,value])=>`export const ${key} = ${JSON.stringify(value,null,2)};`).join('\n\n')+'\n';}
 export function exportEnvironmentTuning(){return '// Global environment values. Review before replacing WorldEnvironmentConfig.js.\nexport const worldAppearance = '+JSON.stringify(worldAppearance,null,2)+';\n';}
@@ -224,4 +235,4 @@ if(typeof window!=='undefined'){
  window.addEventListener('pageshow',refresh);
 }
 
-export function exportAudiTuning(){return 'export const audiTuning = '+JSON.stringify(audiTuning,null,2)+';\nexport function audiConfig(){return {...audiTuning,accel:audiTuning.acceleration,max:audiTuning.topSpeed,reverse:audiTuning.reverseSpeed,landingBouncePercent:12*audiTuning.landingBounceScalePercent/100};}\n';}
+export function exportRallyCarTuning(){return 'export const rallyCarTuning = '+JSON.stringify(rallyCarTuning,null,2)+';\nexport function rallyCarConfig(){return {...rallyCarTuning,accel:rallyCarTuning.acceleration,max:rallyCarTuning.topSpeed,reverse:rallyCarTuning.reverseSpeed,landingBouncePercent:12*rallyCarTuning.landingBounceScalePercent/100};}\n';}

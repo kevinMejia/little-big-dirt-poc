@@ -1,4 +1,4 @@
-import {audiConfig} from './AudiConfig.js';
+import {rallyCarConfig} from './RallyCarConfig.js';
 import './TuningStore.js';
 import {vehicleConfig,originalDriveConfig,jumpConfig,jumpVehicleConfig} from './VehicleConfig.js';
 import {stinkyCollision} from './StinkyEquipment.js';
@@ -6,7 +6,7 @@ import {stinkyCollision} from './StinkyEquipment.js';
 // Shared main-game/lab configuration assembly. Numbers below describe the
 // existing collision envelope, not another set of handling parameters.
 export function playableVehicleConfig(index,collision){
- if(index===2)return audiConfig();
+ if(index===2)return rallyCarConfig();
  const drive=originalDriveConfig[index===0?'dirty':'stinky'];
  return {...drive,hill:vehicleConfig[index===0?'backhoe':'garbageTruck'],
   accel:drive.acceleration,max:drive.topSpeed,reverse:drive.reverseSpeed,

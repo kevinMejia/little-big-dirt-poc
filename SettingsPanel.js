@@ -1,6 +1,6 @@
 import {appendWordHuntSettings} from './WordHuntSettings.js';
 import {appendAudioSettings} from './AudioSettings.js';
-import {tuningFields,fieldPath,tuningValue,defaultTuningValue,setTuning,resetTuning,exportTuning,exportEnvironmentTuning,exportStorybookTuning,exportAudiTuning} from './TuningStore.js';
+import {tuningFields,fieldPath,tuningValue,defaultTuningValue,setTuning,resetTuning,exportTuning,exportEnvironmentTuning,exportStorybookTuning,exportRallyCarTuning} from './TuningStore.js';
 import {readGamePreferences,saveGamePreference,resetGamePreference,gamePreferenceStorage} from './GamePreferences.js?v=central-settings-3';
 import {settingsPlacement} from './SettingsPlacement.js';
 
@@ -17,7 +17,7 @@ function createSettingsPanel(){
  button,select,input{font:inherit;color:inherit}button,select{min-height:44px;border:1px solid #ccd6c5;border-radius:9px;background:white;padding:9px;touch-action:manipulation;cursor:pointer}button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid #b47b00;outline-offset:2px}
  select{width:100%;margin-top:8px}.context{font-size:12px;line-height:1.5;color:#63735c;margin:8px 0 0}main{padding:10px}details{border:1px solid #d7dfd0;border-radius:12px;margin-bottom:9px;background:white;overflow:hidden}summary{min-height:48px;padding:14px;cursor:pointer;font-weight:700;touch-action:manipulation}.section{padding:0 12px 12px}.field{padding:12px 0;border-top:1px solid #e6eadf}label{font-weight:650;display:block}p{font-size:12px;line-height:1.5;margin:5px 0;color:#63735c}.value{display:flex;align-items:center;gap:6px;margin:8px 0}.value input{width:100px;min-height:40px;border:1px solid #ccd6c5;border-radius:7px;padding:6px;background:#fbfcf7}input[type=range]{width:100%;height:36px;accent-color:#356754;touch-action:pan-y}.reset{margin-left:auto;font-size:11px;min-height:40px;padding:6px}footer{padding:2px 10px 16px;display:grid;gap:8px}.primary{background:#244b3e;color:white}#status{min-height:20px;margin:0 12px 12px;font-size:12px}.empty{padding:10px}.check{display:flex;align-items:center;gap:10px;min-height:48px}.check input{width:22px;height:22px}
  @media(max-height:500px){.context{display:none}main{padding-top:6px}}
- </style><dialog aria-labelledby="settings-title"><header><div class="top"><h2 id="settings-title">Settings</h2><button id="minimize" aria-label="Minimize settings" aria-expanded="true">Minimize</button><button id="close" aria-label="Close settings">Close</button></div><div class="vehicle"><label for="tuning-vehicle">Tune vehicle</label><select id="tuning-vehicle"><option value="dirty">Dirty · Backhoe</option><option value="stinky">Stinky · Garbage truck</option><option value="audi">Audi · RS Q e-tron</option></select></div></header><div id="body"><p class="context" id="context" style="padding:0 12px"></p><main></main><footer><button id="export" class="primary">Export VehicleConfig.js</button><button id="reset-all">Reset all tuning…</button><div id="confirm" hidden><p>Restore all vehicles and global tuning to the current file defaults?</p><button id="confirm-reset">Yes, reset all tuning</button> <button id="cancel-reset">Cancel</button></div></footer><p role="status" id="status"></p></div></dialog>`;
+ </style><dialog aria-labelledby="settings-title"><header><div class="top"><h2 id="settings-title">Settings</h2><button id="minimize" aria-label="Minimize settings" aria-expanded="true">Minimize</button><button id="close" aria-label="Close settings">Close</button></div><div class="vehicle"><label for="tuning-vehicle">Tune vehicle</label><select id="tuning-vehicle"><option value="dirty">Dirty · Backhoe</option><option value="stinky">Stinky · Garbage truck</option><option value="rally-car">Rally Car</option></select></div></header><div id="body"><p class="context" id="context" style="padding:0 12px"></p><main></main><footer><button id="export" class="primary">Export VehicleConfig.js</button><button id="reset-all">Reset all tuning…</button><div id="confirm" hidden><p>Restore all vehicles and global tuning to the current file defaults?</p><button id="confirm-reset">Yes, reset all tuning</button> <button id="cancel-reset">Cancel</button></div></footer><p role="status" id="status"></p></div></dialog>`;
  document.body.append(host);
  const $=selector=>root.querySelector(selector),dialog=$('dialog'),vehicle=$('#tuning-vehicle');
  const isPlay=()=>!!document.querySelector('#physicsMode');
@@ -29,7 +29,7 @@ function createSettingsPanel(){
   const expanded=new Set([...root.querySelectorAll('details[open]')].map(element=>element.dataset.group));
   const first=!root.querySelector('details');
   $('#context').textContent=`${mode()==='hybrid'?'Main-game hybrid':'Original controller'} tuning. ${isPlay()||isLab()?'Vehicle selection edits tuning; it does not switch or reset the car.':'Preview area: saved driving changes apply when you enter Play or Dirt Jump Lab.'} Shared values apply to all vehicles.`;
-  $('#export').textContent=vehicle.value==='audi'?'Export AudiConfig.js':'Export VehicleConfig.js';
+  $('#export').textContent=vehicle.value==='rally-car'?'Export RallyCarConfig.js':'Export VehicleConfig.js';
   const main=$('main');main.replaceChildren();
   for(const group of [...new Set(tuningFields.map(field=>field.group))]){
    if(group==='Audio')continue;
@@ -108,7 +108,7 @@ function createSettingsPanel(){
  $('#reset-all').onclick=()=>{$('#confirm').hidden=false;$('#confirm-reset').focus();};
  $('#cancel-reset').onclick=()=>{$('#confirm').hidden=true;};
  $('#confirm-reset').onclick=()=>{report(resetTuning());$('#confirm').hidden=true;render();};
- $('#export').onclick=()=>{downloadConfiguration(vehicle.value==='audi'?'AudiConfig.tuned.js':'VehicleConfig.tuned.js',vehicle.value==='audi'?exportAudiTuning():exportTuning());$('#status').textContent='Exported current vehicle values. Environment has its own export in the Environment section.';};
+ $('#export').onclick=()=>{downloadConfiguration(vehicle.value==='rally-car'?'RallyCarConfig.tuned.js':'VehicleConfig.tuned.js',vehicle.value==='rally-car'?exportRallyCarTuning():exportTuning());$('#status').textContent='Exported current vehicle values. Environment has its own export in the Environment section.';};
  function place(){
   if(!dialog.open)return;
   const css=getComputedStyle(host),viewport=window.visualViewport;

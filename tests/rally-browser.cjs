@@ -1,7 +1,7 @@
 const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
 (async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{
  const page=await browser.newPage({viewport:{width:1400,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error'&&!m.location().url.endsWith('/favicon.ico'))errors.push(m.text());});
- const started=Date.now();await page.goto('http://127.0.0.1:8000/?qa=rally');await page.waitForFunction(()=>window.rallyQA&&document.querySelector('#gameLoading').hidden&&!document.querySelector('#audiBtn').disabled,null,{timeout:120000});
+ const started=Date.now();await page.goto('http://127.0.0.1:8000/?qa=rally');await page.waitForFunction(()=>window.rallyQA&&document.querySelector('#gameLoading').hidden&&!document.querySelector('#rallyCarBtn').disabled,null,{timeout:120000});
  console.log('Startup ms',Date.now()-started);
  const runs=await page.evaluate(()=>{
   const runs=[];
