@@ -75,7 +75,6 @@ body.touch-enabled #mobile{display:flex}body.touch-enabled #help{display:none}
 body[data-lbd-driving-hud="true"] #hud{display:block!important}
 body[data-lbd-controls-guide="true"] #help{display:block!important;max-width:calc(100vw - 32px);white-space:normal;pointer-events:none}
 
-#turboStatus{position:fixed;top:max(80px,calc(env(safe-area-inset-top) + 80px));left:50%;transform:translateX(-50%);z-index:9;background:#ffe494;color:#243b32;padding:7px 14px;border-radius:18px;font:800 13px system-ui;pointer-events:none;box-shadow:0 2px 8px #23382a33}#turboStatus[hidden]{display:none}
 /* Shared vehicle menu overlays the canvas and retains the original control nodes. */
  #vehicleControls{position:fixed;z-index:35;top:max(12px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));pointer-events:none}
  #vehicleControlsToggle{display:grid;place-content:center;width:48px;height:48px;min-height:48px;padding:0;margin-left:auto;background:#203e35ed;color:#fff5d6;border:1px solid #ffffff60;border-radius:13px;box-shadow:0 3px 12px #14291e30;font:650 25px system-ui;touch-action:manipulation;pointer-events:auto}
@@ -113,8 +112,9 @@ to{transform:translate3d(-8px,-26px,0) rotate(-18deg) scale(.95,1.09)}
 
 </style>
 
-<script type="importmap">{"imports":{"./WorldEnvironmentConfig.js":"./WorldEnvironmentConfig.js?v=contact-motion-1","three":"https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/","./TuningStore.js":"./TuningStore.js?v=turbo-integration-hybrid-only-1","./SettingsPanel.js":"./SettingsPanel.js?v=turbo-integration-hybrid-only-1","./VehicleConfig.js":"./VehicleConfig.js?v=turbo-integration-1","./RapierWorldVehicle.js":"./RapierWorldVehicle.js?v=turbo-integration-1","./ArcadeGroundDrive.js":"./ArcadeGroundDrive.js?v=rally-road-support-1","./VisualPolish.js":"./VisualPolish.js?v=contact-motion-1","./TurboBoost.js":"./TurboBoost.js?v=turbo-integration-1","./TurboPickupSystem.js":"./TurboPickupSystem.js?v=turbo-integration-1","./DirtJumpSystem.js":"./DirtJumpSystem.js?v=turbo-integration-1","./WorldAppearance.js?v=expanded-1":"./WorldAppearance.js?v=world-polish-1","./GroundDebrisSystem.js?v=expanded-1":"./GroundDebrisSystem.js?v=turbo-integration-1","./RapierWorldVehicle.js?v=rapier-world-5":"./RapierWorldVehicle.js?v=turbo-integration-1","./GroundTextures.js":"./GroundTextures.js?v=world-polish-1","./StorybookBackgroundConfig.js":"./StorybookBackgroundConfig.js?v=world-polish-1"}}</script>
-<script type="module" src="./SharedNavigation.js?v=touch-ui-1"></script></head>
+<script type="importmap">{"imports":{"./WorldEnvironmentConfig.js":"./WorldEnvironmentConfig.js?v=contact-motion-1","three":"https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/","./TuningStore.js":"./TuningStore.js?v=turbo-integration-charge-2","./SettingsPanel.js":"./SettingsPanel.js?v=turbo-integration-charge-2","./VehicleConfig.js":"./VehicleConfig.js?v=turbo-charge-2","./RapierWorldVehicle.js":"./RapierWorldVehicle.js?v=turbo-charge-2","./ArcadeGroundDrive.js":"./ArcadeGroundDrive.js?v=turbo-charge-2","./DrivingInput.js":"./DrivingInput.js?v=turbo-charge-2","./VisualPolish.js":"./VisualPolish.js?v=contact-motion-1","./TurboBoost.js":"./TurboBoost.js?v=turbo-charge-2","./TurboPickupSystem.js":"./TurboPickupSystem.js?v=turbo-charge-2","./DirtJumpSystem.js":"./DirtJumpSystem.js?v=turbo-charge-2","./WorldAppearance.js?v=expanded-1":"./WorldAppearance.js?v=world-polish-1","./GroundDebrisSystem.js?v=expanded-1":"./GroundDebrisSystem.js?v=turbo-charge-2","./RapierWorldVehicle.js?v=rapier-world-5":"./RapierWorldVehicle.js?v=turbo-charge-2","./GroundTextures.js":"./GroundTextures.js?v=world-polish-1","./StorybookBackgroundConfig.js":"./StorybookBackgroundConfig.js?v=world-polish-1"}}</script>
+<script type="module" src="./SharedNavigation.js?v=touch-ui-1"></script><link rel="stylesheet" href="./TurboHud.css">
+</head>
 
 <body>
 <div id="gameLoading" role="status" aria-live="polite" aria-label="Loading Little Big Dirt">
@@ -188,6 +188,8 @@ import { addGroundTextures } from './GroundTextures.js?v=expanded-map-1';
 import { createPolishedLighting, ContactShading, polishTerrain, VehicleSurfaceEffects, EquipmentRattle } from './VisualPolish.js';
 import { DirtJumpSystem, playgroundFeatures } from './DirtJumpSystem.js';
 import {WordHuntSystem} from './WordHuntSystem.js';
+import {TurboHud} from './TurboHud.js';
+import {TurboEffects} from './TurboEffects.js';
 import {TurboPickupSystem} from './TurboPickupSystem.js';
 import { mainWorldRamps, rampClearance } from './MainWorldRamps.js';
 import {playableVehicleConfig,smoothDrivingSteering,hybridDrivingInput,hybridLandingFeedback} from './PlayableVehicleSetup.js';
@@ -321,7 +323,7 @@ let wordHunt=null;
 if(!handlingCourse)WordHuntSystem.load(scene,{halfSize:world,height:surfaceHeight,trees:sceneryLayout.trees,rocks:sceneryLayout.rocks,ramps:worldJumps.features,audio:{play:(...args)=>gameAudio.hunt(...args),dispose(){}}}).then(system=>wordHunt=system).catch(error=>console.warn('Word Hunt unavailable',error));
 addEventListener('pagehide',event=>{if(!event.persisted)wordHunt?.dispose();});
 let turboPickups=null;
-const turboReady=handlingCourse?Promise.resolve():TurboPickupSystem.load(scene,{onCollect:()=>{gameAudio.play('turbo-pickup');gameAudio.play('turbo-active',{intensity:.6});},renderer,halfSize:world,height:surfaceHeight,trees:sceneryLayout.trees,rocks:sceneryLayout.rocks,ramps:worldJumps.features}).then(system=>{turboPickups=system;}).catch(error=>{console.warn('Turbo pickups could not load',error);});
+const turboReady=handlingCourse?Promise.resolve():TurboPickupSystem.load(scene,{onCollect:()=>{gameAudio.play('turbo-pickup');},renderer,halfSize:world,height:surfaceHeight,trees:sceneryLayout.trees,rocks:sceneryLayout.rocks,ramps:worldJumps.features}).then(system=>{turboPickups=system;}).catch(error=>{console.warn('Turbo pickups could not load',error);});
 addEventListener('pagehide',event=>{if(!event.persisted)turboPickups?.dispose();});
 addEventListener('pagehide',event=>{if(!event.persisted)groundDetails.dispose();});
 
@@ -378,7 +380,7 @@ addEventListener('blur',releaseOrbit);addEventListener('resize',releaseOrbit);ad
 
 function choose(i){if(i===2&&!rallyCarTemplate)return;gameAudio.stopAll();audioBoost=0;audioAirborne=false;audioCannon=false;audioVehicle=null;turboPickups?.resetVehicle();wordHunt?.resetVehicle();if(rapierController)position.copy(vehicleRoot.position);surfaceEffects.reset();equipmentRattle.reset();bodyFeedback.reset();vehicleVisual.position.set(0,0,0);vehicleVisual.rotation.set(0,0,0);index=i;document.querySelector('#vehicleSelect').value=String(i); if(vehicle){if(vehicle.userData.controller)vehicle.userData.controller.dispose();else{vehicleVisual.remove(vehicle);vehicle.traverse(o=>{if(o.isMesh)o.geometry.dispose()})}}vehicle=configs[i].build();vehicleVisual.add(vehicle);if(i===1&&!vehicle.userData.controller){for(const x of [-.8,.8]){box(vehicle,.35,.22,.12,x,index===0?1.7:1.85,index===0?2.38:3.43,white);box(vehicle,.3,.18,.12,x,1.35,index===0?-2.4:-3.13,red)}box(vehicle,.16,.85,.16,.7,3.7,-.5,metal);}document.querySelector('#vehicleName').textContent=configs[i].name;document.querySelector('#backhoeBtn').classList.toggle('active',i===0);document.querySelector('#garbageBtn').classList.toggle('active',i===1);document.querySelector('#rallyCarBtn').classList.toggle('active',i===2);speed=0;if(rapierController)rapierController.setVehicle(vehicle,configs[index],index,position,heading);}
 
-function reset(){gameAudio.stopAll();audioBoost=0;audioAirborne=false;audioCannon=false;audioVehicle=null;turboPickups?.resetVehicle();wordHunt?.resetVehicle();surfaceEffects.reset();equipmentRattle.reset();flight=null;bodyFeedback.reset();releaseOrbit();cameraOrbit.yaw=cameraOrbit.pitch=0;position.set(handlingCourse?-145:0,surfaceHeight(handlingCourse?-145:0,handlingCourse?-170:0),handlingCourse?-170:0);heading=0;speed=0;steer=0;if(rapierController)rapierController.resetAt(position,heading);}
+function reset(){gameAudio.stopAll();audioBoost=0;audioAirborne=false;audioCannon=false;audioVehicle=null;turboPickups?.resetVehicle();wordHunt?.resetVehicle();surfaceEffects.reset();equipmentRattle.reset();flight=null;bodyFeedback.reset();releaseOrbit();cameraOrbit.yaw=cameraOrbit.pitch=0;position.set(handlingCourse?-145:0,surfaceHeight(handlingCourse?-145:0,handlingCourse?-170:0),handlingCourse?-170:0);heading=0;speed=0;steer=0;if(rapierController){rapierController.turbo.reset();rapierController.resetAt(position,heading);}}
 
 choose(0);reset();
 
@@ -474,7 +476,8 @@ function honk(){gameAudio.horn();}
 
 document.querySelector('#gameLoading').dataset.phase='turbo-assets';
 await turboReady;
-const turboStatus=document.createElement('div');turboStatus.id='turboStatus';turboStatus.hidden=true;turboStatus.setAttribute('aria-live','off');document.body.append(turboStatus);
+const turboHud=new TurboHud(),turboEffects=new TurboEffects(vehicleRoot);
+addEventListener('pagehide',e=>{if(!e.persisted)turboEffects.dispose();});
 // Safari can cache this live page on navigation; preserve its audio manager for return.
 addEventListener('pagehide',event=>{if(event.persisted)gameAudio.stopAll(true);else gameAudio.dispose();});
 const clock=new THREE.Clock(),camTarget=new THREE.Vector3(),targetPos=new THREE.Vector3(),up=new THREE.Vector3(0,1,0);
@@ -487,6 +490,7 @@ for(const tree of treeCollisions.trees){const previous=treeAudioStates.get(tree)
 const cfg=configs[index];treeCollisions.setVehicles([{position,heading,bounds:cfg.collision,airborne:!!flight}]);treeCollisions.update(dt);rockInteractions.setVehicles([{position,heading,bounds:cfg.collision,airborne:!!flight}]);rockInteractions.update(dt);const pad=navigator.getGamepads?.()[0];
 
 const drivingInput=controls.read(speed,pad);
+rapierController.turbo.request(controls.turboInput.held&&drivingInput.accelerate&&!garage.open);
 const forward=drivingInput.accelerate,back=drivingInput.reverse,emergencyBrake=drivingInput.emergencyBrake;
 steer=smoothDrivingSteering(steer,drivingInput,cfg,dt);
 
@@ -504,9 +508,10 @@ let slope=0;
 
 turboPickups?.update(dt,position,rapierController);
 const boostRemaining=rapierController?.turbo.remaining??0;
-turboStatus.hidden=boostRemaining<=0;
-if(!turboStatus.hidden)turboStatus.textContent=`⚡ TURBO ${boostRemaining.toFixed(1)}s`;
+turboHud.update(rapierController.turbo);
+turboEffects.update(dt,rapierController.turbo.active,configs[index].collision.rear);
 if(!audioAirborne&&flight&&!audioCannon)gameAudio.play('ramp-takeoff',{cooldown:.3});
+if(audioBoost<=0&&boostRemaining>0)gameAudio.play('turbo-active',{intensity:.6});
 if(audioBoost>0&&boostRemaining<=0)gameAudio.play('turbo-expire',{cooldown:.3});
 audioBoost=boostRemaining;audioAirborne=!!flight;
 audioCannon=!!rapierController?.cannonFlight;

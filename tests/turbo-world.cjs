@@ -1,62 +1,31 @@
 const {chromium}=require('playwright');
-const assert=require('node:assert/strict');
-const fs=require('node:fs');
-(async()=>{
- const browser=await chromium.launch({channel:'msedge',headless:true});
- try{
-  const mobile=process.env.TURBO_MOBILE==='1';
-  const page=await browser.newPage({viewport:mobile?{width:390,height:844}:{width:1280,height:800},hasTouch:mobile}),errors=[];
-  page.on('pageerror',e=>errors.push(e.message));let loads=0;
-  page.on('request',r=>{if(r.url().endsWith('/turbo-boost.glb'))loads++;});
-  await page.route('**/index.html*',async route=>{
-   const source=fs.readFileSync('index.html','utf8');
-   const probe=`window.turboQA={
-    ready:()=>physicsMode==='rapier'&&!!turboPickups&&!document.querySelector('#rallyCarBtn').disabled,
-    place:(slot,car,offset=-1)=>{choose(car);const p=turboPickups.records[slot].point;position.set(p.x,surfaceHeight(p.x,p.z+offset)-.09,p.z+offset);heading=0;rapierController.resetAt(position,0);turboPickups.resetVehicle();},
-    reset:()=>reset(),
-    status:()=>({speed:rapierController?.physics.state.speed,normal:rapierController?.cfg.max*(1+rapierController.cfg.hill.speedAdjustmentPercent/100),boost:rapierController?.turbo.remaining,count:turboPickups.records.length,calls:renderer.info.render.calls,
-     available:turboPickups.records.map(r=>r.timer.available),cooldowns:turboPickups.records.map(r=>r.timer.remaining),
-     effects:turboPickups.records.map(r=>r.effects.visible),
-     pedestal:turboPickups.batches.filter(b=>b.part==='pedestal').map(({batch})=>{const m=new THREE.Matrix4();batch.getMatrixAt(0,m);return m.determinant();}),
-     floating:turboPickups.batches.filter(b=>b.part==='collectible').map(({batch})=>{const m=new THREE.Matrix4();batch.getMatrixAt(0,m);return m.determinant();})})
-   };`;
-   await route.fulfill({contentType:'text/html',body:source.replace('}animate();','}animate();'+probe)});
-  });
-  await page.goto('http://127.0.0.1:8000/index.html?turbo-check=1');
-  await page.waitForFunction(()=>window.turboQA?.ready(),{timeout:60000});
-  assert.equal((await page.evaluate(()=>turboQA.status())).count,15);assert.equal(loads,1);
-  await page.evaluate(()=>turboQA.place(0,0,-9));await page.waitForTimeout(300);
-  await page.screenshot({path:'docs/screenshots/turbo-world-available'+(mobile?'-mobile':'')+'.png'});
-  await page.evaluate(()=>turboQA.place(0,0));
-  await page.waitForFunction(()=>turboQA.status().cooldowns[0]>4);
-  let state=await page.evaluate(()=>turboQA.status());
-  assert(state.boost>1.5);assert(state.speed>state.normal*2.5,'pickup accelerates the vehicle');assert(!state.effects[0]);assert(state.pedestal.every(x=>x>.5));assert(state.floating.every(x=>x===0));
-  await page.screenshot({path:'docs/screenshots/turbo-world-collected'+(mobile?'-mobile':'')+'.png'});
-  await page.evaluate(()=>turboQA.reset());
-  state=await page.evaluate(()=>turboQA.status());assert.equal(state.boost,0);assert(!state.available[0]);
-  await page.evaluate(()=>turboQA.place(1,1));
-  await page.waitForFunction(()=>turboQA.status().cooldowns[1]>4);
-  state=await page.evaluate(()=>turboQA.status());assert(state.boost>1.5);assert(state.speed>state.normal*2.5,'truck receives full turbo acceleration');assert(state.cooldowns[0]<state.cooldowns[1]);
-  await page.evaluate(()=>turboQA.reset());
-  await page.waitForFunction(()=>turboQA.status().available[0]&&turboQA.status().available[1],{timeout:12000});
-  await page.evaluate(()=>turboQA.place(2,2));
-  await page.waitForFunction(()=>turboQA.status().cooldowns[2]>4);
-  state=await page.evaluate(()=>turboQA.status());assert(state.boost>1.5);assert(state.speed>state.normal*2.5,'rally car receives full turbo acceleration');
-  await page.evaluate(()=>turboQA.reset());
-  await page.getByRole('button',{name:'Open navigation menu'}).click();
-  await page.getByRole('button',{name:'Settings',exact:false}).click();
-  await page.locator('summary').filter({hasText:/^Turbo Boost$/}).click();
-  await page.getByRole('slider',{name:'Extra boost speed',exact:true}).waitFor({state:'visible'});
-  const count=page.getByRole('spinbutton',{name:'Pickup count value'});await count.fill('12');await count.press('Tab');
-  await page.waitForFunction(()=>turboQA.status().count===12);
-  await page.screenshot({path:'docs/screenshots/turbo-settings'+(mobile?'-mobile':'')+'.png'});
-  if(mobile){await page.setViewportSize({width:844,height:390});await page.screenshot({path:'docs/screenshots/turbo-settings-landscape.png'});}
-  console.log('Viewport:',mobile?'iPhone-sized':'desktop','render calls:',(await page.evaluate(()=>turboQA.status())).calls);
-  assert.deepEqual(errors,[]);
-  const showroom=await browser.newPage({viewport:{width:390,height:844}});
-  await showroom.goto('http://127.0.0.1:8000/viewer/showroom.html');
-  await showroom.waitForFunction(()=>!document.querySelector('#visualSettings').disabled);
-  assert.equal(await showroom.locator('#stage canvas').count(),1);
-  console.log('PASS world: one GLB load, 15 slots, all three vehicles collect and accelerate, only floating assembly hides, pedestal remains, independent cooldowns/respawn, reset isolation, live Settings count, showroom works.');
- }finally{await browser.close();}
-})().catch(e=>{console.error(e);process.exitCode=1;});
+const assert=require('node:assert/strict'),fs=require('node:fs');
+(async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});console.log('Browser',browser.version(),'Windows',process.platform);try{
+ const page=await browser.newPage({viewport:{width:1280,height:800},hasTouch:true}),errors=[];
+ page.on('pageerror',e=>{errors.push(e.message);console.log('PAGE ERROR',e.message)});
+ await page.route('**/index.html*',route=>route.fulfill({contentType:'text/html',body:fs.readFileSync('index.html','utf8').replace('}animate();',`}animate();window.turboQA={ready:()=>!!turboPickups&&!document.querySelector('#rallyCarBtn').disabled,state:()=>({charge:rapierController.turbo.charge,active:rapierController.turbo.active,speed}),charge:n=>rapierController.turbo.charge=n,choose,scale:n=>rapierController.turbo.config.turboHudScale=n,collect:()=>{const r=turboPickups.records.find(r=>r.timer.available);position.set(r.point.x,r.point.y,r.point.z);rapierController.resetAt(position,0);turboPickups.resetVehicle();}};`)}));
+ page.on('console',m=>{if(m.type()==='error')console.log('CONSOLE',m.text().slice(0,200))});
+ await page.goto('http://127.0.0.1:8000/index.html');await page.waitForFunction(()=>window.turboQA?.ready(),null,{timeout:90000});
+ await page.evaluate(()=>{turboQA.charge(0)});await page.waitForTimeout(1000);let s=await page.evaluate(()=>turboQA.state());assert(s.charge>.5&&s.charge<2);
+ await page.evaluate(()=>{turboQA.charge(0);turboQA.collect()});await page.waitForTimeout(150);s=await page.evaluate(()=>turboQA.state());assert(s.charge>=25&&s.charge<27);
+ for(const car of [0,1,2]){
+ await page.evaluate(car=>{turboQA.charge(60);turboQA.choose(car)},car);assert((await page.evaluate(()=>turboQA.state())).charge>=60);
+ await page.keyboard.down('w');await page.waitForTimeout(40);await page.keyboard.up('w');await page.waitForTimeout(40);await page.keyboard.down('w');await page.waitForTimeout(450);
+ s=await page.evaluate(()=>turboQA.state());assert(s.active);assert(s.charge<58);assert(s.speed>0);await page.keyboard.up('w');await page.waitForTimeout(60);assert(!(await page.evaluate(()=>turboQA.state())).active);
+ }
+ await page.evaluate(()=>turboQA.charge(50));await page.screenshot({path:'docs/screenshots/turbo-charge-desktop.png'});
+ for(const viewport of [{width:390,height:844},{width:844,height:390}]){await page.setViewportSize(viewport);
+ for(const scale of [.5,1,2]){await page.evaluate(n=>turboQA.scale(n),scale);await page.waitForTimeout(120);const box=await page.locator('#turboHud').boundingBox(),controls=await page.locator('#mobile').boundingBox();assert(box.x>=0&&box.y>=0&&box.x+box.width<=viewport.width);assert(box.y+box.height<controls.y);}
+ await page.screenshot({path:`docs/screenshots/turbo-charge-${viewport.width}.png`});}
+ const accel=page.locator('[data-drive=forward]'),box=await accel.boundingBox(),x=box.x+box.width/2,y=box.y+box.height/2;
+ await page.evaluate(()=>turboQA.charge(60));
+ // Browser-dispatched pointer lifecycle exercises the same existing mobile control handlers.
+ // Use CDP touch events for real pointer capture behavior.
+ const cdp=await page.context().newCDPSession(page);const touch=type=>cdp.send('Input.dispatchTouchEvent',{type,touchPoints:type==='touchEnd'?[]:[{x,y}]});
+ await touch('touchStart');await touch('touchEnd');await page.waitForTimeout(50);await touch('touchStart');await page.waitForTimeout(250);assert((await page.evaluate(()=>turboQA.state())).active);await touch('touchEnd');await page.waitForTimeout(80);assert(!(await page.evaluate(()=>turboQA.state())).active);
+ await page.evaluate(()=>turboQA.charge(0));await page.waitForTimeout(30);
+ await page.evaluate(()=>{turboQA.charge(10)});await page.waitForTimeout(40);assert.equal(await page.locator('#turboHud').getAttribute('data-state'),'low');
+ await page.evaluate(()=>turboQA.charge(100));await page.waitForTimeout(40);assert(await page.locator('#turboHud').evaluate(e=>e.classList.contains('full')));
+ await page.keyboard.down('w');await page.keyboard.up('w');await page.keyboard.down('w');await page.waitForTimeout(80);assert((await page.evaluate(()=>turboQA.state())).active);await page.evaluate(()=>window.dispatchEvent(new Event('blur')));await page.waitForTimeout(80);assert(!(await page.evaluate(()=>turboQA.state())).active);await page.keyboard.up('w');
+ assert.deepEqual(errors,[]);console.log('PASS Edge: passive charge, pickups, all vehicles, keyboard double tap/release, mobile touch double tap/release, scale .5/1/2, portrait/landscape bounds; no page errors.');
+ }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1});

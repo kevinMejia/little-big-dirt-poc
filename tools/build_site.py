@@ -10,7 +10,7 @@ def build():
     # Clean only our fixed generated directory; never follow a linked output path.
     if DIST.is_symlink() or DIST.resolve().parent!=ROOT.resolve():
         raise RuntimeError('Unsafe build output path')
-    files=[ROOT/'index.html',*sorted(ROOT.glob('*.js'))]
+    files=[ROOT/'index.html',*sorted(ROOT.glob('*.js')),*sorted(ROOT.glob('*.css'))]
     for folder in ['viewer','assets']:
         for p in sorted((ROOT/folder).rglob('*')):
             if p.is_symlink():raise RuntimeError('Symlinks are not deployment assets: '+str(p))

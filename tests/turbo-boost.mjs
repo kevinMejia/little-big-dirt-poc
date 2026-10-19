@@ -5,11 +5,22 @@ import {turboBoostConfig} from '../VehicleConfig.js';
 import {turboPickupLayout} from '../TurboPickupLayout.js';
 import {tuningFields,setTuning,resetTuning,loadTuning,tuningValue} from '../TuningStore.js';
 
-assert.deepEqual(turboBoostConfig,{enabled:true,speedBoostPercent:200,durationSeconds:2,respawnSeconds:5,pickupCount:15,pickupRadius:2.5});
-const boost=new TurboBoost({...turboBoostConfig});assert(boost.activate());assert.equal(boost.multiplier,3);
-boost.step(1.5);boost.activate();assert.equal(boost.remaining,2);assert.equal(boost.multiplier,3,'refresh without stacking');
-boost.step(2);assert.equal(boost.multiplier,1);boost.activate();boost.reset();assert.equal(boost.remaining,0);
-boost.config.enabled=false;assert(!boost.activate());
+assert.equal(turboBoostConfig.rechargePerSecond,1);
+const boost=new TurboBoost({...turboBoostConfig});assert.equal(boost.charge,0);
+boost.step(10);assert.equal(boost.charge,10);boost.collect();assert.equal(boost.charge,35);
+boost.request(true);boost.step(1,true);assert.equal(boost.charge,15);assert(boost.active);assert.equal(boost.multiplier,1.8);
+boost.request(false);assert(!boost.active);boost.step(1);assert.equal(boost.charge,16);
+boost.request(true);boost.step(1,false);assert(!boost.active);assert.equal(boost.charge,17);
+boost.step(2,true);assert.equal(boost.charge,0);assert(!boost.active);
+boost.collect();boost.stop();assert.equal(boost.charge,25,'vehicle changes stop boost without losing charge');
+for(let i=0;i<6;i++)boost.collect();assert.equal(boost.charge,100);
+boost.reset();assert.equal(boost.charge,0);
+boost.charge=1;boost.request(true);boost.step(1,true);assert(!boost.active);boost.request(true);boost.step(1,true);boost.request(true);boost.step(1,true);assert(!boost.active,'exhaustion requires a fresh gesture');boost.request(false);
+boost.config.enabled=false;assert(!boost.collect());
+const {TurboInput}=await import('../TurboInput.js');
+const input=new TurboInput();input.press('w',0);input.press('w',100);assert(!input.held,'repeat ignored');input.release('w');input.press('w',250);assert(input.held);input.release('w');assert(!input.held);input.clear();input.press('w',1000);input.release('w');input.press('w',1301);assert(!input.held);input.clear();assert(!input.held);
+// Equal elapsed time at different simulation rates produces equal charge.
+for(const hz of [30,60,120]){const t=new TurboBoost({...turboBoostConfig});for(let i=0;i<hz*10;i++)t.step(1/hz);assert(Math.abs(t.charge-10)<1e-9);t.request(true);for(let i=0;i<hz/5;i++)t.step(1/hz,true);assert(Math.abs(t.charge-6)<1e-9);}
 const a=new TurboPickupTimer(),b=new TurboPickupTimer();
 assert(a.collect(5));assert(!a.collect(5));a.step(2);assert(b.collect(5));a.step(3);b.step(3);
 assert(a.available);assert(!b.available);assert.equal(b.remaining,2);assert(a.collect(5));boost.reset();assert.equal(a.remaining,5,'vehicle reset independent of pickup timers');
@@ -31,4 +42,4 @@ const imports=JSON.parse(html.match(/<script type="importmap">(.*?)<\/script>/s)
 assert(imports['./VehicleConfig.js'].includes('?v='),'invalidate cached config when adding an export');
 assert.equal(imports['./RapierWorldVehicle.js?v=rapier-world-5'],imports['./RapierWorldVehicle.js'],'old explicit controller URL resolves to the same updated module');
 assert(imports['./TuningStore.js'].includes('turbo-integration'),'cached settings receive new fields');
-console.log('PASS Turbo: defaults, exact duration, refresh without stacking, independent respawns, reset isolation, swept collection/vertical reach, seeded placement and persisted Settings.');
+console.log('PASS Turbo: charge, drain, release, empty stop, throttle guard, double taps, frame independence, pickup timers, placement and saved settings.');

@@ -18,21 +18,8 @@ export class RapierWorldVehicle {
   this.arcade=new ArcadeGroundDrive(this);this.physics.step=(h,input)=>this.arcade.step(h,input);
   this.resetAt(position,heading);
  }
- resetAt(position,heading){if(this.arcade)this.arcade.slip=0;this.turbo.reset();this.physics.reset(position.x,position.z,position.y-.12,heading);this.physics.hasGrounded=true;this.hills.reset();this.cannonFlight=false;this.cannonArmed=true;this.cameraHeading=heading;}
- collectTurbo(){
-  if(!this.turbo.activate())return false;
-  const p=this.physics,t=(this.cfg.handling??arcadeHandlingConfig[this.index?'stinky':'dirty']);
-  const sign=Math.sign(p.state.speed)||1;
-  const normal=(sign<0?t.reverseSpeed:t.topSpeed)*getSpeedMultiplier(this.cfg.hill.speedAdjustmentPercent);
-  const v=p.body.linvel(),q=p.body.rotation(),f=rotateVector(q,{x:0,y:0,z:1});
-  const len=Math.hypot(v.x,v.z);
-  const target=Math.max(len,normal*this.turbo.multiplier);
-  const dx=p.state.airborne&&len>.1?v.x/len:Math.sin(Math.atan2(f.x,f.z))*sign;
-  const dz=p.state.airborne&&len>.1?v.z/len:Math.cos(Math.atan2(f.x,f.z))*sign;
-  p.body.setLinvel({x:dx*target,y:v.y,z:dz*target},true);
-  p.state.speed=target*sign;
-  return true;
- }
+ resetAt(position,heading){if(this.arcade)this.arcade.slip=0;this.turbo.stop();this.physics.reset(position.x,position.z,position.y-.12,heading);this.physics.hasGrounded=true;this.hills.reset();this.cannonFlight=false;this.cannonArmed=true;this.cameraHeading=heading;}
+ collectTurbo(){return this.turbo.collect();}
  rootPose(pose){const down=rotateVector(pose.rotation,{x:0,y:-this.physics.offset,z:0});return {x:pose.position.x+down.x,y:pose.position.y+down.y,z:pose.position.z+down.z};}
  afterStep(p,h){
   const current=this.rootPose({position:p.body.translation(),rotation:p.body.rotation()}),previous=this.rootPose(p.previousPose),q=p.body.rotation(),forward=rotateVector(q,{x:0,y:0,z:1}),heading=Math.atan2(forward.x,forward.z),velocity=p.body.linvel();

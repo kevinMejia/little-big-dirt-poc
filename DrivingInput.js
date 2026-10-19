@@ -1,3 +1,4 @@
+import {TurboInput} from './TurboInput.js';
 /** Independent pointer ownership keeps keyboard, gamepad and multitouch additive. */
 export class PointerInputState {
   constructor(){this.pointers=new Map();}
@@ -23,18 +24,20 @@ export function mergeDrivingInput(keys,touch,pad,speed){
 export class DrivingInput {
   constructor({root,toggle,keys,actionsRoot,actionsToggle}){
     this.root=root;this.toggle=toggle;this.keys=keys;this.actionsRoot=actionsRoot;this.actionsToggle=actionsToggle;
-    this.touch=new PointerInputState();this.state={};this.actions=new Map();this.actionHeld=new Set();this.listeners=[];this.captureOwners=new Map();
+    this.turboInput=new TurboInput();this.touch=new PointerInputState();this.state={};this.actions=new Map();this.actionHeld=new Set();this.listeners=[];this.captureOwners=new Map();
     this.enabled=navigator.maxTouchPoints>0||matchMedia('(any-pointer: coarse)').matches;
     const on=(target,event,handler,options)=>{target.addEventListener(event,handler,options);this.listeners.push(()=>target.removeEventListener(event,handler,options));};
     const hit=(event)=>document.elementFromPoint(event.clientX,event.clientY)?.closest('[data-drive]');
     const valid=(button)=>button&&this.root.contains(button);
+    on(window,'keydown',event=>{if(event.code==='KeyW'&&!event.repeat&&!event.target.closest?.('input,textarea,select,[contenteditable=true]'))this.turboInput.press('keyboard');});
+    on(window,'keyup',event=>{if(event.code==='KeyW')this.turboInput.release('keyboard');});
     on(root,'pointerdown',event=>{
       const button=event.target.closest('[data-drive]');if(!this.enabled||!valid(button)||(event.pointerType==='mouse'&&event.button!==0))return;
-      event.preventDefault();this.touch.set(event.pointerId,button.dataset.drive);
+      event.preventDefault();if(button.dataset.drive==='forward')this.turboInput.press('touch');this.touch.set(event.pointerId,button.dataset.drive);
       this.captureOwners.set(event.pointerId,button);button.setPointerCapture(event.pointerId);this.sync();
     });
-    on(window,'pointermove',event=>{if(!this.touch.pointers.has(event.pointerId))return;event.preventDefault();const button=hit(event);this.touch.set(event.pointerId,valid(button)?button.dataset.drive:null);this.sync();},{passive:false});
-    const release=event=>{if(!this.touch.pointers.has(event.pointerId))return;this.touch.release(event.pointerId);this.captureOwners.delete(event.pointerId);this.sync();};
+    on(window,'pointermove',event=>{if(!this.touch.pointers.has(event.pointerId))return;event.preventDefault();const button=hit(event);if(this.touch.pointers.get(event.pointerId)==='forward'&&(!valid(button)||button.dataset.drive!=='forward'))this.turboInput.release('touch');this.touch.set(event.pointerId,valid(button)?button.dataset.drive:null);this.sync();},{passive:false});
+    const release=event=>{if(!this.touch.pointers.has(event.pointerId))return;if(this.touch.pointers.get(event.pointerId)==='forward')this.turboInput.release('touch');this.touch.release(event.pointerId);this.captureOwners.delete(event.pointerId);this.sync();};
     for(const event of ['pointerup','pointercancel','lostpointercapture'])on(window,event,release);
     on(window,'blur',()=>{this.keys.clear();this.clear();});
     on(document,'visibilitychange',()=>{if(document.hidden){this.keys.clear();this.clear();}});
@@ -51,7 +54,7 @@ export class DrivingInput {
     for(const [id,action] of this.actions){const held=this.touch.held('action:'+id);if(held&&!this.actionHeld.has(id)){this.actionHeld.add(id);action.onPress?.();}else if(!held&&this.actionHeld.has(id)){this.actionHeld.delete(id);action.onRelease?.();}}
   }
   clear(){
-    this.touch.clear();
+    this.turboInput.clear();this.touch.clear();
     for(const [id,button] of this.captureOwners){try{if(button.hasPointerCapture(id))button.releasePointerCapture(id);}catch{}}
     this.captureOwners.clear();this.sync();
   }

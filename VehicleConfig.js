@@ -1458,48 +1458,77 @@ export const jumpVehicleConfig = {
 };
 
 // Main-world Turbo Boost. Shared by both vehicles; floating Settings saves overrides.
+// Turbo values apply live in Play; charge is session-only, never persisted.
 export const turboBoostConfig = {
-  // Controls: Enable pickup collection, rendering and boost timers.
-  // Modes: HYBRID main world; lab and Original driving are unchanged.
-  // Units / actual limits: boolean true/false.
-  // Increase/decrease: true enables pickups; false clears boosts and hides pickups.
-  // Examples: true = on; false = off.
-  // Suggested start: true; all Turbo Boost settings apply live.
+  // Controls: Enable pickups and turbo.
+  // Modes: Play, all three vehicles; live settings.
+  // Units / actual limits: boolean.
+  // Increase/decrease: true enables; false stops boost.
+  // Examples: true / false.
+  // Suggested start: true; session charge is never saved.
   enabled: true,
-  // Controls: Extra speed and acceleration relative to normal vehicle tuning.
-  // Modes: HYBRID main world; applies to Dirty and Stinky.
-  // Units / actual limits: percent 0..300; temporary multiplier = 1 + percent/100.
-  // Increase/decrease: higher gives a stronger immediate boost; lower is gentler.
-  // Examples: 0 = normal; 100 = 2x; 200 = 3x; 300 = 4x speed.
-  // Suggested start: 200; another pickup refreshes duration, never stacks multipliers.
-  speedBoostPercent: 200,
-  // Controls: Active boost duration, refreshed on each collection.
-  // Modes: HYBRID main world; reset/switch clears active boost only.
-  // Units / actual limits: seconds 0..20; 0 disables collection.
-  // Increase/decrease: higher lasts longer; lower returns to normal sooner.
-  // Examples: 1 = brief; 2 = default; 5 = extended.
-  // Suggested start: 2; expiration uses existing smooth speed-limit settling.
-  durationSeconds: 2,
-  // Controls: Independent cooldown before each floating collectible returns.
-  // Modes: Main-world pickups; pedestal stays visible throughout cooldown.
-  // Units / actual limits: seconds 0.1..60.
-  // Increase/decrease: higher waits longer; lower respawns sooner.
-  // Examples: 1 = frequent; 5 = default; 15 = sparse.
-  // Suggested start: 5; editing affects the next collection, not timers already running.
+  // Controls: Additional acceleration and speed.
+  // Modes: Play, all three vehicles; live settings.
+  // Units / actual limits: percent 0..300.
+  // Increase/decrease: higher gives stronger boost.
+  // Examples: 80 = 1.8x.
+  // Suggested start: 80; session charge is never saved.
+  speedBoostPercent: 80,
+  // Controls: Passive charge rate.
+  // Modes: Play, all three vehicles; live settings.
+  // Units / actual limits: percentage points/s 0..20.
+  // Increase/decrease: higher fills faster.
+  // Examples: 1 = 100 seconds.
+  // Suggested start: 1; session charge is never saved.
+  rechargePerSecond: 1,
+  // Controls: Boost consumption.
+  // Modes: Play, all three vehicles; live settings.
+  // Units / actual limits: percentage points/s 1..100.
+  // Increase/decrease: higher drains faster.
+  // Examples: 20 = 5 seconds.
+  // Suggested start: 20; session charge is never saved.
+  drainPerSecond: 20,
+  // Controls: Charge per pickup.
+  // Modes: Play, all three vehicles; live settings.
+  // Units / actual limits: percentage points 1..100.
+  // Increase/decrease: higher grants more charge.
+  // Examples: 25 = quarter tank.
+  // Suggested start: 25; session charge is never saved.
+  pickupCharge: 25,
+  // Controls: Separate acceleration press window.
+  // Modes: Play, all three vehicles; live settings.
+  // Units / actual limits: milliseconds 100..600.
+  // Increase/decrease: higher allows slower taps.
+  // Examples: 300 = .3 seconds.
+  // Suggested start: 300; session charge is never saved.
+  doubleTapWindowMs: 300,
+  // Controls: Scale ALL turbo widget artwork and reserved dimensions.
+  // Modes: Play, all three vehicles; live settings.
+  // Units / actual limits: multiplier .5..2; viewport clamped.
+  // Increase/decrease: higher makes the entire HUD larger.
+  // Examples: 0.5 = 50%; 1 = default; 2 = 200%.
+  // Suggested start: 1.0; session charge is never saved.
+  turboHudScale: 1.0,
+  // Controls: Pickup cooldown.
+  // Modes: Play, all three vehicles; live settings.
+  // Units / actual limits: seconds .1..60.
+  // Increase/decrease: higher waits longer.
+  // Examples: 5 = five seconds.
+  // Suggested start: 5; session charge is never saved.
   respawnSeconds: 5,
-  // Controls: Desired seeded pickup count, with clear terrain placement filters.
-  // Modes: Main world; count changes rebuild pickup slots, not terrain or ramps.
-  // Units / actual limits: integer 0..30; fractional settings round to nearest integer.
-  // Increase/decrease: higher adds pickups; lower removes slots from the end.
-  // Examples: 0 = none; 15 = default; 30 = maximum mobile budget.
-  // Suggested start: 15; retained slots keep their respawn timers when count changes.
+  // Controls: Seeded pickup count.
+  // Modes: Play, all three vehicles; live settings.
+  // Units / actual limits: integer 0..30.
+  // Increase/decrease: higher places more pickups.
+  // Examples: 15 = default.
+  // Suggested start: 15; session charge is never saved.
   pickupCount: 15,
-  // Controls: Swept horizontal collection distance from the vehicle origin.
-  // Modes: HYBRID main world; vertical reach is limited to 3.5 m above ground.
-  // Units / actual limits: world units 0.5..6.
-  // Increase/decrease: higher is easier to collect; lower requires closer contact.
-  // Examples: 1 = precise; 2.5 = default; 5 = forgiving.
-  // Suggested start: 2.5; no pickup colliders or rigid bodies are created.
+  // Controls: Swept collection radius.
+  // Modes: Play, all three vehicles; live settings.
+  // Units / actual limits: world units .5..6.
+  // Increase/decrease: higher collects farther away.
+  // Examples: 2.5 = default.
+  // Suggested start: 2.5; session charge is never saved.
   pickupRadius: 2.5,
 };
 // Word Hunt defaults. Runtime Settings overrides are persisted separately from vehicle tuning.

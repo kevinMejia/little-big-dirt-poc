@@ -23,7 +23,11 @@ function add(group,root,keys,{vehicle=false,mode='both',scope='driving'}={}){
 }
 add('Turbo Boost','turboBoostConfig',[
  ['speedBoostPercent','Extra boost speed',0,300,10,'%','Live in hybrid Play: 0 = normal; 100 = 2x; 200 = 3x; 300 = 4x. Higher is faster; normal handling values stay unchanged.'],
- ['durationSeconds','Boost duration',0,20,.1,'s','Higher lasts longer; 0 disables collection. A second pickup refreshes the timer without stacking. Applies on the next collection.'],
+ ['rechargePerSecond','Passive recharge',0,20,.1,'%/s','Charge gained while not boosting.'],
+ ['drainPerSecond','Boost drain',1,100,1,'%/s','Charge consumed while accelerating with turbo.'],
+ ['pickupCharge','Pickup charge',1,100,1,'%','Charge gained per pickup, capped at 100.'],
+ ['doubleTapWindowMs','Double tap window',100,600,10,'ms','Two separate acceleration presses within this window.'],
+ ['turboHudScale','Turbo HUD scale',.5,2,.05,'x','Scales the entire circular widget, including its glow.'],
  ['respawnSeconds','Pickup respawn time',.1,60,.1,'s','Higher waits longer before the floating asset returns. Pedestals remain visible. Existing cooldowns keep their current deadline.'],
  ['pickupCount','Pickup count',0,30,1,'','Live seeded placement: rounded to an integer. Higher adds pickups; lower removes the last slots. Retained slots preserve cooldowns.'],
  ['pickupRadius','Collection radius',.5,6,.1,'m','Higher is easier to collect. Swept checks prevent missed pickups at high speed; no rigid bodies or invisible colliders.'],

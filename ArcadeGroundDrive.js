@@ -10,6 +10,7 @@ export class ArcadeGroundDrive {
  step(h,input={}){
   const a=this.adapter,p=a.physics,cfg=a.cfg,t=cfg.handling??arcadeHandlingConfig[a.index?'stinky':'dirty'];
   const throttle=input.throttle??0,steer=input.steering??0,shared=cfg.rally?cfg:originalDriveConfig[a.index?'stinky':'dirty'];
+  a.turbo?.step(h,throttle>0&&!input.brake);
   p.copyPose();
   let root=a.rootPose({position:p.body.translation(),rotation:p.body.rotation()});
   const f=rotateVector(p.body.rotation(),{x:0,y:0,z:1});
@@ -91,7 +92,7 @@ export class ArcadeGroundDrive {
   const v=p.body.linvel(),forward=rotateVector(p.body.rotation(),{x:0,y:0,z:1}),len=Math.hypot(forward.x,forward.z)||1;
   p.state.speed=(v.x*forward.x+v.z*forward.z)/len;p.state.verticalSpeed=v.y;
   if(p.events.length>32)p.events.splice(0,p.events.length-32);
-  a.turbo?.step(h);
+
   p.capturePose(p.currentPose);for(let i=0;i<p.wheels.length;i++)p.currentPose.suspension[i]=p.rest-p.state.compression[i];
  }
 }

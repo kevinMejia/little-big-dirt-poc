@@ -1,0 +1,14 @@
+/* All artwork, dirt and glow live inside ONE scaled SVG; scale configured in VehicleConfig.js. */
+#turboHud{position:fixed;z-index:9;pointer-events:none;width:var(--turbo-hud-size,120px);height:var(--turbo-hud-size,120px);right:max(16px,env(safe-area-inset-right));bottom:max(var(--turbo-hud-bottom,16px),env(safe-area-inset-bottom));color:#16baff;font-size:calc(var(--turbo-hud-size,120px) / 12)}
+#turboHud svg{width:100%;height:100%;overflow:hidden}
+#turboHud[data-state=empty]{filter:grayscale(1);opacity:.5}
+#turboHud[data-state=low]{color:#ff9233}
+#turboHud .turbo-flame{transform-origin:60px 75px}
+#turboHud.boosting .turbo-flame{animation:turboBurn .25s ease-in-out infinite alternate;filter:drop-shadow(0 0 4px #16cfff)}
+#turboHud.full .turbo-ring{animation:turboFull .65s ease-out 1}
+@keyframes turboBurn{to{transform:scale(.94,1.06);opacity:.8}}
+@keyframes turboFull{50%{stroke-width:10;stroke:#c5ffff}}
+@media(prefers-reduced-motion:reduce){#turboHud *{animation:none!important}}
+
+/* Keep the dirt earthy: blue illumination belongs to the energy ring only. */
+#turboHud .turbo-ring{filter:drop-shadow(0 0 2px #00aaff88)}
