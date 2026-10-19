@@ -113,7 +113,7 @@ to{transform:translate3d(-8px,-26px,0) rotate(-18deg) scale(.95,1.09)}
 
 </style>
 
-<script type="importmap">{"imports":{"./WorldEnvironmentConfig.js":"./WorldEnvironmentConfig.js?v=expanded-map-1","three":"https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/","./TuningStore.js":"./TuningStore.js?v=turbo-integration-1","./SettingsPanel.js":"./SettingsPanel.js?v=turbo-integration-1","./VehicleConfig.js":"./VehicleConfig.js?v=turbo-integration-1","./RapierWorldVehicle.js":"./RapierWorldVehicle.js?v=turbo-integration-1","./ArcadeGroundDrive.js":"./ArcadeGroundDrive.js?v=turbo-integration-1","./VisualPolish.js":"./VisualPolish.js?v=turbo-integration-1","./TurboBoost.js":"./TurboBoost.js?v=turbo-integration-1","./TurboPickupSystem.js":"./TurboPickupSystem.js?v=turbo-integration-1","./DirtJumpSystem.js":"./DirtJumpSystem.js?v=turbo-integration-1","./WorldAppearance.js?v=expanded-1":"./WorldAppearance.js?v=turbo-integration-1","./GroundDebrisSystem.js?v=expanded-1":"./GroundDebrisSystem.js?v=turbo-integration-1","./RapierWorldVehicle.js?v=rapier-world-5":"./RapierWorldVehicle.js?v=turbo-integration-1"}}</script>
+<script type="importmap">{"imports":{"./WorldEnvironmentConfig.js":"./WorldEnvironmentConfig.js?v=expanded-map-1","three":"https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/","./TuningStore.js":"./TuningStore.js?v=turbo-integration-1","./SettingsPanel.js":"./SettingsPanel.js?v=turbo-integration-1","./VehicleConfig.js":"./VehicleConfig.js?v=turbo-integration-1","./RapierWorldVehicle.js":"./RapierWorldVehicle.js?v=turbo-integration-1","./ArcadeGroundDrive.js":"./ArcadeGroundDrive.js?v=rally-road-support-1","./VisualPolish.js":"./VisualPolish.js?v=turbo-integration-1","./TurboBoost.js":"./TurboBoost.js?v=turbo-integration-1","./TurboPickupSystem.js":"./TurboPickupSystem.js?v=turbo-integration-1","./DirtJumpSystem.js":"./DirtJumpSystem.js?v=turbo-integration-1","./WorldAppearance.js?v=expanded-1":"./WorldAppearance.js?v=turbo-integration-1","./GroundDebrisSystem.js?v=expanded-1":"./GroundDebrisSystem.js?v=turbo-integration-1","./RapierWorldVehicle.js?v=rapier-world-5":"./RapierWorldVehicle.js?v=turbo-integration-1"}}</script>
 <script type="module" src="./SharedNavigation.js?v=touch-ui-1"></script></head>
 
 <body>
@@ -158,7 +158,7 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.m
 
 import { BackhoeLoader } from './BackhoeLoader.js';
 import {rallyTrackConfig,rallyAccessConfig} from './RallyTrackConfig.js';
-import {RallyTrack,RallyLandscape,extendRallySurface} from './RallyTrack.js';
+import {RallyTrack,RallyLandscape,extendRallySurface} from './RallyTrack.js?v=rally-road-support-1';
 import {createRallyVisuals} from './RallyVisuals.js';
 import {rallySceneryLayout,createRallyScenery} from './RallyScenery.js';
 import {AudiVehicle} from './AudiVehicle.js';
@@ -562,6 +562,7 @@ if(flight){
 }else{
  const cannonBefore=rapierController.cannonFlight;
  const state=rapierController.update(dt,hybridDrivingInput(drivingInput,steer,rapierController.physics.state.airborne));
+ if(window.driveProbeStats){const d=window.driveProbeStats;d.air+=state.airborne?dt:0;d.min=Math.min(d.min,state.speed);d.max=Math.max(d.max,state.speed);d.events.push(...state.events);}
  position.set(state.position.x,state.position.y,state.position.z);heading=state.heading;speed=state.speed;slope=state.grade;flight=state.airborne?{kind:'rapier',vy:state.verticalSpeed}:null;
  if(state.cannon&&!cannonBefore)gameAudio.play('cannon-boom',{cooldown:.3});
  audioCannon=cannonBefore||state.cannon;
@@ -659,6 +660,14 @@ if(new URLSearchParams(location.search).get('qa')==='rally'&&rallyEnabled)window
  controller:()=>rapierController,
 };
 
+// BEGIN temporary uphill driving probe
+if(window.rallyQA&&new URLSearchParams(location.search).has('driveProbe')){
+ const probe=document.createElement('div');probe.style.cssText='position:fixed;z-index:99;top:80px;left:12px;background:#132f34ee;padding:10px;max-width:480px';
+ const output=document.createElement('pre'),button=document.createElement('button');button.textContent='Uphill test';
+ button.onclick=()=>{reset();window.rallyQA.place(.22);const start=rallyTrack.at(.22);camera.position.set(start.x-start.tx*20,start.y+8,start.z-start.tz*20);camera.lookAt(start.x,start.y+2.4,start.z);window.driveProbeStats={air:0,min:0,max:0,events:[]};button.blur();};probe.append(button,output);document.body.append(probe);
+ setInterval(()=>{const q=window.rallyQA.read(),p=rapierController?.physics;output.textContent=JSON.stringify({car:q.index,speed:+q.speed.toFixed(2),y:+q.position.y.toFixed(2),u:+q.near.u.toFixed(4),edge:+(q.near.distance-q.near.width/2).toFixed(2),air:q.airborne,support:worldSurface.isContinuousRoad?.(q.position.x,q.position.z),mode:physicsMode,stats:window.driveProbeStats},null,2);},150);
+}
+// END temporary uphill driving probe
 let diagnosticFrames=0,diagnosticStart=performance.now();
 function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);wordHunt?.update(dt,physicsMode==='rapier'?vehicleRoot.position:position,garage.open||document.hidden||physicsSelector.disabled);if(garage.open){gameAudio.stopAll();}if(!garage.open){update(dt);storybookBackground?.update(dt);groundTextures.update();groundDetails.update(camera.position);renderer.render(scene,camera);if(!physicsSelector.disabled){document.querySelector('#gameLoading').hidden=true;document.querySelector('#gameLoading').dataset.phase='ready';}diagnosticFrames++;const now=performance.now();if(now-diagnosticStart>1000){if(document.body.classList.contains('show-debug'))document.querySelector('#renderTuning').textContent=Math.round(diagnosticFrames*1000/(now-diagnosticStart))+' FPS · '+renderer.info.render.calls+' draws · '+Math.round(renderer.info.render.triangles/1000)+'k triangles';diagnosticFrames=0;diagnosticStart=now;}}}animate();
 

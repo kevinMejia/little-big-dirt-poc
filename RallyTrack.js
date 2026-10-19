@@ -129,5 +129,5 @@ export function extendRallySurface(original,landscape,roads,config){
  carveRoadClearance(vertices,indices,roads);
  const terrainVertices=new Float32Array(vertices),terrainIndices=new Uint32Array(indices);
  for(const road of roads){const offset=vertices.length/3;for(const n of road.vertices)vertices.push(n);for(const i of road.indices)indices.push(i+offset);}
- return {vertices:new Float32Array(vertices),indices:new Uint32Array(indices),terrainVertices,terrainIndices,halfSize:half,heightAt:(x,z)=>landscape.height(x,z),bounds:{minX:-half,maxX:half+config.extension,minZ:-half,maxZ:half}};
+ return {vertices:new Float32Array(vertices),indices:new Uint32Array(indices),terrainVertices,terrainIndices,halfSize:half,heightAt:(x,z)=>landscape.height(x,z),isContinuousRoad:(x,z)=>{const n=landscape.nearest(x,z);return !!n&&n.distance<=n.width/2+(config.shoulder??5)&&!['jump','ramp'].includes(n.feature);},bounds:{minX:-half,maxX:half+config.extension,minZ:-half,maxZ:half}};
 }

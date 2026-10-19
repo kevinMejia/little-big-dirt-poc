@@ -36,7 +36,10 @@ export class ArcadeGroundDrive {
    // ramp lips release the body; ordinary terrain curvature stays attached.
    const gravity=12*Math.max(.25,Math.min(2,jumpConfig.gravityScalePercent/100));
    const predicted=root.y+vy*h-.5*gravity*h*h;
-   const launch=jumpConfig.enabled&&vy>t.minimumLaunchSpeed&&predicted-ground>t.takeoffClearance;
+   // Sampled road/bank seams are continuous support, not authored jump lips.
+   // Check both ends so leaving a road or a real ramp still permits flight.
+   const roadSupport=a.surface.isContinuousRoad?.(root.x,root.z)&&a.surface.isContinuousRoad?.(root.x+dx,root.z+dz);
+   const launch=!roadSupport&&jumpConfig.enabled&&vy>t.minimumLaunchSpeed&&predicted-ground>t.takeoffClearance;
    root.x+=dx;root.z+=dz;
    if(launch){root.y=predicted;vy-=gravity*h;p.state.airborne=true;p.events.push({type:'takeoff',vx:dx/h,vy,vz:dz/h});}
    else{vy=(ground-root.y)/h;root.y=ground;}

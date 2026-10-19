@@ -44,4 +44,6 @@ Run Blender 4.2.3 LTS (or a compatible version) from the repository root:
 blender -b -t 4 --python tools/blender/build_audi_dakar.py
 ```
 
+For the portable copy used in this workspace, the executable is `C:/Users/kevin/.cache/little-big-dirt-tools/blender-4.2.3-windows-x64/blender.exe`.
+
 The script preserves the original GLB. A portable Blender copy was used from the external user cache; no application install was required. To roll back, change the URL in `AudiVehicle.load()` back to `./assets/audi_rs_q_e-tron.glb`. Rebuild the static site with `python tools/build_site.py` after changing either asset.
