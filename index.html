@@ -113,7 +113,7 @@ to{transform:translate3d(-8px,-26px,0) rotate(-18deg) scale(.95,1.09)}
 
 </style>
 
-<script type="importmap">{"imports":{"./WorldEnvironmentConfig.js":"./WorldEnvironmentConfig.js?v=expanded-map-1","three":"https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/","./TuningStore.js":"./TuningStore.js?v=turbo-integration-hybrid-only-1","./SettingsPanel.js":"./SettingsPanel.js?v=turbo-integration-hybrid-only-1","./VehicleConfig.js":"./VehicleConfig.js?v=turbo-integration-1","./RapierWorldVehicle.js":"./RapierWorldVehicle.js?v=turbo-integration-1","./ArcadeGroundDrive.js":"./ArcadeGroundDrive.js?v=rally-road-support-1","./VisualPolish.js":"./VisualPolish.js?v=turbo-integration-1","./TurboBoost.js":"./TurboBoost.js?v=turbo-integration-1","./TurboPickupSystem.js":"./TurboPickupSystem.js?v=turbo-integration-1","./DirtJumpSystem.js":"./DirtJumpSystem.js?v=turbo-integration-1","./WorldAppearance.js?v=expanded-1":"./WorldAppearance.js?v=turbo-integration-1","./GroundDebrisSystem.js?v=expanded-1":"./GroundDebrisSystem.js?v=turbo-integration-1","./RapierWorldVehicle.js?v=rapier-world-5":"./RapierWorldVehicle.js?v=turbo-integration-1"}}</script>
+<script type="importmap">{"imports":{"./WorldEnvironmentConfig.js":"./WorldEnvironmentConfig.js?v=world-polish-1","three":"https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/","./TuningStore.js":"./TuningStore.js?v=turbo-integration-hybrid-only-1","./SettingsPanel.js":"./SettingsPanel.js?v=turbo-integration-hybrid-only-1","./VehicleConfig.js":"./VehicleConfig.js?v=turbo-integration-1","./RapierWorldVehicle.js":"./RapierWorldVehicle.js?v=turbo-integration-1","./ArcadeGroundDrive.js":"./ArcadeGroundDrive.js?v=rally-road-support-1","./VisualPolish.js":"./VisualPolish.js?v=world-polish-1","./TurboBoost.js":"./TurboBoost.js?v=turbo-integration-1","./TurboPickupSystem.js":"./TurboPickupSystem.js?v=turbo-integration-1","./DirtJumpSystem.js":"./DirtJumpSystem.js?v=turbo-integration-1","./WorldAppearance.js?v=expanded-1":"./WorldAppearance.js?v=world-polish-1","./GroundDebrisSystem.js?v=expanded-1":"./GroundDebrisSystem.js?v=turbo-integration-1","./RapierWorldVehicle.js?v=rapier-world-5":"./RapierWorldVehicle.js?v=turbo-integration-1","./GroundTextures.js":"./GroundTextures.js?v=world-polish-1","./StorybookBackgroundConfig.js":"./StorybookBackgroundConfig.js?v=world-polish-1"}}</script>
 <script type="module" src="./SharedNavigation.js?v=touch-ui-1"></script></head>
 
 <body>
@@ -177,7 +177,7 @@ import {proceduralDebrisConfig} from './ProceduralDebrisConfig.js';
 import './TuningStore.js';
 import {mainWorldSettings} from './MainWorldSettings.js?v=expanded-1';
 import {isStorybookEnabled} from './StorybookPreviewMode.js?v=approved-1';
-import { worldAppearance, createWorldAtmosphere, createTerrainPainter, createSceneryLayout, createGroundDetails } from './WorldAppearance.js?v=expanded-1';
+import { worldAppearance, createWorldAtmosphere, createTerrainPainter, createSceneryLayout, createTerrainDressing, createGroundDetails } from './WorldAppearance.js?v=expanded-1';
 
 import { cameraSettings, groundDebrisConfig, jumpConfig } from './VehicleConfig.js';
 
@@ -288,6 +288,7 @@ function makeTree(x,z,scale=1){const g=new THREE.Group();g.position.set(x,surfac
 let seed=3184;function rand(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
 
 const sceneryLayout={trees:(handlingCourse?[]:originalLayout.trees).filter(t=>!rallyLandscape||!(rallyLandscape.nearest(t.x,t.z)?.distance<(rallyLandscape.nearest(t.x,t.z)?.width??0)/2+5)).filter(t=>!worldJumps.features.some(f=>rampClearance(f,t.x,t.z,t.scale*.35+3))),rocks:(handlingCourse?[]:originalLayout.rocks).filter(r=>!rallyLandscape||!(rallyLandscape.nearest(r.x,r.z)?.distance<(rallyLandscape.nearest(r.x,r.z)?.width??0)/2+5)).filter(r=>!worldJumps.features.some(f=>rampClearance(f,r.x,r.z,r.radius+4)))};
+terrainPainter.visualSurface=createTerrainDressing({trees:[...sceneryLayout.trees,...rallyPlacements.filter(p=>p.kind==='tree')],rocks:[...sceneryLayout.rocks,...rallyPlacements.filter(p=>p.kind==='rock').map(p=>({...p,radius:p.scale}))]},rallyLandscape?(x,z)=>rallyLandscape.nearest(x,z):null);
 polishTerrain(terrain,terrainPainter,sceneryLayout,world);
 const groundTextures=addGroundTextures(terrain,terrainPainter,world,renderer,undefined,worldSurface.bounds);
 addEventListener('pagehide',event=>{if(!event.persisted)groundTextures.dispose();});
@@ -308,7 +309,7 @@ if(!handlingCourse)try{
   blocked:(x,z,r)=>{const near=rallyLandscape?.nearest(x,z);return !!near&&near.distance<near.width/2+7+r||worldJumps.features.some(f=>rampClearance(f,x,z,r+3));}});
 }catch(error){console.warn('Decorative debris unavailable',error);}
 addEventListener('pagehide',event=>{if(!event.persisted)decorativeDebris?.dispose();});
-if(new URLSearchParams(location.search).has('debrisQA'))window.debrisQA={system:decorativeDebris,get contacts(){return debrisContacts;},get root(){return vehicleRoot;},terrain,scene,renderer,camera,config:proceduralDebrisConfig};
+if(new URLSearchParams(location.search).has('debrisQA'))window.debrisQA={system:decorativeDebris,layout:sceneryLayout,painter:terrainPainter,get contacts(){return debrisContacts;},get root(){return vehicleRoot;},terrain,scene,renderer,camera,config:proceduralDebrisConfig};
 const debrisContacts=new DebrisWheelContacts();
 const surfaceEffects=new VehicleSurfaceEffects(scene,surfaceHeight,terrainPainter);
 addEventListener('pagehide',event=>{if(!event.persisted)surfaceEffects.dispose();});

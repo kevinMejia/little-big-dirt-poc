@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {worldAppearance} from './WorldEnvironmentConfig.js';
+import {worldAppearance,worldPolish} from './WorldEnvironmentConfig.js';
 import {visualPolishConfig} from './VehicleConfig.js';
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
 const hash=(x,y)=>{const v=Math.sin(x*127.1+y*311.7+37.4)*43758.5453;return v-Math.floor(v);};
@@ -24,7 +24,11 @@ export function createGroundDetailTexture(size=512){
 }
 export function addGroundTextures(terrain,painter,halfSize,renderer,config=visualPolishConfig,bounds=null){
  const detail=createGroundDetailTexture(),size=Math.min(512,Math.max(256,Math.round(256*halfSize/220))),data=new Uint8Array(size*size*4);detail.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
- for(let y=0;y<size;y++)for(let x=0;x<size;x++){const f=painter.surface(bounds?bounds.minX+x/(size-1)*(bounds.maxX-bounds.minX):(x/(size-1)*2-1)*halfSize,bounds?bounds.minZ+y/(size-1)*(bounds.maxZ-bounds.minZ):(y/(size-1)*2-1)*halfSize),soil=clamp(Math.max(f.path,f.dirtMask)),rock=clamp(f.rockMask)*(1-soil),i=(y*size+x)*4;data[i]=Math.round(soil*255);data[i+1]=Math.round(rock*255);data[i+2]=0;data[i+3]=255;}
+ for(let y=0;y<size;y++)for(let x=0;x<size;x++){
+  const wx=bounds?bounds.minX+x/(size-1)*(bounds.maxX-bounds.minX):(x/(size-1)*2-1)*halfSize,wz=bounds?bounds.minZ+y/(size-1)*(bounds.maxZ-bounds.minZ):(y/(size-1)*2-1)*halfSize;
+  const f=painter.surface(wx,wz),dress=painter.visualSurface?.(wx,wz),soil=clamp(Math.max(f.path,f.dirtMask)),rock=clamp(f.rockMask)*(1-soil),i=(y*size+x)*4;
+  data[i]=Math.round(soil*255);data[i+1]=Math.round(rock*255);data[i+2]=Math.round(clamp(Math.max(dress?.bare??0,(dress?.shoulder??0)*.5,(dress?.gravel??0)*.7))*255);data[i+3]=Math.round(clamp(dress?.wear??0)*255);
+ }
  const mask=new THREE.DataTexture(data,size,size,THREE.RGBAFormat);mask.magFilter=mask.minFilter=THREE.LinearFilter;mask.needsUpdate=true;mask.name='Existing terrain surface blend';
  let disposed=false,paintedReady=false,surfaceReady=false;
  const painted=new THREE.TextureLoader().load(new URL('./assets/terrain/painted-grass.png',import.meta.url).href,()=>{if(disposed){painted.dispose();return;}paintedReady=true;},undefined,()=>console.warn('Painted grass unavailable; using original ground.'));
@@ -32,15 +36,16 @@ export function addGroundTextures(terrain,painter,halfSize,renderer,config=visua
  painted.magFilter=THREE.LinearFilter;painted.minFilter=THREE.LinearMipmapLinearFilter;painted.generateMipmaps=true;painted.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
  const atlas=new THREE.TextureLoader().load(new URL('./assets/terrain/painted-soil-stone-v1.png',import.meta.url).href,()=>{if(disposed){atlas.dispose();return;}surfaceReady=true;},undefined,()=>console.warn('Painted soil/stone unavailable; retaining original surfaces.'));
  atlas.colorSpace=THREE.SRGBColorSpace;atlas.magFilter=THREE.LinearFilter;atlas.minFilter=THREE.LinearMipmapLinearFilter;atlas.generateMipmaps=true;atlas.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
- const surfaceUniforms={surfaceAtlas:{value:atlas},surfaceReady:{value:0},dirtStrength:{value:0},rockStrength:{value:0},dirtScale:{value:8},rockScale:{value:4.5},edgeVariation:{value:.6}};
+ const surfaceUniforms={polishSaturation:{value:worldPolish.saturation},polishDressing:{value:worldPolish.dressing},polishHaze:{value:worldPolish.haze},polishHazeColor:{value:new THREE.Color(0xb5c9bf)},surfaceAtlas:{value:atlas},surfaceReady:{value:0},dirtStrength:{value:0},rockStrength:{value:0},dirtScale:{value:8},rockScale:{value:4.5},edgeVariation:{value:.6}};
  const uniforms={paintedGrass:{value:painted},paintedScale:{value:9},paintedStrength:{value:0},paintedSaturation:{value:.9},paintedDirtBlend:{value:.45}};
- function update(){surfaceUniforms.surfaceReady.value=surfaceReady?1:0;surfaceUniforms.dirtStrength.value=clamp((worldAppearance.dirtTextureStrength??75)/100);surfaceUniforms.rockStrength.value=clamp((worldAppearance.rockTextureStrength??90)/100);surfaceUniforms.dirtScale.value=clamp(worldAppearance.dirtTextureScale??8,2,24);surfaceUniforms.rockScale.value=clamp(worldAppearance.rockTextureScale??4.5,1,16);surfaceUniforms.edgeVariation.value=clamp((worldAppearance.surfaceEdgeVariation??60)/100);uniforms.paintedScale.value=clamp(worldAppearance.grassTextureScale??9,2,40);uniforms.paintedStrength.value=paintedReady?clamp((worldAppearance.grassTextureStrength??85)/100):0;uniforms.paintedSaturation.value=clamp((worldAppearance.grassTextureSaturation??90)/100,0,1.5);uniforms.paintedDirtBlend.value=clamp((worldAppearance.grassDirtBlending??45)/100);}
+ function update(){surfaceUniforms.polishSaturation.value=clamp(worldPolish.saturation,0,1.5);surfaceUniforms.polishDressing.value=clamp(worldPolish.dressing);surfaceUniforms.polishHaze.value=clamp(worldPolish.haze);surfaceUniforms.surfaceReady.value=surfaceReady?1:0;surfaceUniforms.dirtStrength.value=clamp((worldAppearance.dirtTextureStrength??75)/100);surfaceUniforms.rockStrength.value=clamp((worldAppearance.rockTextureStrength??90)/100);surfaceUniforms.dirtScale.value=clamp(worldAppearance.dirtTextureScale??8,2,24);surfaceUniforms.rockScale.value=clamp(worldAppearance.rockTextureScale??4.5,1,16);surfaceUniforms.edgeVariation.value=clamp((worldAppearance.surfaceEdgeVariation??60)/100);uniforms.paintedScale.value=clamp(worldAppearance.grassTextureScale??9,2,40);uniforms.paintedStrength.value=paintedReady?clamp((worldAppearance.grassTextureStrength??85)/100):0;uniforms.paintedSaturation.value=clamp((worldAppearance.grassTextureSaturation??90)/100,0,1.5);uniforms.paintedDirtBlend.value=clamp((worldAppearance.grassDirtBlending??45)/100);}
  const material=terrain.material,previous=material.onBeforeCompile,previousKey=material.customProgramCacheKey;
  material.onBeforeCompile=shader=>{
   previous.call(material,shader,renderer);Object.assign(shader.uniforms,uniforms,surfaceUniforms,{groundDetail:{value:detail},groundBlend:{value:mask},groundHalfSize:{value:halfSize},groundBounds:{value:new THREE.Vector4(bounds?.minX??-halfSize,bounds?.minZ??-halfSize,bounds?bounds.maxX-bounds.minX:halfSize*2,bounds?bounds.maxZ-bounds.minZ:halfSize*2)},groundTextureStrength:{value:clamp((config.groundTextureStrengthPercent??75)/100)}});
   shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vGroundPosition;').replace('#include <worldpos_vertex>','#include <worldpos_vertex>\nvGroundPosition=(modelMatrix*vec4(transformed,1.)).xyz;');
   shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>
  varying vec3 vGroundPosition;
+ uniform float polishSaturation,polishDressing,polishHaze; uniform vec3 polishHazeColor;
  uniform sampler2D surfaceAtlas; uniform float surfaceReady,dirtStrength,rockStrength,dirtScale,rockScale,edgeVariation;
  // Fold each panel independently, inset at the split to prevent cross-panel bleed.
  // Mips blend naturally to the average albedo at long distances.
@@ -48,7 +53,8 @@ export function addGroundTextures(terrain,painter,halfSize,renderer,config=visua
  uniform sampler2D paintedGrass; uniform float paintedScale; uniform float paintedStrength; uniform float paintedSaturation; uniform float paintedDirtBlend;
  uniform sampler2D groundDetail; uniform sampler2D groundBlend; uniform float groundHalfSize; uniform vec4 groundBounds; uniform float groundTextureStrength;`);
   shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>',`#include <map_fragment>
- vec2 blendUV=clamp((vGroundPosition.xz-groundBounds.xy)/groundBounds.zw,0.,1.);vec2 cover=texture2D(groundBlend,blendUV).rg;
+ vec2 blendUV=clamp((vGroundPosition.xz-groundBounds.xy)/groundBounds.zw,0.,1.);vec4 groundMasks=texture2D(groundBlend,blendUV);vec2 cover=groundMasks.rg;
+ cover.r=max(cover.r,groundMasks.b*polishDressing);
  vec3 detailA=texture2D(groundDetail,vGroundPosition.xz/7.).rgb;
  vec2 rotated=mat2(.8,-.6,.6,.8)*vGroundPosition.xz/19.+vec2(.37,.61);vec3 detailB=texture2D(groundDetail,rotated).rgb;
  float activeDirt=surfaceReady*dirtStrength,activeRock=surfaceReady*rockStrength;
@@ -88,11 +94,19 @@ export function addGroundTextures(terrain,painter,halfSize,renderer,config=visua
  float stoneWeight=smoothstep(.04,.65,cover.g)*(1.-dirtWeight);
  diffuseColor.rgb=mix(diffuseColor.rgb,soilColor,activeDirt*dirtWeight);
  diffuseColor.rgb=mix(diffuseColor.rgb,stoneColor,activeRock*stoneWeight);
+ // Permanent worn lanes use the existing mask, independently of temporary tracks.
+ float trailDistance=abs(vGroundPosition.x-18.*sin(vGroundPosition.z*.025));
+ float trailWear=(1.-smoothstep(.32,.8,abs(trailDistance-1.35)))*(1.-smoothstep(3.8,5.,trailDistance));
+ float worn=max(groundMasks.a,trailWear)*polishDressing;diffuseColor.rgb*=1.-worn*.22;
+ float gravelPocket=groundMasks.b*polishDressing*smoothstep(.45,.7,detailA.b)*(1.-groundMasks.a)*.38;
+ diffuseColor.rgb=mix(diffuseColor.rgb,stoneColor,activeRock*gravelPocket);
+ float terrainGray=dot(diffuseColor.rgb,vec3(.2126,.7152,.0722));diffuseColor.rgb=mix(vec3(terrainGray),diffuseColor.rgb,polishSaturation);
+ diffuseColor.rgb=mix(diffuseColor.rgb,polishHazeColor,smoothstep(140.,600.,textureDistance)*polishHaze);
  float groundRelief=(dot(detailA,weights)-.5)*.045*textureAmount;`);
   shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
  vec3 sx=dFdx(-vViewPosition),sy=dFdy(-vViewPosition);vec3 rx=cross(sy,normal),ry=cross(normal,sx);float determinant=dot(sx,rx);
  vec3 gradient=sign(determinant)*(dFdx(groundRelief)*rx+dFdy(groundRelief)*ry);if(abs(determinant)>1.e-8)normal=normalize(abs(determinant)*normal-gradient);`);
  };
- material.customProgramCacheKey=()=> 'painted-ground-textures-v3';material.needsUpdate=true;
+ material.customProgramCacheKey=()=> 'painted-ground-textures-v4';material.needsUpdate=true;
  return {detail,mask,painted,atlas,update,dispose(){disposed=true;atlas.dispose();painted.dispose();detail.dispose();mask.dispose();material.onBeforeCompile=previous;material.customProgramCacheKey=previousKey;material.needsUpdate=true;}};
 }

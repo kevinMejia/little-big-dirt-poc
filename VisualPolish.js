@@ -5,11 +5,11 @@ export function createPolishedLighting(scene,renderer,config=visualPolishConfig)
  const quality={low:[1024,50],medium:[2048,65],high:[2048,48]}[config.shadowQuality]||[2048,65];
  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
  renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.02;
- const ambient=new THREE.HemisphereLight(0xdcefff,0x867654,1.65),sun=new THREE.DirectionalLight(0xffe5b9,3.1);
+ const ambient=new THREE.HemisphereLight(0xdce9f1,0x87755e,1.5),sun=new THREE.DirectionalLight(0xffe6c6,2.8);
  sun.position.set(-55,100,48);sun.castShadow=true;sun.shadow.mapSize.set(quality[0],quality[0]);
  Object.assign(sun.shadow.camera,{left:-quality[1],right:quality[1],top:quality[1],bottom:-quality[1],near:1,far:240});sun.shadow.camera.updateProjectionMatrix();
  sun.shadow.normalBias=.018;sun.shadow.bias=-.00008;sun.shadow.intensity=.72;
- const fill=new THREE.DirectionalLight(0xd9edff,.45);fill.position.set(50,35,-65);scene.add(ambient,sun,sun.target,fill);
+ const fill=new THREE.DirectionalLight(0xc7dcf1,.55);fill.position.set(50,35,-65);scene.add(ambient,sun,sun.target,fill);
  // Move the existing single shadow map with the player; snap in light space to avoid shimmer.
  const direction=new THREE.Vector3(-55,100,48),right=new THREE.Vector3().crossVectors(direction,new THREE.Vector3(0,1,0)).normalize(),forward=new THREE.Vector3().crossVectors(right,direction).normalize(),anchor=new THREE.Vector3();
  return {sun,update(position){const texel=2*quality[1]/quality[0];anchor.copy(position);const a=anchor.dot(right),b=anchor.dot(forward);anchor.addScaledVector(right,Math.round(a/texel)*texel-a).addScaledVector(forward,Math.round(b/texel)*texel-b);sun.target.position.copy(anchor);sun.position.copy(anchor).add(direction);},dispose(){for(const o of [ambient,sun,sun.target,fill])o.removeFromParent();sun.shadow.map?.dispose();}};

@@ -2,9 +2,9 @@
 // unchanged. All values update live in Settings → Storybook Background.
 export const storybookBackgroundConfig={
  // Final painted background exposure multiplier; 0.4–1.6. No foreground relighting.
- brightness:1,
+ brightness:.94,
  // Background color saturation multiplier; 0 = grayscale, 1 = artwork, max 1.6.
- saturation:1,
+ saturation:.84,
  // sRGB multiplication tint, #RRGGBB. White preserves the original painted palette.
  skyTint:'#ffffff',
  // Sun halo compass bearing, degrees 0–360; 0 points along +Z, 90 along +X.
@@ -12,11 +12,11 @@ export const storybookBackgroundConfig={
  // Sun halo elevation above horizon, degrees 0–80. Does not move gameplay lights.
  sunElevation:28,
  // Warm sun disc/halo intensity, 0–2. Zero disables the runtime sun overlay.
- sunGlow:.65,
+ sunGlow:.4,
  // Painted mountain band and distant transition geometry; not playable terrain.
  mountainsVisible:true,
  // Atmospheric softening of the distant background, 0–100%. No foreground fog.
- hazePercent:22,
+ hazePercent:30,
  // Cloud-layer drift, degrees per second 0–0.03. Mountains remain stationary.
  cloudSpeed:.006,
  // Background horizontal scale, 0.75–1.5. Terrain-edge attachment stays fixed.

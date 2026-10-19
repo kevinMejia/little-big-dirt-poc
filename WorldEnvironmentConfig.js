@@ -1,5 +1,14 @@
 // Global Play environment defaults. Saved Settings overrides apply before scene
 // creation. Reload Play to rebuild scenery; vehicle physics is independent.
+// File-only art direction. Reload Play; no saved overrides are migrated/reset.
+export const worldPolish={
+  // Terrain/painted grass saturation multiplier, 0–1.5. 1 restores prior color.
+  saturation:.82,
+  // Visual soil, gravel shoulders and worn lanes, 0–1. 0 disables dressing.
+  dressing: .8,
+  // Distance color softening, 0–1, from 140 to 600m; nearby driving stays clear.
+  haze:.18,
+};
 export const worldAppearance={
   // Visual size relative to each existing interactive rock's collision radius.
   // Reload Play to apply. Both axes and height scale uniformly; density and

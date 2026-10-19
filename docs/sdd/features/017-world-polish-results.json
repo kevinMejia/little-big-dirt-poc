@@ -1,0 +1,30 @@
+{
+  "browser": "155.0.4283.62",
+  "platform": "win32",
+  "viewport": [
+    1280,
+    720
+  ],
+  "before": {
+    "terrain": "7d550ce2db639995744e5c734a27497b604b1686a59810938fe64f6caefc1372",
+    "collision": "62a66fe82c090e06815a303004d1988cc9dceecc1f19543b58cb998b4a97e302",
+    "debris": 6336,
+    "drawCalls": 289,
+    "triangles": 2266379,
+    "medianMs": 7,
+    "p95Ms": 7.099999999998545,
+    "startupMs": 12181,
+    "travel": 100.74645631584646
+  },
+  "after": {
+    "terrain": "7d550ce2db639995744e5c734a27497b604b1686a59810938fe64f6caefc1372",
+    "collision": "62a66fe82c090e06815a303004d1988cc9dceecc1f19543b58cb998b4a97e302",
+    "debris": 6336,
+    "drawCalls": 291,
+    "triangles": 2269659,
+    "medianMs": 7,
+    "p95Ms": 7.099999999998545,
+    "startupMs": 11622,
+    "travel": 100.74645631584646
+  }
+}

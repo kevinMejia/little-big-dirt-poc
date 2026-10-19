@@ -17,6 +17,23 @@ const fbm=(x,z)=>landscapeNoise(x,z)*.72+landscapeNoise(x*2.13+17,z*2.13-31)*.28
 export function landscapeFields(x,z){
   return {grass:fbm(x*.014,z*.014),dirt:fbm(x*.038+54,z*.038-21),rock:fbm(x*.052-12,z*.052+48),woods:fbm(x*.018+103,z*.018-71),meadow:fbm(x*.016-83,z*.016+19)};
 }
+// Visual-only masks. Never replace painter.surface: placement/traction retain
+// their authoritative masks. A local index keeps texture baking bounded.
+export function createTerrainDressing(layout,nearestRoad=null){
+  const cells=new Map(),cellSize=12;
+  for(const o of [...layout.trees.map(t=>({...t,r:2.4+t.scale})),...layout.rocks.map(r=>({...r,r:r.radius+1.7}))]){const key=Math.floor(o.x/cellSize)+','+Math.floor(o.z/cellSize);if(!cells.has(key))cells.set(key,[]);cells.get(key).push(o);}
+  return (x,z)=>{
+    const noise=landscapeNoise(x*.55+17,z*.55-9),ix=Math.floor(x/cellSize),iz=Math.floor(z/cellSize);let bare=0;
+    for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++)for(const o of cells.get((ix+a)+','+(iz+b))??[]){const d=Math.hypot(x-o.x,z-o.z)/(o.r*(.85+noise*.3));bare=Math.max(bare,(1-smooth(d))*.85);}
+    const trail=Math.abs(x-18*Math.sin(z*.025)),near=nearestRoad?.(x,z);
+    const distance=near&&near.distance<near.width/2+10?near.distance:trail,halfWidth=near&&near.distance<near.width/2+10?near.width/2:3.8;
+    const edge=distance-halfWidth,irregular=edge+(noise-.5)*1.7;
+    const shoulder=(1-smooth(Math.max(0,irregular)/3.4))*smooth((edge+1)/1.4);
+    const gravel=shoulder*smooth((landscapeNoise(x*.19-37,z*.19+21)-.25)/.45);
+    const lane=1-smooth(Math.abs(distance-halfWidth*.4)/.95),wear=lane*(.65+noise*.35)*(1-smooth(Math.max(0,edge)));
+    return {bare:clamp(bare),shoulder:clamp(shoulder),gravel:clamp(gravel),wear:clamp(wear)};
+  };
+}
 const pathDistance=(x,z)=>Math.abs(x-18*Math.sin(z*.025));
 function quantile(values,percent){values.sort((a,b)=>a-b);return values[Math.min(values.length-1,Math.floor((1-percent)*values.length))];}
 
