@@ -9,7 +9,7 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 let rapierPromise;
 export async function loadWorldPhysics(){rapierPromise??=import('./viewer/vendor/rapier/rapier.mjs').then(async module=>{await module.default.init();return module.default;});return rapierPromise;}
 export class RapierWorldVehicle {
- constructor(RAPIER,{surface,height,groundDebris,trees,rocks,limit=205}){if(typeof trees?.resolveMovement!=='function'||typeof rocks?.resolveMovement!=='function')throw new Error('Rapier requires current tree/rock collision adapters. Reload the game to refresh cached modules.');Object.assign(this,{RAPIER,surface,height,groundDebris,trees,rocks,limit});this.hills=new HillSpeedPhysics(height);this.turbo=new TurboBoost();this.point=new THREE.Vector3();this.rotation=new THREE.Quaternion();this.normal=new THREE.Vector3();this.cannonArmed=true;this.cannonFlight=false;this.cameraHeading=null;}
+ constructor(RAPIER,{surface,height,groundDebris,trees,rocks,limit=205,bounds=null}){if(typeof trees?.resolveMovement!=='function'||typeof rocks?.resolveMovement!=='function')throw new Error('Rapier requires current tree/rock collision adapters. Reload the game to refresh cached modules.');Object.assign(this,{RAPIER,surface,height,groundDebris,trees,rocks,limit,bounds});this.hills=new HillSpeedPhysics(height);this.turbo=new TurboBoost();this.point=new THREE.Vector3();this.rotation=new THREE.Quaternion();this.normal=new THREE.Vector3();this.cannonArmed=true;this.cannonFlight=false;this.cameraHeading=null;}
  setVehicle(vehicle,cfg,index,position,heading){
   this.physics?.dispose();this.vehicle=vehicle;const tuning=(cfg.handling??arcadeHandlingConfig[index?'stinky':'dirty']);this.cfg={...cfg,accel:tuning.acceleration,max:tuning.topSpeed,reverse:tuning.reverseSpeed,turn:tuning.turn,drag:tuning.drag};this.index=index;
   const model=vehicle.userData.controller,pivots=(model?.wheels?model.wheels.map(w=>w.steering||w):vehicle.children).filter(w=>w.userData.wheel);
@@ -47,15 +47,16 @@ export class RapierWorldVehicle {
    const dx=trial.x-current.x,dz=trial.z-current.z;if(Math.abs(dx)+Math.abs(dz)>1e-7){const b=p.body.translation();p.body.setTranslation({x:b.x+dx,y:b.y,z:b.z+dz},true);}
   }
   const b=this.cfg.collision,reach=Math.max(Math.abs(b.rear),Math.abs(b.front)),lx=this.limit-b.radius-reach*Math.abs(Math.sin(heading)),lz=this.limit-b.radius-reach*Math.abs(Math.cos(heading));
-  if(grounded&&Math.abs(current.x)<lx-12&&Math.abs(current.z)<lz-12)this.cannonArmed=true;
-  const crossing=Math.abs(current.x)>=lx&&current.x*velocity.x>0||Math.abs(current.z)>=lz&&current.z*velocity.z>0;
+  const minX=this.bounds?this.bounds.minX+b.radius+reach*Math.abs(Math.sin(heading)):-lx,maxX=this.bounds?this.bounds.maxX-b.radius-reach*Math.abs(Math.sin(heading)):lx,minZ=this.bounds?this.bounds.minZ+b.radius+reach*Math.abs(Math.cos(heading)):-lz,maxZ=this.bounds?this.bounds.maxZ-b.radius-reach*Math.abs(Math.cos(heading)):lz;
+  if(grounded&&current.x>minX+12&&current.x<maxX-12&&current.z>minZ+12&&current.z<maxZ-12)this.cannonArmed=true;
+  const crossing=current.x>=maxX&&velocity.x>0||current.x<=minX&&velocity.x<0||current.z>=maxZ&&velocity.z>0||current.z<=minZ&&velocity.z<0;
   if(crossing&&this.cannonArmed&&!this.cannonFlight){const c=this.cfg.hill.boundaryCannon;
    if(c?.enabled!==false){const distance=Math.hypot(current.x,current.z)||1,speed=clamp(c?.horizontalLaunchSpeed??45,8,65);p.impulse({x:-current.x/distance*speed,y:clamp(c?.verticalLaunchSpeed??28,8,40),z:-current.z/distance*speed});this.cannonArmed=false;this.cannonFlight=true;this.cannonAge=0;const spin=clamp((c?.launchSpinPercent??20)/100,0,1);p.body.setAngvel({x:.35*spin,y:.25*spin,z:-.3*spin},true);p.state.airborne=true;p.state.contacts=0;}
-   else{const v=p.body.linvel();p.body.setLinvel({x:Math.abs(current.x)>=lx?-Math.sign(current.x)*Math.min(2,Math.abs(v.x)*.15):v.x,y:v.y,z:Math.abs(current.z)>=lz?-Math.sign(current.z)*Math.min(2,Math.abs(v.z)*.15):v.z},true);}
+   else{const v=p.body.linvel();p.body.setLinvel({x:(current.x<=minX||current.x>=maxX)?-Math.sign(current.x)*Math.min(2,Math.abs(v.x)*.15):v.x,y:v.y,z:(current.z<=minZ||current.z>=maxZ)?-Math.sign(current.z)*Math.min(2,Math.abs(v.z)*.15):v.z},true);}
   }
   if(this.cannonFlight){this.cannonAge+=h;if(p.state.contacts&&this.cannonAge>.2){for(const event of p.events)if(event.type==='landing')event.bounce=this.cfg.hill.boundaryCannon?.landingBouncePercent??30;this.cannonFlight=false;}else{const v=p.body.linvel(),steer=this.input?.steering??0,turn=-steer*clamp((this.cfg.hill.boundaryCannon?.airControlPercent??15)/100,0,1)*.7*h,c=Math.cos(turn),s=Math.sin(turn);p.body.setLinvel({x:v.x*c+v.z*s,y:v.y,z:v.z*c-v.x*s},true);const target=Math.atan2(v.x,v.z),angle=Math.atan2(Math.sin(target-heading),Math.cos(target-heading)),ang=p.body.angvel();p.body.applyTorqueImpulse({x:0,y:(angle*.9-ang.y*.7)*p.mass*h,z:0},true);}}
   // Velocity-only containment; normal flights never reach this guard.
-  const v=p.body.linvel(),edge=this.limit+4;if(current.x>edge&&v.x>0||current.x<-edge&&v.x<0)p.body.setLinvel({...v,x:-Math.sign(current.x)*Math.abs(v.x)},true);if(current.z>edge&&v.z>0||current.z<-edge&&v.z<0)p.body.setLinvel({...p.body.linvel(),z:-Math.sign(current.z)*Math.abs(v.z)},true);
+  const v=p.body.linvel();if(current.x>(this.bounds?.maxX??this.limit)+4&&v.x>0||current.x<(this.bounds?.minX??-this.limit)-4&&v.x<0)p.body.setLinvel({...v,x:-Math.sign(current.x)*Math.abs(v.x)},true);if(current.z>(this.bounds?.maxZ??this.limit)+4&&v.z>0||current.z<(this.bounds?.minZ??-this.limit)-4&&v.z<0)p.body.setLinvel({...p.body.linvel(),z:-Math.sign(current.z)*Math.abs(v.z)},true);
  }
  update(dt,input){
   const tuning=(this.cfg.handling??arcadeHandlingConfig[this.index?'stinky':'dirty']);

@@ -15,7 +15,8 @@ export const worldAppearance={
   rockMedium1Weight:1,
   rockMedium2Weight:1,
   rockMedium3Weight:1,
-  // Main Play only: full square width AND length, in world metres; clamped 220–880.
+  // Rally terrain extends east independently; this setting preserves the sandbox footprint.
+  // Main Play only: full sandbox square width AND length, in world metres; clamped 220–880.
   // Reload required. 440 = previous map; 660 = 1.5× width / 2.25× area (default);
   // 880 = 2× width / 4× area, with greater memory/startup/rendering cost.
   // Start 440–660 for phones. Terrain/texture scales and ramp coordinates stay fixed.

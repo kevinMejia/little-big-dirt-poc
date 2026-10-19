@@ -1,0 +1,65 @@
+{
+  "runs": [
+    {
+      "index": 0,
+      "access": false,
+      "complete": true,
+      "progress": 1.0151092680670626,
+      "maxError": 0,
+      "maxAir": 0
+    },
+    {
+      "index": 0,
+      "access": true,
+      "complete": true,
+      "progress": 0.998030303559601,
+      "maxError": 0,
+      "maxAir": 0
+    },
+    {
+      "index": 1,
+      "access": false,
+      "complete": true,
+      "progress": 1.015106279823693,
+      "maxError": 0,
+      "maxAir": 0
+    },
+    {
+      "index": 1,
+      "access": true,
+      "complete": true,
+      "progress": 0.998069459493515,
+      "maxError": 0,
+      "maxAir": 0
+    },
+    {
+      "index": 2,
+      "access": false,
+      "complete": true,
+      "progress": 1.0150174581593903,
+      "maxError": 0,
+      "maxAir": 0
+    },
+    {
+      "index": 2,
+      "access": true,
+      "complete": true,
+      "progress": 0.9982732536894355,
+      "maxError": 0,
+      "maxAir": 0
+    }
+  ],
+  "errors": [],
+  "keyboardAccessModes": [
+    "original",
+    "rapier"
+  ],
+  "desktop": [
+    1400,
+    900
+  ],
+  "phone": [
+    390,
+    844
+  ]
+}

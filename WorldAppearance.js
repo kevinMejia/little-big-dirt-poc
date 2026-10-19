@@ -80,7 +80,7 @@ export function createSceneryLayout(painter,halfSize,config=worldAppearance,area
   return {trees,rocks};
 }
 
-export function createWorldAtmosphere(scene,height,halfSize,config=worldAppearance,painter=null){
+export function createWorldAtmosphere(scene,height,halfSize,config=worldAppearance,painter=null,bounds=null){
   scene.background=new THREE.Color(0xb5e1ee);
   // Even at full haze the first 350 units remain completely clear.
   const haze=pct(config.hazeStrengthPercent);
@@ -93,9 +93,9 @@ export function createWorldAtmosphere(scene,height,halfSize,config=worldAppearan
     const near=new THREE.Color(0x79a956),far=new THREE.Color(0x829b7b),color=new THREE.Color();
     for(let ring=0;ring<rings.length;ring++)for(let i=0;i<segments;i++){
       const side=Math.floor(i/(segments/4)),t=(i%(segments/4))/(segments/4),r=halfSize+rings[ring];
-      const x=side===0?r:side===1?r*(1-2*t):side===2?-r:r*(-1+2*t);
+      let x=side===0?r:side===1?r*(1-2*t):side===2?-r:r*(-1+2*t);
       const z=side===0?r*(-1+2*t):side===1?r:side===2?r*(1-2*t):-r;
-      const edgeX=x*halfSize/r,edgeZ=z*halfSize/r,edge=height(edgeX,edgeZ);
+      let edgeX=x*halfSize/r;const edgeZ=z*halfSize/r;if(bounds){const center=(bounds.minX+bounds.maxX)/2,span=(bounds.maxX-bounds.minX)/2;x=center+x/r*(span+rings[ring]);edgeX=center+edgeX/halfSize*span;}const edge=height(edgeX,edgeZ);
       const distance=rings[ring],blend=smooth(distance/95);
       const rolling=edge+10+landscapeNoise(x*.008,z*.008)*52+landscapeNoise(x*.019+19,z*.019-9)*16;
       let y=edge*(1-blend)+rolling*blend;

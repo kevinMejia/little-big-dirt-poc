@@ -76,9 +76,7 @@ body[data-lbd-driving-hud="true"] #hud{display:block!important}
 body[data-lbd-controls-guide="true"] #help{display:block!important;max-width:calc(100vw - 32px);white-space:normal;pointer-events:none}
 
 #turboStatus{position:fixed;top:max(80px,calc(env(safe-area-inset-top) + 80px));left:50%;transform:translateX(-50%);z-index:9;background:#ffe494;color:#243b32;padding:7px 14px;border-radius:18px;font:800 13px system-ui;pointer-events:none;box-shadow:0 2px 8px #23382a33}#turboStatus[hidden]{display:none}
-/* Mobile vehicle menu overlays the canvas and retains the original control nodes. */
-#vehicleControlsToggle{display:none}
-@media(max-width:800px),(max-width:1000px) and (max-height:500px),(hover:none) and (pointer:coarse){
+/* Shared vehicle menu overlays the canvas and retains the original control nodes. */
  #vehicleControls{position:fixed;z-index:35;top:max(12px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));pointer-events:none}
  #vehicleControlsToggle{display:grid;place-content:center;width:48px;height:48px;min-height:48px;padding:0;margin-left:auto;background:#203e35ed;color:#fff5d6;border:1px solid #ffffff60;border-radius:13px;box-shadow:0 3px 12px #14291e30;font:650 25px system-ui;touch-action:manipulation;pointer-events:auto}
  #vehicleControls #switcher{position:absolute;top:56px;right:0;display:flex;flex-direction:column;gap:7px;width:164px;max-width:calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right) - 24px);max-height:calc(100dvh - max(12px,env(safe-area-inset-top)) - env(safe-area-inset-bottom) - 160px);overflow:auto;overscroll-behavior:contain;padding:8px;background:#193b3de8;border:1px solid #ffffff30;border-radius:15px;box-shadow:0 6px 18px #14291e30;opacity:0;visibility:hidden;transform:translateY(-7px) scale(.97);transform-origin:top right;pointer-events:none;transition:opacity .18s ease,transform .18s ease,visibility 0s .18s}
@@ -87,7 +85,6 @@ body[data-lbd-controls-guide="true"] #help{display:block!important;max-width:cal
  #vehicleControls .physics-mode{min-height:48px;flex-shrink:0}
  #vehicleControls .physics-mode select{min-height:30px;width:100%}
  #vehicleControlsToggle:focus-visible{outline:3px solid #ffe58b;outline-offset:3px}
-}
 @media(prefers-reduced-motion:reduce){#vehicleControls #switcher{transition:none}}
 /* First-paint loading screen; no font, image, or module downloads required. */
 #gameLoading{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;background:#f5dfaa;color:#24332c;padding:24px;padding-top:max(24px,env(safe-area-inset-top));text-align:center;font-family:"Comic Sans MS","Chalkboard SE",cursive;overflow:hidden}
@@ -135,7 +132,10 @@ document.querySelector('#loadingRetry').onclick=()=>location.reload();
 
 <div id="hud"><div class="subtitle">FREE DRIVE</div><h1>LITTLE BIG DIRT</h1><div id="vehicleName">Backhoe Loader</div><div id="speed">0 <small>MPH</small></div><button id="debugToggle" type="button" aria-label="Toggle driving diagnostics" aria-pressed="false" title="Driving diagnostics">i</button><div id="treeTuning" style="font-size:11px;color:#ffe5a0;margin-top:6px"></div><div id="renderTuning" style="font-size:10px;color:#c6e3d5;margin-top:4px"></div><div id="terrainInfo" style="font-size:11px;color:#c6e3d5;margin-top:6px">Explore the hills!</div></div>
 
-<div id="vehicleControls"><button id="vehicleControlsToggle" type="button" aria-label="Expand vehicle controls" aria-expanded="false" aria-controls="switcher">&lt;</button><div id="switcher"><label class="physics-mode" for="physicsMode">Physics Mode<select id="physicsMode"><option value="original">Original</option><option value="rapier" selected>Rapier</option></select></label><button id="backhoeBtn" class="active">1 · Backhoe</button><button id="garbageBtn">2 · Garbage truck</button><button id="audiBtn" disabled>3 · Audi RS Q e-tron</button><button id="resetBtn">↻ Reset</button></div></div><script type="module" src="./MobileControlPanel.js"></script><button id="touchToggle" type="button" aria-label="Toggle touch controls" aria-pressed="false" hidden>Touch controls</button>
+<div id="vehicleControls"><button id="vehicleControlsToggle" type="button" aria-label="Expand vehicle controls" aria-expanded="false" aria-controls="switcher">‹</button><div id="switcher"><label class="physics-mode" for="vehicleSelect">Cars<select id="vehicleSelect"><option value="0">Backhoe</option><option value="1">Garbage Truck</option><option value="2" disabled>Audi RS Q e-tron</option></select></label><button id="rallyBtn" type="button">Rally</button><button id="resetBtn" type="button">↻ Reset</button></div></div>
+<!-- Existing preference/controller and keyboard garage bindings remain internal. -->
+<div hidden><select id="physicsMode"><option value="original">Original</option><option value="rapier" selected>Rapier</option></select><button id="backhoeBtn"></button><button id="garbageBtn"></button><button id="audiBtn" disabled></button></div>
+<script type="module" src="./MobileControlPanel.js"></script><button id="touchToggle" type="button" aria-label="Toggle touch controls" aria-pressed="false" hidden>Touch controls</button>
 
 <div id="status">Keyboard or gamepad supported</div>
 
@@ -157,6 +157,10 @@ const treeAudioStates=new WeakMap();
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js';
 
 import { BackhoeLoader } from './BackhoeLoader.js';
+import {rallyTrackConfig,rallyAccessConfig} from './RallyTrackConfig.js';
+import {RallyTrack,RallyLandscape,extendRallySurface} from './RallyTrack.js';
+import {createRallyVisuals} from './RallyVisuals.js';
+import {rallySceneryLayout,createRallyScenery} from './RallyScenery.js';
 import {AudiVehicle} from './AudiVehicle.js';
 import { DirtyGLB } from './assets/dirty/DirtyGLB.js';
 import { StinkyGLB } from './assets/stinky/StinkyGLB.js';
@@ -220,31 +224,38 @@ const mapSettings=mainWorldSettings();
 const originalLayout=createSceneryLayout(createTerrainPainter(height,220),mapSettings.halfSize,worldAppearance,mapSettings.areaScale);
 const rampLayout=handlingCourse?playgroundFeatures():mainWorldRamps({halfSize:mapSettings.halfSize,height,layout:originalLayout});
 const worldJumps=new DirtJumpSystem(handlingCourse?handlingHeight:height,jumpConfig.enabled?rampLayout:[]);
-function surfaceHeight(x,z){return worldJumps.sample(x,z);}
+const rallyEnabled=!handlingCourse&&rallyTrackConfig.enabled&&!new URLSearchParams(location.search).has('noRally');
+const rallyTrack=rallyEnabled?new RallyTrack(rallyTrackConfig,{x:mapSettings.halfSize+rallyTrackConfig.originOffsetX,z:0}):null;
+const rallyAccess=rallyEnabled?new RallyTrack(rallyAccessConfig(rallyTrackConfig,rallyTrack.at(0),mapSettings.halfSize,(x,z)=>worldJumps.sample(x,z)),undefined,false):null;
+const rallyLandscape=rallyEnabled?new RallyLandscape((x,z)=>worldJumps.sample(x,z),rallyTrack,rallyAccess,mapSettings.halfSize,rallyTrackConfig):null;
+function surfaceHeight(x,z){return rallyLandscape?rallyLandscape.height(x,z):worldJumps.sample(x,z);}
 
 function groundNormal(x,z){const e=.7;return new THREE.Vector3(surfaceHeight(x-e,z)-surfaceHeight(x+e,z),2*e,surfaceHeight(x,z-e)-surfaceHeight(x,z+e)).normalize()}
 
 // Full width is configurable; procedural coordinates and ramp dimensions stay fixed.
 
-const world=mapSettings.halfSize,worldSurface=worldJumps.createWorldSurface(world,2,handlingCourse ? .75 : 1.5);
-const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(worldSurface.vertices,3));geo.setIndex(new THREE.BufferAttribute(worldSurface.indices,1));const pos=geo.attributes.position,colors=[];
+const world=mapSettings.halfSize,baseWorldSurface=worldJumps.createWorldSurface(world,2,handlingCourse ? .75 : 1.5);
+const rallyRoads=rallyEnabled?[rallyTrack.createRoad(),rallyAccess.createRoad()]:[];
+const worldSurface=rallyEnabled?extendRallySurface(baseWorldSurface,rallyLandscape,rallyRoads,rallyTrackConfig):baseWorldSurface;
+const driveBounds=rallyEnabled?{minX:-world+mapSettings.boundaryInset,maxX:world+rallyTrackConfig.extension-mapSettings.boundaryInset,minZ:-world+mapSettings.boundaryInset,maxZ:world-mapSettings.boundaryInset}:world-mapSettings.boundaryInset;
+const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(worldSurface.terrainVertices??worldSurface.vertices,3));geo.setIndex(new THREE.BufferAttribute(worldSurface.terrainIndices??worldSurface.indices,1));const pos=geo.attributes.position,colors=[];
 
 const terrainPainter=createTerrainPainter(surfaceHeight,220),terrainColor=new THREE.Color();
 const baseSurface=terrainPainter.surface,baseColor=terrainPainter.sampleColor,rampSoil=new THREE.Color(0xb59057);
-terrainPainter.surface=(x,z)=>{const field=baseSurface(x,z),ramp=worldJumps.dirtMask(x,z);return {...field,ramp,path:Math.max(field.path,ramp),dirtMask:Math.max(field.dirtMask,ramp)};};
-terrainPainter.sampleColor=(x,z,target=new THREE.Color())=>baseColor(x,z,target).lerp(rampSoil,worldJumps.dirtMask(x,z)*.9);
-for(let i=0;i<pos.count;i++){const x=pos.getX(i),z=pos.getZ(i);pos.setY(i,surfaceHeight(x,z));terrainPainter.sampleColor(x,z,terrainColor);colors.push(terrainColor.r,terrainColor.g,terrainColor.b)}
+terrainPainter.surface=(x,z)=>{const field=baseSurface(x,z),ramp=Math.max(worldJumps.dirtMask(x,z),rallyLandscape?.dirtMask(x,z)??0);return {...field,ramp,path:Math.max(field.path,ramp),dirtMask:Math.max(field.dirtMask,ramp)};};
+terrainPainter.sampleColor=(x,z,target=new THREE.Color())=>baseColor(x,z,target).lerp(rampSoil,Math.max(worldJumps.dirtMask(x,z),rallyLandscape?.dirtMask(x,z)??0)*.9);
+for(let i=0;i<pos.count;i++){const x=pos.getX(i),z=pos.getZ(i);if(!rallyLandscape)pos.setY(i,surfaceHeight(x,z));terrainPainter.sampleColor(x,z,terrainColor);colors.push(terrainColor.r,terrainColor.g,terrainColor.b)}
 
 geo.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));geo.computeVertexNormals();const terrain=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}));terrain.receiveShadow=true;scene.add(terrain);
 
-const worldAtmosphere=createWorldAtmosphere(scene,surfaceHeight,world,worldAppearance,terrainPainter);
+const worldAtmosphere=createWorldAtmosphere(scene,surfaceHeight,world,worldAppearance,terrainPainter,worldSurface.bounds);
 addEventListener('pagehide',event=>{if(!event.persisted)worldAtmosphere.dispose();});
 // Approved painted scenery by default.
 let storybookBackground=null;
 if(isStorybookEnabled(location.search)){
  try{
   const {createStorybookBackground}=await import('./StorybookBackground.js?v=painted-2');
-  storybookBackground=await createStorybookBackground(scene,{height:surfaceHeight,painter:terrainPainter,halfSize:world,camera,original:worldAtmosphere});
+  storybookBackground=await createStorybookBackground(scene,{height:surfaceHeight,painter:terrainPainter,halfSize:world,camera,original:worldAtmosphere,bounds:worldSurface.bounds});
  }catch(error){console.error('Painted background unavailable',error);const warning=document.createElement('p');warning.setAttribute('role','alert');warning.style.cssText='position:fixed;z-index:30;top:12px;left:76px;background:#633a28;color:white;padding:12px';warning.textContent='Painted background could not load. Original background remains active. '+error.message;document.body.append(warning);}
 }
 addEventListener('pagehide',event=>{if(!event.persisted){storybookBackground?.dispose();}});
@@ -263,15 +274,23 @@ if(handlingCourse){
  }
 }
 
+const rallyVisuals=rallyEnabled?createRallyVisuals(scene,rallyTrack,rallyAccess,rallyRoads,rallyLandscape):null;
+const rallyPlacements=rallyEnabled?rallySceneryLayout(rallyLandscape,{minX:world+5,maxX:world+rallyTrackConfig.extension},rallyTrackConfig.scenery):[];
+const rallyScenery=rallyEnabled?createRallyScenery(scene,rallyPlacements):null;
+addEventListener('pagehide',e=>{if(!e.persisted){rallyVisuals?.dispose();rallyScenery?.dispose();}});
+document.querySelector('#rallyBtn').hidden=!rallyEnabled;
+let rallyDebug=new URLSearchParams(location.search).has('trackDebug');
+function toggleTrackDebug(value){rallyDebug=value;rallyVisuals?.setDebug(value);}
+toggleTrackDebug(rallyDebug);
 const treeCollisions=new TreeCollisionSystem(scene,{groundHeight:surfaceHeight,onImpact:treeImpactSound});
 
 function makeTree(x,z,scale=1){const g=new THREE.Group();g.position.set(x,surfaceHeight(x,z)-.08,z);const trunk=cylinder(g,.22*scale,2.3*scale,0,1.1*scale,0,mat(0x91623e));trunk.rotation.z=0;for(let i=0;i<2;i++){const cone=new THREE.Mesh(new THREE.ConeGeometry((1.45-i*.35)*scale,2.8*scale,7),mat(i?0x438659:0x326e4b));cone.position.y=(2.55+i*1.3)*scale;cone.castShadow=true;g.add(cone)}scene.add(g);treeCollisions.addTree(g,.22*scale,3.5*scale)}
 
 let seed=3184;function rand(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
 
-const sceneryLayout={trees:(handlingCourse?[]:originalLayout.trees).filter(t=>!worldJumps.features.some(f=>rampClearance(f,t.x,t.z,t.scale*.35+3))),rocks:(handlingCourse?[]:originalLayout.rocks).filter(r=>!worldJumps.features.some(f=>rampClearance(f,r.x,r.z,r.radius+4)))};
+const sceneryLayout={trees:(handlingCourse?[]:originalLayout.trees).filter(t=>!rallyLandscape||!(rallyLandscape.nearest(t.x,t.z)?.distance<(rallyLandscape.nearest(t.x,t.z)?.width??0)/2+5)).filter(t=>!worldJumps.features.some(f=>rampClearance(f,t.x,t.z,t.scale*.35+3))),rocks:(handlingCourse?[]:originalLayout.rocks).filter(r=>!rallyLandscape||!(rallyLandscape.nearest(r.x,r.z)?.distance<(rallyLandscape.nearest(r.x,r.z)?.width??0)/2+5)).filter(r=>!worldJumps.features.some(f=>rampClearance(f,r.x,r.z,r.radius+4)))};
 polishTerrain(terrain,terrainPainter,sceneryLayout,world);
-const groundTextures=addGroundTextures(terrain,terrainPainter,world,renderer);
+const groundTextures=addGroundTextures(terrain,terrainPainter,world,renderer,undefined,worldSurface.bounds);
 addEventListener('pagehide',event=>{if(!event.persisted)groundTextures.dispose();});
 for(const {x,z,scale} of sceneryLayout.trees)makeTree(x,z,scale);
 
@@ -310,7 +329,7 @@ let stinkyTemplate;
 try{stinkyTemplate=await StinkyGLB.load(new URL('./assets/stinky/stinky.glb',location.href).href);}catch(error){console.warn('Stinky GLB unavailable; procedural garbage truck fallback active',error);}
 addEventListener('pagehide',event=>{if(!event.persisted)stinkyTemplate?.dispose();});
 let audiTemplate;
-const audiReady=AudiVehicle.load().then(model=>{audiTemplate=model;document.querySelector('#audiBtn').disabled=false;}).catch(error=>{console.error('Audi model unavailable',error);document.querySelector('#audiBtn').textContent='Audi unavailable';});
+const audiReady=AudiVehicle.load().then(model=>{audiTemplate=model;document.querySelector('#audiBtn').disabled=false;document.querySelector('#vehicleSelect option[value="2"]').disabled=false;}).catch(error=>{console.error('Audi model unavailable',error);document.querySelector('#audiBtn').textContent='Audi unavailable';document.querySelector('#vehicleSelect option[value="2"]').textContent='Audi unavailable';});
 addEventListener('pagehide',e=>{if(!e.persisted)AudiVehicle.dispose(audiTemplate);});
 const start={x:0,z:0,heading:0};
 
@@ -351,13 +370,24 @@ renderer.domElement.addEventListener('pointermove',event=>{if(event.pointerId!==
 for(const type of ['pointerup','pointercancel','lostpointercapture'])renderer.domElement.addEventListener(type,event=>{if(event.pointerId===cameraOrbit.pointer)releaseOrbit();});
 addEventListener('blur',releaseOrbit);addEventListener('resize',releaseOrbit);addEventListener('orientationchange',releaseOrbit);document.addEventListener('visibilitychange',()=>{if(document.hidden)releaseOrbit();});
 
-function choose(i){if(i===2&&!audiTemplate)return;gameAudio.stopAll();audioBoost=0;audioAirborne=false;audioCannon=false;audioVehicle=null;turboPickups?.resetVehicle();wordHunt?.resetVehicle();if(physicsMode==='rapier')position.copy(vehicleRoot.position);surfaceEffects.reset();hillPhysics.reset();bodyFeedback.reset();boundaryMotion.reset();vehicleVisual.position.set(0,0,0);vehicleVisual.rotation.set(0,0,0);index=i; if(vehicle){if(vehicle.userData.controller)vehicle.userData.controller.dispose();else{vehicleVisual.remove(vehicle);vehicle.traverse(o=>{if(o.isMesh)o.geometry.dispose()})}}vehicle=configs[i].build();vehicleVisual.add(vehicle);if(i===1&&!vehicle.userData.controller){for(const x of [-.8,.8]){box(vehicle,.35,.22,.12,x,index===0?1.7:1.85,index===0?2.38:3.43,white);box(vehicle,.3,.18,.12,x,1.35,index===0?-2.4:-3.13,red)}box(vehicle,.16,.85,.16,.7,3.7,-.5,metal);}document.querySelector('#vehicleName').textContent=configs[i].name;document.querySelector('#backhoeBtn').classList.toggle('active',i===0);document.querySelector('#garbageBtn').classList.toggle('active',i===1);document.querySelector('#audiBtn').classList.toggle('active',i===2);speed=0;if(physicsMode==='rapier')rapierController.setVehicle(vehicle,configs[index],index,position,heading);}
+function choose(i){if(i===2&&!audiTemplate)return;gameAudio.stopAll();audioBoost=0;audioAirborne=false;audioCannon=false;audioVehicle=null;turboPickups?.resetVehicle();wordHunt?.resetVehicle();if(physicsMode==='rapier')position.copy(vehicleRoot.position);surfaceEffects.reset();hillPhysics.reset();bodyFeedback.reset();boundaryMotion.reset();vehicleVisual.position.set(0,0,0);vehicleVisual.rotation.set(0,0,0);index=i;document.querySelector('#vehicleSelect').value=String(i); if(vehicle){if(vehicle.userData.controller)vehicle.userData.controller.dispose();else{vehicleVisual.remove(vehicle);vehicle.traverse(o=>{if(o.isMesh)o.geometry.dispose()})}}vehicle=configs[i].build();vehicleVisual.add(vehicle);if(i===1&&!vehicle.userData.controller){for(const x of [-.8,.8]){box(vehicle,.35,.22,.12,x,index===0?1.7:1.85,index===0?2.38:3.43,white);box(vehicle,.3,.18,.12,x,1.35,index===0?-2.4:-3.13,red)}box(vehicle,.16,.85,.16,.7,3.7,-.5,metal);}document.querySelector('#vehicleName').textContent=configs[i].name;document.querySelector('#backhoeBtn').classList.toggle('active',i===0);document.querySelector('#garbageBtn').classList.toggle('active',i===1);document.querySelector('#audiBtn').classList.toggle('active',i===2);speed=0;if(physicsMode==='rapier')rapierController.setVehicle(vehicle,configs[index],index,position,heading);}
 
 function reset(){gameAudio.stopAll();audioBoost=0;audioAirborne=false;audioCannon=false;audioVehicle=null;turboPickups?.resetVehicle();wordHunt?.resetVehicle();surfaceEffects.reset();flight=null;boundaryCannon.reset();hillPhysics.reset();bodyFeedback.reset();boundaryMotion.reset();releaseOrbit();cameraOrbit.yaw=cameraOrbit.pitch=0;position.set(handlingCourse?-145:0,surfaceHeight(handlingCourse?-145:0,handlingCourse?-170:0),handlingCourse?-170:0);heading=0;speed=0;steer=0;if(physicsMode==='rapier')rapierController.resetAt(position,heading);}
 
 choose(0);reset();
 
 document.querySelector('#resetBtn').onclick=reset;
+document.querySelector('#rallyBtn').onclick=()=>{
+ if(!rallyTrack)return;
+ reset();keys.clear();controls.clear();
+ const start=rallyTrack.at(0);
+ position.set(start.x,surfaceHeight(start.x,start.z)-.09,start.z);
+ heading=Math.atan2(start.tx,start.tz);
+ vehicleRoot.position.copy(position);vehicleRoot.rotation.set(0,heading,0);
+ if(physicsMode==='rapier')rapierController.resetAt(position,heading);
+ camera.position.set(position.x-Math.sin(heading)*20,position.y+8,position.z-Math.cos(heading)*20);
+ camera.lookAt(position.x,position.y+2.4,position.z);
+};
 
 const keys=new Set();addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys.add(e.code);if(garage.open)return;if(e.repeat)return;if(e.code==='KeyR')reset();if(e.code==='KeyH')honk()});addEventListener('keyup',e=>keys.delete(e.code));addEventListener('blur',()=>keys.clear());
 
@@ -375,7 +405,7 @@ physicsSelector.addEventListener('change',async()=>{
  try{
   if(requested==='rapier'&&physicsMode!=='rapier'){
    const RAPIER=await loadWorldPhysics();
-   const controller=new RapierWorldVehicle(RAPIER,{surface:worldSurface,height:surfaceHeight,groundDebris,trees:treeCollisions,rocks:rockInteractions,limit:world-mapSettings.boundaryInset});
+   const controller=new RapierWorldVehicle(RAPIER,{surface:worldSurface,height:surfaceHeight,groundDebris,trees:treeCollisions,rocks:rockInteractions,limit:world-mapSettings.boundaryInset,bounds:typeof driveBounds==='object'?driveBounds:null});
    rapierController=controller;controller.setVehicle(vehicle,configs[index],index,position,heading);physicsMode='rapier';boundaryCannon.reset();flight=null;
   }else if(requested==='original'&&physicsMode!=='original'){
    position.copy(vehicleRoot.position);rapierController.dispose();rapierController=null;physicsMode='original';boundaryCannon.reset();flight=null;
@@ -412,6 +442,11 @@ addEventListener('message',event=>{
  if(event.data?.type==='garage:pose'&&garageVehicle===0){const pose=event.data.pose;const ranges={lift:[0,100],tilt:[-40,50],swing:[-65,65],boom:[-17,20],stick:[-37,43],curl:[-48,65]};if(!pose||Object.keys(ranges).some(k=>!Number.isFinite(pose[k])))return;const safe={};for(const [key,range] of Object.entries(ranges))safe[key]=THREE.MathUtils.clamp(pose[key],...range);equipmentPoses.set(0,safe);if(index===0)applyEquipmentPose(vehicle.userData.controller,safe);}
  if(event.data?.type==='garage:pose'&&garageVehicle===1&&stinkyTemplate){const safe=sanitizeStinkyPose(event.data.pose);if(!safe)return;equipmentPoses.set(1,safe);if(index===1)applyStinkyPose(vehicle.userData.controller,safe);}
  if(event.data?.type==='garage:close')closeGarage();
+});
+document.querySelector('#vehicleSelect').addEventListener('change',event=>{
+ const select=event.currentTarget,i=Number(select.value);
+ if(!garage.open){controls.setVehicleActions();choose(i);applyEquipmentPose(vehicle.userData.controller,equipmentPoses.get(i));configureVehicleActions();}
+ select.blur();
 });
 const garageBindings=bindVehicleGarage({buttons:[document.querySelector('#backhoeBtn'),document.querySelector('#garbageBtn'),document.querySelector('#audiBtn')],onSelect:i=>{if(!garage.open){controls.setVehicleActions();choose(i);applyEquipmentPose(vehicle.userData.controller,equipmentPoses.get(i));configureVehicleActions();}},onOpen:openGarage});
 
@@ -474,7 +509,7 @@ let slope=0;
 
 
 if(physicsMode==='original'){
-boundaryCannon.rearm(position,world-mapSettings.boundaryInset);
+boundaryCannon.rearm(position,driveBounds);
 if(!flight){
 let thrust=forward?1:back?-1:0;
 
@@ -503,7 +538,7 @@ for(let step=0;step<movementSteps;step++){
  const startX=position.x,startZ=position.z;
  speed=treeCollisions.move(position,heading,speed,movementDt,cfg.collision,{baseMaxSpeed:cfg.max,treeKnockdownSpeedPercent:cfg.hill.treeKnockdownSpeedPercent});
  speed=rockInteractions.resolveMovement(position,startX,startZ,heading,speed,movementDt,cfg.collision,{baseMaxSpeed:cfg.max,...cfg.hill});
- const contact=boundaryMotion.resolve(position,heading,speed,world-mapSettings.boundaryInset,cfg.collision,cfg.hill,thrust);
+ const contact=boundaryMotion.resolve(position,heading,speed,driveBounds,cfg.collision,cfg.hill,thrust);
  if(contact.nx||contact.nz){position.y=surfaceHeight(position.x,position.z)-.09;if(!launchFromBoundary())speed=contact.speed;break;}
 }
 
@@ -512,7 +547,7 @@ hillPhysics.recordTravel(position.x-previousX,position.z-previousZ);
 position.y=surfaceHeight(position.x,position.z)-.09;
 }
 if(flight){
- const state=boundaryCannon.update(dt,position,surfaceHeight,steer,world-mapSettings.boundaryInset);
+ const state=boundaryCannon.update(dt,position,surfaceHeight,steer,driveBounds);
  flight=boundaryCannon.flight;
  if(state.unrecoverable){reset();}
  else if(state.landed){
@@ -593,7 +628,7 @@ document.querySelector('#status').textContent=flight?(physicsMode==='rapier'&&!r
 if(cameraOrbit.pointer===null){const decay=cameraReturnDecay(cameraSettings.cameraReturnSpeedPercent,dt);cameraOrbit.yaw*=decay;cameraOrbit.pitch*=decay;}
 const cameraAnchor=physicsMode==='rapier'?vehicleRoot.position:position;
 const orbitHeading=(physicsMode==='rapier'?rapierController.cameraHeading:heading)+cameraOrbit.yaw,elevation=chaseElevation+cameraOrbit.pitch;
-const rallyDistance=index===2?chaseDistance+4+Math.min(6,Math.abs(speed)*.08):chaseDistance;
+const rallyDistance=index===2?chaseDistance+4+Math.min(1,Math.abs(speed)*.01):chaseDistance;
 camera.fov=THREE.MathUtils.damp(camera.fov,index===2?72+Math.min(6,Math.abs(speed)*.08):66,3,dt);camera.updateProjectionMatrix();
 const behind=new THREE.Vector3(-Math.sin(orbitHeading)*Math.cos(elevation)*rallyDistance,2.4+Math.sin(elevation)*rallyDistance,-Math.cos(orbitHeading)*Math.cos(elevation)*rallyDistance);targetPos.copy(cameraAnchor).add(behind);camera.position.lerp(targetPos,1-Math.exp(-(cameraOrbit.pointer===null?4:12)*dt));camera.position.y=Math.max(camera.position.y,surfaceHeight(camera.position.x,camera.position.z)+1.3);camTarget.set(cameraAnchor.x,cameraAnchor.y+2.4,cameraAnchor.z);camera.lookAt(camTarget);
 
@@ -613,6 +648,15 @@ if(new URLSearchParams(location.search).get('qa')==='audi')window.audiQA={
  read(){const p=rapierController?.physics,m=vehicle.userData.controller;return {index,speed,heading,position:{x:position.x,y:position.y,z:position.z},airborne:!!flight,contacts:p?.state.contacts,compression:p?.state.compression,wheels:m?.wheels?.map(w=>({x:w.x,z:w.z,radius:w.radius,steer:w.steering.rotation.y,spin:w.spin?.rotation.x})),calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,memory:renderer.info.memory,fov:camera.fov};},
  place(x,z,h=0){reset();position.set(x,surfaceHeight(x,z)-.09,z);heading=h;rapierController?.resetAt(position,heading);},
  jump(){rapierController?.physics.impulse({x:0,y:12,z:18});if(rapierController)rapierController.physics.state.airborne=true;}
+};
+
+if(new URLSearchParams(location.search).get('qa')==='rally'&&rallyEnabled)window.rallyQA={
+ track:rallyTrack,access:rallyAccess,landscape:rallyLandscape,surface:worldSurface,scenery:rallyPlacements,
+ choose,place(u=0,access=false){const p=(access?rallyAccess:rallyTrack).at(u);position.set(p.x,p.y-.09,p.z);heading=Math.atan2(p.tx,p.tz);speed=steer=0;rapierController?.resetAt(position,heading);vehicleRoot.position.copy(position);},
+ read(){return {index,speed,heading,position:{x:position.x,y:position.y,z:position.z},airborne:!!flight,near:rallyLandscape.nearest(position.x,position.z),calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,memory:renderer.info.memory,debug:rallyDebug};},
+ debug:toggleTrackDebug,
+ aerial(){cameraOrbit.pointer=-1;camera.position.set(world+190,390,210);camera.lookAt(world+190,8,0);},
+ controller:()=>rapierController,
 };
 
 let diagnosticFrames=0,diagnosticStart=performance.now();

@@ -4,7 +4,7 @@ const setting=(v,f,a,b)=>clamp(Number.isFinite(Number(v))?Number(v):f,a,b);
 export class BoundaryCannon {
   constructor(){this.reset();}
   reset(){this.flight=null;this.armed=true;}
-  rearm(position,limit){if(!this.flight&&Math.max(Math.abs(position.x),Math.abs(position.z))<limit-12)this.armed=true;}
+  rearm(position,limit){if(!this.flight&&(typeof limit==='number'?Math.max(Math.abs(position.x),Math.abs(position.z))<limit-12:position.x>limit.minX+12&&position.x<limit.maxX-12&&position.z>limit.minZ+12&&position.z<limit.maxZ-12))this.armed=true;}
   launch(position,config={}){
     if(this.flight||!this.armed||config.enabled===false)return false;
     const distance=Math.hypot(position.x,position.z);if(distance<1)return false;
@@ -31,8 +31,8 @@ export class BoundaryCannon {
       }
       position.x=next.x;position.y=next.y;position.z=next.z;
       // Safety containment for extreme settings/air steering: redirect velocity, never teleport.
-      const safe=limit-4;if(position.x>safe&&f.vx>0)f.vx=-Math.abs(f.vx);if(position.x<-safe&&f.vx<0)f.vx=Math.abs(f.vx);
-      if(position.z>safe&&f.vz>0)f.vz=-Math.abs(f.vz);if(position.z<-safe&&f.vz<0)f.vz=Math.abs(f.vz);
+      const safe=typeof limit==='number'?limit-4:0,minX=typeof limit==='number'?-safe:limit.minX+4,maxX=typeof limit==='number'?safe:limit.maxX-4,minZ=typeof limit==='number'?-safe:limit.minZ+4,maxZ=typeof limit==='number'?safe:limit.maxZ-4;if(position.x>maxX&&f.vx>0)f.vx=-Math.abs(f.vx);if(position.x<minX&&f.vx<0)f.vx=Math.abs(f.vx);
+      if(position.z>maxZ&&f.vz>0)f.vz=-Math.abs(f.vz);if(position.z<minZ&&f.vz<0)f.vz=Math.abs(f.vz);
       // Bounded inputs and gravity normally land in <8 seconds. Timeout is an emergency only.
       if(f.elapsed>15||![position.x,position.y,position.z].every(Number.isFinite)){this.reset();return {unrecoverable:true};}
     }

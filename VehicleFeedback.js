@@ -18,12 +18,13 @@ export class SoftBoundary {
   }
   resolve(position,heading,speed,limit,bounds,config,thrust){
     const fx=Math.sin(heading),fz=Math.cos(heading),reach=Math.max(Math.abs(bounds.rear),Math.abs(bounds.front));
-    const lx=limit-bounds.radius-reach*Math.abs(fx),lz=limit-bounds.radius-reach*Math.abs(fz);
+    const lx=(typeof limit==='number'?limit:limit.maxX)-bounds.radius-reach*Math.abs(fx),lz=(typeof limit==='number'?limit:limit.maxZ)-bounds.radius-reach*Math.abs(fz);
+    const minX=typeof limit==='number'?-lx:limit.minX+bounds.radius+reach*Math.abs(fx),minZ=typeof limit==='number'?-lz:limit.minZ+bounds.radius+reach*Math.abs(fz);
     let vx=fx*speed+this.x,vz=fz*speed+this.z;
-    const nx=position.x>=lx&&vx>0?-1:position.x<=-lx&&vx<0?1:0;
-    const nz=position.z>=lz&&vz>0?-1:position.z<=-lz&&vz<0?1:0;
-    position.x=clamp(position.x,-lx,lx);position.z=clamp(position.z,-lz,lz);
-    const clearance=Math.min(lx-Math.abs(position.x),lz-Math.abs(position.z));
+    const nx=position.x>=lx&&vx>0?-1:position.x<=minX&&vx<0?1:0;
+    const nz=position.z>=lz&&vz>0?-1:position.z<=minZ&&vz<0?1:0;
+    position.x=clamp(position.x,minX,lx);position.z=clamp(position.z,minZ,lz);
+    const clearance=Math.min(lx-position.x,position.x-minX,lz-position.z,position.z-minZ);
     if(clearance>1&&(thrust===0||(fx*this.nx+fz*this.nz)*thrust>.1))this.latched=false;
     if(!nx&&!nz)return {speed,impact:0,nx:0,nz:0};
     const length=Math.hypot(nx,nz),normalX=nx/length,normalZ=nz/length;

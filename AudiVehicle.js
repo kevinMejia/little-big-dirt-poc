@@ -3,9 +3,12 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
 // Runtime pivots preserve every source mesh, material and embedded texture.
 export class AudiVehicle {
- static async load(){return (await new GLTFLoader().loadAsync(new URL('./assets/audi_rs_q_e-tron.glb',import.meta.url).href)).scene;}
+ static async load(){return (await new GLTFLoader().loadAsync(new URL('./assets/audi_rs_q_e-tron_dakar.glb',import.meta.url).href)).scene;}
  constructor(template){
   this.point=new THREE.Vector3();this.group=new THREE.Group();const asset=template.clone(true);this.group.add(asset);
+  // The source's right gullwing door is raised 90 degrees about its local hinge.
+  // Close the instance before measuring bounds; retain the cached source pose.
+  asset.getObjectByName('PuertaCopi001')?.rotateX(Math.PI/2);
   asset.updateMatrixWorld(true);let bounds=new THREE.Box3().setFromObject(asset);
   asset.scale.multiplyScalar(5/bounds.getSize(new THREE.Vector3()).z);asset.updateMatrixWorld(true);
   bounds.setFromObject(asset);const center=bounds.getCenter(new THREE.Vector3());asset.position.set(-center.x,-bounds.min.y,-center.z);this.group.updateMatrixWorld(true);

@@ -1,4 +1,5 @@
 import {worldAppearance} from './WorldEnvironmentConfig.js';
+// The rally module extends the eastern boundary independently of this sandbox footprint.
 // Main Play only. The Jump Lab keeps its independent, fixed testing dimensions.
 export function mainWorldSettings(config=worldAppearance){
  const requested=Number(config.worldSize);

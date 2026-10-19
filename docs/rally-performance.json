@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-19T01:19:35.718Z",
+  "browser": "Edge headless WebGL",
+  "viewport": "1280x800",
+  "frames": 120,
+  "results": [
+    {
+      "region": "sandbox baseline",
+      "startupMs": 6428,
+      "fps": 143.80664652567975,
+      "calls": 148,
+      "triangles": 2160314,
+      "memory": {
+        "geometries": 74,
+        "textures": 53
+      }
+    },
+    {
+      "region": "sandbox expanded",
+      "startupMs": 10865,
+      "fps": 136.9232539408586,
+      "calls": 148,
+      "triangles": 2260374,
+      "memory": {
+        "geometries": 74,
+        "textures": 53
+      },
+      "course": {
+        "length": 653.4436338731985,
+        "accessLength": 221.36694464346803,
+        "elevationRange": 31.733371206110156,
+        "triangles": 448292
+      }
+    },
+    {
+      "region": "rally uphill",
+      "fps": 141.43094841930122,
+      "calls": 104,
+      "triangles": 2244676,
+      "memory": {
+        "geometries": 87,
+        "textures": 56
+      },
+      "course": {
+        "length": 653.4436338731985,
+        "accessLength": 221.36694464346803,
+        "elevationRange": 31.733371206110156,
+        "triangles": 448292
+      }
+    }
+  ]
+}

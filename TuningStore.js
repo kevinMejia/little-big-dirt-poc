@@ -1,8 +1,9 @@
+import {audiTuning} from './AudiConfig.js';
 import * as vehicleDefaults from './VehicleConfig.js';
 import {worldAppearance} from './WorldEnvironmentConfig.js';
 import {storybookBackgroundConfig} from './StorybookBackgroundConfig.js';
 import {audioConfig,audioDefinitions} from './AudioConfig.js';
-const config={...vehicleDefaults,worldAppearance,storybookBackgroundConfig,audioConfig};
+const config={audiTuning,...vehicleDefaults,worldAppearance,storybookBackgroundConfig,audioConfig};
 
 // VehicleConfig.js owns defaults. This module stores only explicit user overrides.
 export const tuningConfig=config;
@@ -165,13 +166,21 @@ for(const [key,label,type,description] of [
  ['skyTint','Sky color tint','color','Live: multiplies the painted background palette; white preserves the original artwork.'],
 ])tuningFields.push({id:'storybookBackgroundConfig.'+key,root:'storybookBackgroundConfig',key,label,type,description,group:'Storybook Background',scope:'storybook',mode:'both',vehicle:false});
 export function fieldPath(field,vehicle='dirty',mode='hybrid'){
+ if(vehicle==='audi'){
+  if(field.root==='drive')return `audiTuning.${mode==='original'?'':'handling.'}${field.key}`;
+  if(field.root==='originalDriveConfig')return `audiTuning.${field.key}`;
+  if(field.root==='arcadeHandlingConfig')return `audiTuning.handling.${field.key}`;
+  if(field.root==='vehicleConfig')return `audiTuning.hill.${field.key}`;
+  if(field.root==='cannon')return `audiTuning.hill.boundaryCannon.${field.key}`;
+  if(field.root==='jumpVehicleConfig')return `audiTuning.${field.key}`;
+ }
  const name=vehicle==='dirty'?'backhoe':'garbageTruck';
  if(field.root==='drive')return `${mode==='original'?'originalDriveConfig':'arcadeHandlingConfig'}.${vehicle}.${field.key}`;
  if(field.root==='cannon')return `vehicleConfig.${name}.boundaryCannon.${field.key}`;
  return `${field.root}${field.vehicle?'.'+(field.root==='vehicleConfig'?name:vehicle):''}.${field.key}`;
 }
 const allowed=new Map();
-for(const field of tuningFields)for(const vehicle of ['dirty','stinky'])for(const mode of ['hybrid','original'])allowed.set(fieldPath(field,vehicle,mode),field);
+for(const field of tuningFields)for(const vehicle of ['dirty','stinky','audi'])for(const mode of ['hybrid','original'])allowed.set(fieldPath(field,vehicle,mode),field);
 export const tuningValue=path=>get(config,path);
 export const defaultTuningValue=path=>get(tuningDefaults,path);
 let overrides={};
@@ -214,3 +223,5 @@ if(typeof window!=='undefined'){
  window.addEventListener('storage',event=>{if(event.key===tuningKey()||event.key===null)refresh();});
  window.addEventListener('pageshow',refresh);
 }
+
+export function exportAudiTuning(){return 'export const audiTuning = '+JSON.stringify(audiTuning,null,2)+';\nexport function audiConfig(){return {...audiTuning,accel:audiTuning.acceleration,max:audiTuning.topSpeed,reverse:audiTuning.reverseSpeed,landingBouncePercent:12*audiTuning.landingBounceScalePercent/100};}\n';}

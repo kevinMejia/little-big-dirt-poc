@@ -1,0 +1,37 @@
+[
+  {
+    "material": "Chasis",
+    "paintedTriangles": 18897,
+    "coveredPixels": 772089,
+    "overlappingPixelWrites": 531,
+    "resolution": 1024
+  },
+  {
+    "material": "Chimenea",
+    "paintedTriangles": 4072,
+    "coveredPixels": 699217,
+    "overlappingPixelWrites": 391,
+    "resolution": 1024
+  },
+  {
+    "material": "Parachoques_trasero",
+    "paintedTriangles": 6576,
+    "coveredPixels": 695182,
+    "overlappingPixelWrites": 280,
+    "resolution": 1024
+  },
+  {
+    "material": "Puertas",
+    "paintedTriangles": 3182,
+    "coveredPixels": 657320,
+    "overlappingPixelWrites": 610063,
+    "resolution": 1024
+  },
+  {
+    "material": "TapaMotor",
+    "paintedTriangles": 7564,
+    "coveredPixels": 577827,
+    "overlappingPixelWrites": 504,
+    "resolution": 1024
+  }
+]
