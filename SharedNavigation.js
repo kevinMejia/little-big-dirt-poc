@@ -1,6 +1,6 @@
 import './TouchInteraction.js';
 import {openSettingsPanel} from './SettingsPanel.js';
-import {readGamePreferences,gamePreferenceStorage} from './GamePreferences.js?v=central-settings-3';
+import {readGamePreferences,gamePreferenceStorage} from './GamePreferences.js?v=hybrid-only-1';
 // Paths are relative to this module, so local hosting and GitHub project Pages work.
 // Add a destination here, then include this module on its page. No router/scenes.
 export const navigationItems = [

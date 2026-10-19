@@ -23,8 +23,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
  },null,{timeout:120000});
  console.log('Driving',JSON.stringify(runs));for(const r of runs){assert(r.complete,JSON.stringify(r));assert(r.maxError<2,'stay within road plus shoulder');assert(r.maxAir<1,'no seam launches');}
  await page.keyboard.press('Digit3');
- for(const mode of ['original','rapier']){
-  await page.locator('#vehicleControlsToggle').click();await page.locator('#physicsMode').selectOption(mode);await page.waitForTimeout(500);await page.locator('#vehicleControlsToggle').click();
+ for(const mode of ['rapier']){
   await page.evaluate(()=>rallyQA.place(.1,true));await page.keyboard.down('KeyW');await page.waitForTimeout(2300);await page.keyboard.up('KeyW');
   const gate=await page.evaluate(()=>rallyQA.read());assert(gate.position.x>330&&gate.speed>0&&!gate.airborne,mode+' access boundary '+JSON.stringify(gate));
  }
@@ -33,5 +32,5 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
  await page.evaluate(()=>{window.rallyAerial=true;const frame=()=>{if(window.rallyAerial){rallyQA.aerial();requestAnimationFrame(frame);}};frame();});await page.waitForTimeout(500);await page.screenshot({path:'docs/screenshots/rally-aerial.png'});
  await page.locator('#vehicleControlsToggle').click();await page.getByRole('button',{name:'Track debug',exact:true}).click();await page.waitForTimeout(300);assert(await page.locator('[aria-pressed="true"]').count()>0);await page.screenshot({path:'docs/screenshots/rally-debug.png'});await page.getByRole('button',{name:'Track debug',exact:true}).click();await page.locator('#vehicleControlsToggle').click();await page.evaluate(()=>{window.rallyAerial=false;});
  await page.setViewportSize({width:390,height:844});await page.evaluate(()=>rallyQA.place(0));await page.waitForTimeout(1300);await page.locator('#vehicleControlsToggle').click();await page.screenshot({path:'docs/screenshots/rally-phone.png'});
- console.log('errors',errors);assert.deepEqual(errors,[]);fs.writeFileSync('docs/rally-validation.json',JSON.stringify({runs,errors,keyboardAccessModes:['original','rapier'],desktop:[1400,900],phone:[390,844]},null,2)+'\n');
+ console.log('errors',errors);assert.deepEqual(errors,[]);fs.writeFileSync('docs/rally-validation.json',JSON.stringify({runs,errors,keyboardAccessModes:['rapier'],desktop:[1400,900],phone:[390,844]},null,2)+'\n');
  }finally{await browser.close();}})().catch(e=>{console.error(e);process.exit(1)});

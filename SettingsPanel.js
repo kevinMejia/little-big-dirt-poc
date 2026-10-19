@@ -1,7 +1,7 @@
 import {appendWordHuntSettings} from './WordHuntSettings.js';
 import {appendAudioSettings} from './AudioSettings.js';
 import {tuningFields,fieldPath,tuningValue,defaultTuningValue,setTuning,resetTuning,exportTuning,exportEnvironmentTuning,exportStorybookTuning,exportRallyCarTuning} from './TuningStore.js';
-import {readGamePreferences,saveGamePreference,resetGamePreference,gamePreferenceStorage} from './GamePreferences.js?v=central-settings-3';
+import {readGamePreferences,saveGamePreference,resetGamePreference,gamePreferenceStorage} from './GamePreferences.js?v=hybrid-only-1';
 import {settingsPlacement} from './SettingsPlacement.js';
 
 let panel;
@@ -20,15 +20,15 @@ function createSettingsPanel(){
  </style><dialog aria-labelledby="settings-title"><header><div class="top"><h2 id="settings-title">Settings</h2><button id="minimize" aria-label="Minimize settings" aria-expanded="true">Minimize</button><button id="close" aria-label="Close settings">Close</button></div><div class="vehicle"><label for="tuning-vehicle">Tune vehicle</label><select id="tuning-vehicle"><option value="dirty">Dirty · Backhoe</option><option value="stinky">Stinky · Garbage truck</option><option value="rally-car">Rally Car</option></select></div></header><div id="body"><p class="context" id="context" style="padding:0 12px"></p><main></main><footer><button id="export" class="primary">Export VehicleConfig.js</button><button id="reset-all">Reset all tuning…</button><div id="confirm" hidden><p>Restore all vehicles and global tuning to the current file defaults?</p><button id="confirm-reset">Yes, reset all tuning</button> <button id="cancel-reset">Cancel</button></div></footer><p role="status" id="status"></p></div></dialog>`;
  document.body.append(host);
  const $=selector=>root.querySelector(selector),dialog=$('dialog'),vehicle=$('#tuning-vehicle');
- const isPlay=()=>!!document.querySelector('#physicsMode');
+ const isPlay=()=>!!document.querySelector('#vehicleSelect');
  const isLab=()=>location.pathname.endsWith('/jumps.html');
- const mode=()=>isPlay()&&document.querySelector('#physicsMode').value==='original'?'original':'hybrid';
+ const mode=()=>'hybrid';
  const report=saved=>{$('#status').textContent=saved?'Saved automatically.':'Applied for this page; browser storage is unavailable.';};
  function downloadConfiguration(filename,source){const url=URL.createObjectURL(new Blob([source],{type:'text/javascript'})),link=document.createElement('a');link.href=url;link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
  function render(){
   const expanded=new Set([...root.querySelectorAll('details[open]')].map(element=>element.dataset.group));
   const first=!root.querySelector('details');
-  $('#context').textContent=`${mode()==='hybrid'?'Main-game hybrid':'Original controller'} tuning. ${isPlay()||isLab()?'Vehicle selection edits tuning; it does not switch or reset the car.':'Preview area: saved driving changes apply when you enter Play or Dirt Jump Lab.'} Shared values apply to all vehicles.`;
+  $('#context').textContent=`Main-game hybrid tuning. ${isPlay()||isLab()?'Vehicle selection edits tuning; it does not switch or reset the car.':'Preview area: saved driving changes apply when you enter Play or Dirt Jump Lab.'} Shared values apply to all vehicles.`;
   $('#export').textContent=vehicle.value==='rally-car'?'Export RallyCarConfig.js':'Export VehicleConfig.js';
   const main=$('main');main.replaceChildren();
   for(const group of [...new Set(tuningFields.map(field=>field.group))]){
@@ -132,7 +132,6 @@ function createSettingsPanel(){
   if(event.key==='Escape'){event.stopPropagation();if(type==='keydown')dialog.close();return;}
   if(type==='keydown'&&(target.matches('input:not([type]),input[type=text],input[type=number],select')||target.matches('input[type=range]')&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End','PageUp','PageDown'].includes(event.key)||target.matches('button,input[type=checkbox]')&&[' ','Enter'].includes(event.key)))event.stopPropagation();
  });
- document.querySelector('#physicsMode')?.addEventListener('change',()=>{if(dialog.open)render();});
  window.addEventListener('storage',()=>{if(dialog.open)render();});
  window.addEventListener('pageshow',()=>{if(dialog.open)render();});
  return {open(){render();if(!dialog.open)dialog.show();place();}};

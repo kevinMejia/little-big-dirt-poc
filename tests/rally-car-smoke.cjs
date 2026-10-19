@@ -25,7 +25,7 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  for(let i=0;i<3;i++){for(const key of ['Digit1','Digit2','Digit3']){await page.keyboard.press(key);await page.waitForTimeout(150);}}
  const memoryEnd=(await read()).memory;assert(memoryEnd.geometries<=memoryStart.geometries+10);assert(memoryEnd.textures<=memoryStart.textures+2);
  for(const key of ['Digit1','Digit2']){await page.keyboard.press(key);await page.evaluate(()=>rallyCarQA.place(0,0));await drive('KeyW',500);assert((await read()).speed>0);}
- await page.keyboard.press('Digit3');await page.locator('#physicsMode').selectOption('original');await page.waitForTimeout(300);await drive('KeyW',600);assert((await read()).speed>0);await page.locator('#physicsMode').selectOption('rapier');await page.waitForTimeout(500);
+ await page.keyboard.press('Digit3');await drive('KeyW',600);assert((await read()).speed>0);assert.equal(await page.locator('#physicsMode').count(),0);
  console.log(JSON.stringify({asset,baseline,memoryStart,memoryEnd,rallyCar:await read(),errors},null,2));assert.deepEqual(errors,[]);
  await page.setViewportSize({width:390,height:844});await page.locator('#vehicleControlsToggle').click();await page.locator('#rallyCarBtn').click();await page.screenshot({path:'docs/screenshots/rally-car-rally-mobile.png'});
  }finally{await browser.close();}})().catch(e=>{console.error(e);process.exit(1)});

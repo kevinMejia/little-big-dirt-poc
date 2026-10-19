@@ -3,7 +3,7 @@
 1. Preserve existing behavior unless the task specification explicitly changes it. State preservation requirements beside new behavior.
 2. Extend current module ownership. Keep index.html as orchestration and put bounded domain behavior in modules. No unrelated refactoring, relocation, bundler or backend migration.
 3. Keep one movement authority per simulation step. Visuals consume simulation state; observational gameplay must not write vehicle transforms or forces.
-4. Reuse authoritative terrain/road data for rendering, detection and collision. Preserve Original physics and loading fallbacks.
+4. Reuse authoritative terrain/road data for rendering, detection and collision. Play uses Rapier / Hybrid exclusively; preserve shared terrain and explicit loading failure recovery.
 5. Keep file defaults distinct from browser overrides. Document configuration units, clamps, mode support, live/reload timing and storage scope. Storage failures must degrade safely.
 6. Preserve relative URLs, static HTTP hosting and the GitHub Pages subdirectory. Consequential dependency changes require an explicit plan decision; retain version/source/license metadata.
 7. Preserve input ownership, input clearing, audio gesture unlocking, focus and page lifecycle. New UI must coexist with touch controls and existing dialogs.

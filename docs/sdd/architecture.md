@@ -6,7 +6,6 @@ Source review: 2026-10-19; vehicle names updated for feature 002. This architect
 | --- | --- |
 | Bootstrap and orchestration | index.html: scene setup, loading, vehicle selection, update/render loop, camera, lifecycle and feature connections |
 | Rendering | Three.js 0.168.0 from pinned jsDelivr imports; native ES modules/import maps, GLTFLoader, procedural meshes and instancing |
-| Original driving | index.html with VehicleMotion.js, HillSpeedPhysics.js, VehicleFeedback.js and BoundaryCannon.js |
 | Hybrid driving | RapierWorldVehicle.js, ArcadeGroundDrive.js and JumpVehiclePrototype.js; vendored Rapier 0.21.0, fixed 1/120-second simulation, interpolated rendering |
 | Vehicle adaptation | DirtyGLB/StinkyGLB adapters, BackhoeLoader.js fallback, RallyCarVehicle.js, StinkyEquipment.js and PlayableVehicleSetup.js |
 | World | EnvironmentWorld.js/assets, world appearance/textures/debris, existing tree/rock interactions, ramps and rally landscape |

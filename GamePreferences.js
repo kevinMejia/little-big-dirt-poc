@@ -5,7 +5,7 @@ const defaults={physicsMode:'rapier',showDrivingHud:false,showControlsGuide:fals
 const booleanKeys=['touchControls','diagnostics','showDrivingHud','showControlsGuide'];
 function savedPreferences(storage,base){
  const saved=JSON.parse(storage.getItem(preferenceKey(base)))??{},result={};
- if(saved.physicsMode==='original'||saved.physicsMode==='rapier')result.physicsMode=saved.physicsMode;
+ if(saved.physicsMode==='original'||saved.physicsMode==='rapier')result.physicsMode='rapier';
  for(const key of booleanKeys)if(typeof saved[key]==='boolean')result[key]=saved[key];
  return result;
 }
@@ -16,7 +16,7 @@ export function readGamePreferences(storage,base=import.meta.url){
 }
 export function preferenceKey(base=import.meta.url){return 'little-big-dirt:preferences:'+new URL('.',base).pathname;}
 export function saveGamePreference(storage,key,value,base=import.meta.url){
- const valid=key==='physicsMode'?['original','rapier'].includes(value):booleanKeys.includes(key)&&typeof value==='boolean';
+ const valid=key==='physicsMode'?value==='rapier':booleanKeys.includes(key)&&typeof value==='boolean';
  if(!valid)return;
  try{let saved;try{saved=savedPreferences(storage,base);}catch{saved={};}storage.setItem(preferenceKey(base),JSON.stringify({...saved,[key]:value}));}catch{/* Private/restricted storage must not break controls. */}
 }

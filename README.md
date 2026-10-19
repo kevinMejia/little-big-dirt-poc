@@ -381,9 +381,9 @@ by the lab, with its vendored license/source metadata under `viewer/vendor/rapie
 
 ### Main-world hybrid driving
 
-The **Physics Mode** selector defaults to **Rapier**: Original-style grounded
-acceleration, turning and hills with Rapier gravity and controls in flight.
-**Original** remains available as a fallback. A loading failure retains Original.
+Play uses **Rapier / Hybrid** exclusively: arcade grounded acceleration, turning
+and hills with Rapier gravity and controls in flight. Legacy saved Original mode
+selections migrate to Rapier. A physics loading failure offers a reload button.
 No models or input devices were replaced. Use the **Handling course** link for
 an open comparison area with a long straight, circles, hills, bumps and ramps.
 

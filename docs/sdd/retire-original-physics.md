@@ -1,0 +1,9 @@
+# Retire Original physics
+
+2026-10-19, baseline ca9e6e6. User explicitly authorized removing the older Play controller after reporting unavailable turbo with a saved Original selection.
+
+Requirements and plan: remove the Original simulation/render branches and mode selector; initialize Rapier / Hybrid before animation; normalize legacy preferences and persist Rapier without resetting unrelated settings. Keep shared tuning data and helper modules used by Hybrid, labs and regression comparisons. Physics startup failure must show reload and must not start another movement path. Preserve vehicle switching, reset, rally relocation, turbo and existing URLs. No dependencies or tuning defaults change.
+
+Implementation: Play has one movement authority; settings now detect Play independently of the removed selector. Legacy reads resolve to Rapier, writes cannot select Original, and successful startup persists migration. Existing loading retry handles physics failure. Historical helper modules and Original tuning data remain for shared consumers and tests, but Play cannot activate the retired controller.
+
+Validation: build_site.py followed by check_project.py passed (production files/links/assets, preferences/tuning, physics integration, jumps, collisions and rally). hybrid-startup.cjs passed migration, preserved display/touch settings, all three vehicles driving/switching/reset, reload persistence, simulated physics module failure and retry recovery. vehicle-menu.cjs passed desktop, portrait and landscape layouts, vehicle selection, keyboard drive and rally relocation with no page errors. turbo-world.cjs passed desktop and phone-sized touch emulation: all three vehicles collect and accelerate, reset/cooldown isolation, live Settings count and showroom. Browser: Windows headless Edge 155.0.4283.62. No physical phones, Firefox or Safari tested. Generated regression screenshots were discarded to preserve the existing reference images.
