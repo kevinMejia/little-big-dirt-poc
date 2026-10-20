@@ -4,7 +4,7 @@ import hashlib, json, shutil
 
 ROOT=Path(__file__).resolve().parents[1]
 DIST=ROOT/'dist'
-ASSET_TYPES={'.css','.mjs','.js','.json','.glb','.gltf','.bin','.blend','.png','.jpg','.jpeg','.webp','.svg','.wav','.ogg','.mp3','.m4a','.md'}
+ASSET_TYPES={'.ttf','.css','.mjs','.js','.json','.glb','.gltf','.bin','.blend','.png','.jpg','.jpeg','.webp','.svg','.wav','.ogg','.mp3','.m4a','.md'}
 
 def build():
     # Clean only our fixed generated directory; never follow a linked output path.

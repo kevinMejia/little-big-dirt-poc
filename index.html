@@ -7,6 +7,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 
 <title>Little Big Dirt | Driving Sandbox</title>
+<link rel="preload" as="image" href="./assets/logo.png" fetchpriority="high">
 
 <style>
 
@@ -85,19 +86,31 @@ body[data-lbd-controls-guide="true"] #help{display:block!important;max-width:cal
  #vehicleControls .physics-mode select{min-height:30px;width:100%}
  #vehicleControlsToggle:focus-visible{outline:3px solid #ffe58b;outline-offset:3px}
 @media(prefers-reduced-motion:reduce){#vehicleControls #switcher{transition:none}}
-/* First-paint loading screen; no font, image, or module downloads required. */
-#gameLoading{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;background:#f5dfaa;color:#24332c;padding:24px;padding-top:max(24px,env(safe-area-inset-top));text-align:center;font-family:"Comic Sans MS","Chalkboard SE",cursive;overflow:hidden}
+@font-face{font-family:"Patrick Hand";src:url("./assets/fonts/PatrickHand-Regular.ttf") format("truetype");font-display:swap}
+/* Loading configuration is in LoadingScreen.js. Beige first paint stays inline. */
+#gameLoading{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;background:#f5dfaa;color:#24332c;text-align:center;font-family:"Patrick Hand","Comic Sans MS","Chalkboard SE",cursive;overflow:hidden;opacity:1;transition:opacity var(--exit-fade,500ms) ease-in-out;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 #gameLoading::before,#gameLoading::after{content:"";position:absolute;width:78vmin;height:78vmin;background:#ead095;pointer-events:none;will-change:transform;backface-visibility:hidden;animation:loading-blob 12s cubic-bezier(.45,0,.55,1) infinite alternate}
 #gameLoading::before{border-radius:44% 56% 47% 53% / 53% 45% 55% 47%;transform:translate3d(-8px,-26px,0) rotate(-8deg) scale(.96,1.06)}
 #gameLoading::after{border-radius:56% 44% 54% 46% / 45% 56% 44% 55%;animation-name:loading-blob-back;transform:translate3d(8px,-12px,0) rotate(8deg) scale(1.06,.96)}
-#gameLoading .loading-content{position:relative;z-index:1;display:grid;justify-items:center;gap:24px}
-#gameLoading .gear-spinner{width:clamp(110px,24vmin,190px);aspect-ratio:1;animation:loading-turn 6s linear infinite;will-change:transform;transform:translateZ(0);backface-visibility:hidden}
-#gameLoading .loading-gear{display:block;width:100%;height:100%;filter:drop-shadow(0 8px 0 #b98b38)}
-#gameLoading h2{font-size:clamp(32px,7vw,52px);font-weight:900;letter-spacing:1px;margin:0;line-height:1.2;transform:rotate(-3deg);text-shadow:2px 3px #fff1cc}
-#gameLoading .loading-brand{font:800 11px system-ui;letter-spacing:4px;color:#6b6844;margin:0}
-#gameLoading button{border:2px solid #273a30;border-radius:14px;background:#e9b72d;color:#24332c;padding:12px 22px;font:700 16px system-ui;cursor:pointer}
+
+#gameLoading .loading-content{position:relative;z-index:1;width:100%;height:100%;display:grid;place-items:center;--logo-width:min(calc(34vw * var(--logo-scale,1.2)),calc(52svh * var(--logo-scale,1.2)),90vw,100svh,1706px);--logo-height:calc(var(--logo-width) * .540445);--move:min(var(--logo-move,60px),8svh);--gear-size:clamp(32px,6.5svh,var(--gear-size-max,70px));--label-size:clamp(24px,6svh,var(--label-size-max,64px))}
+#gameLoading .loading-logo{position:absolute;width:var(--logo-width);height:auto;max-height:60svh;object-fit:contain;margin:0;transform:translateY(0);transition:transform var(--logo-duration,600ms) ease-in-out}
+#gameLoading.indicator-visible .loading-logo{transform:translateY(calc(-1 * var(--move)))}
+#gameLoading .loading-indicator{position:absolute;top:calc(50% + var(--logo-height) / 2 - var(--move) + 12px);display:grid;justify-items:center;gap:clamp(6px,1.5svh,16px);opacity:0;visibility:hidden;transition:opacity var(--indicator-fade,400ms) ease-in-out}
+#gameLoading.indicator-visible .loading-indicator{opacity:1;visibility:visible}
+#gameLoading .gear-spinner{width:var(--gear-size);aspect-ratio:1}
+#gameLoading.indicator-visible:not(.loading-error):not(.loading-exit) .gear-spinner{animation:loading-turn var(--gear-duration,2000ms) linear infinite}
+#gameLoading .loading-gear{display:block;width:100%;height:100%;filter:drop-shadow(2px 2px 0 #b98b38)}
+#gameLoading h2{font-size:var(--label-size);font-weight:900;letter-spacing:1px;margin:0;line-height:1.2;text-shadow:2px 3px #fff1cc}
+#gameLoading button{border:2px solid #273a30;border-radius:14px;background:#e9b72d;color:#24332c;padding:10px 20px;font:700 16px system-ui;cursor:pointer}
 #gameLoading[hidden],#gameLoading button[hidden]{display:none}
-#gameLoading.loading-error .gear-spinner{animation-play-state:paused}
+#gameLoading.loading-exit{opacity:0}
+#gameLoading.loading-exit::before,#gameLoading.loading-exit::after,#gameLoading.loading-error::before,#gameLoading.loading-error::after{animation:none}
+#gameLoading.loading-error .loading-indicator{top:auto;bottom:max(12px,env(safe-area-inset-bottom));max-width:94%;gap:6px}
+#gameLoading.loading-error h2{font-size:clamp(18px,4svh,32px)}
+#gameLoading.loading-error .gear-spinner{display:none}
+@media(orientation:portrait){#gameLoading .loading-content{--logo-width:min(calc(78vw * var(--logo-scale,1.2)),calc(52svh * var(--logo-scale,1.2)),90vw,100svh,1706px)}}
+@media(max-height:450px){#gameLoading .loading-content{--logo-width:min(calc(34vw * var(--logo-scale,1.2)),calc(67svh * var(--logo-scale,1.2)),86vw,80svh,1706px);--gear-size:clamp(24px,9svh,40px);--label-size:clamp(20px,7svh,30px)}}
 /* Animate only composited transforms: no per-frame border-radius paint. */
 @keyframes loading-blob{
 from{transform:translate3d(-8px,-26px,0) rotate(-8deg) scale(.96,1.06)}
@@ -108,7 +121,7 @@ from{transform:translate3d(8px,-12px,0) rotate(8deg) scale(1.06,.96)}
 to{transform:translate3d(-8px,-26px,0) rotate(-18deg) scale(.95,1.09)}
 }
 @keyframes loading-turn{from{transform:translateZ(0) rotate(0deg)}to{transform:translateZ(0) rotate(360deg)}}
-@media(prefers-reduced-motion:reduce){#gameLoading .gear-spinner,#gameLoading::before,#gameLoading::after{animation:none}}
+@media(prefers-reduced-motion:reduce){#gameLoading *,#gameLoading::before,#gameLoading::after{animation:none!important;transition:none!important}}
 
 </style>
 
@@ -118,16 +131,11 @@ to{transform:translate3d(-8px,-26px,0) rotate(-18deg) scale(.95,1.09)}
 
 <body>
 <div id="gameLoading" role="status" aria-live="polite" aria-label="Loading Little Big Dirt">
- <div class="loading-content"><p class="loading-brand">LITTLE BIG DIRT</p>
- <div class="gear-spinner" aria-hidden="true"><svg class="loading-gear" viewBox="0 0 200 200" aria-hidden="true"><path d="M168.00,100.00 L184.27,111.09 L182.10,122.00 L162.82,126.02 L158.89,134.00 L167.44,151.74 L160.10,160.10 L141.40,153.95 L134.00,158.89 L132.53,178.53 L122.00,182.10 L108.88,167.42 L100.00,168.00 L88.91,184.27 L78.00,182.10 L73.98,162.82 L66.00,158.89 L48.26,167.44 L39.90,160.10 L46.05,141.40 L41.11,134.00 L21.47,132.53 L17.90,122.00 L32.58,108.88 L32.00,100.00 L15.73,88.91 L17.90,78.00 L37.18,73.98 L41.11,66.00 L32.56,48.26 L39.90,39.90 L58.60,46.05 L66.00,41.11 L67.47,21.47 L78.00,17.90 L91.12,32.58 L100.00,32.00 L111.09,15.73 L122.00,17.90 L126.02,37.18 L134.00,41.11 L151.74,32.56 L160.10,39.90 L153.95,58.60 L158.89,66.00 L178.53,67.47 L182.10,78.00 L167.42,91.12 Z M128,100 A28,28 0 1,0 72,100 A28,28 0 1,0 128,100 Z" fill="#efb923" stroke="#354034" stroke-width="5" stroke-linejoin="round" fill-rule="evenodd"/></svg></div>
- <h2 id="loadingMessage">Loading…</h2><button id="loadingRetry" type="button" hidden>Try again</button></div>
+ <div class="loading-content"><img class="loading-logo" src="./assets/logo.png" width="1706" height="922" alt="Little Big Dirt" fetchpriority="high" decoding="sync">
+ <div class="loading-indicator" aria-hidden="true"><div class="gear-spinner" aria-hidden="true"><svg class="loading-gear" viewBox="0 0 200 200" aria-hidden="true"><path d="M168.00,100.00 L184.27,111.09 L182.10,122.00 L162.82,126.02 L158.89,134.00 L167.44,151.74 L160.10,160.10 L141.40,153.95 L134.00,158.89 L132.53,178.53 L122.00,182.10 L108.88,167.42 L100.00,168.00 L88.91,184.27 L78.00,182.10 L73.98,162.82 L66.00,158.89 L48.26,167.44 L39.90,160.10 L46.05,141.40 L41.11,134.00 L21.47,132.53 L17.90,122.00 L32.58,108.88 L32.00,100.00 L15.73,88.91 L17.90,78.00 L37.18,73.98 L41.11,66.00 L32.56,48.26 L39.90,39.90 L58.60,46.05 L66.00,41.11 L67.47,21.47 L78.00,17.90 L91.12,32.58 L100.00,32.00 L111.09,15.73 L122.00,17.90 L126.02,37.18 L134.00,41.11 L151.74,32.56 L160.10,39.90 L153.95,58.60 L158.89,66.00 L178.53,67.47 L182.10,78.00 L167.42,91.12 Z M128,100 A28,28 0 1,0 72,100 A28,28 0 1,0 128,100 Z" fill="#efb923" stroke="#354034" stroke-width="5" stroke-linejoin="round" fill-rule="evenodd"/></svg></div>
+ <h2 id="loadingMessage">Loading...</h2><button id="loadingRetry" type="button" hidden>Try again</button></div></div>
 </div>
-<script>
-// Show a usable retry if a required module fails, rather than spinning forever.
-function loadingFailed(event){const screen=document.querySelector('#gameLoading');if(screen&&!screen.hidden){screen.dataset.error=event?.reason?.stack||event?.error?.stack||event?.message||'Startup resource failed';console.error('Game startup failed:',screen.dataset.error);screen.classList.add('loading-error');document.querySelector('#loadingMessage').textContent='Oops! Try again';document.querySelector('#loadingRetry').hidden=false;}}
-addEventListener('error',loadingFailed);addEventListener('unhandledrejection',loadingFailed);
-document.querySelector('#loadingRetry').onclick=()=>location.reload();
-</script>
+<script src="./LoadingScreen.js"></script>
 
 
 <div id="hud"><div class="subtitle">FREE DRIVE</div><h1>LITTLE BIG DIRT</h1><div id="vehicleName">Backhoe Loader</div><div id="speed">0 <small>MPH</small></div><button id="debugToggle" type="button" aria-label="Toggle driving diagnostics" aria-pressed="false" title="Driving diagnostics">i</button><div id="treeTuning" style="font-size:11px;color:#ffe5a0;margin-top:6px"></div><div id="renderTuning" style="font-size:10px;color:#c6e3d5;margin-top:4px"></div><div id="terrainInfo" style="font-size:11px;color:#c6e3d5;margin-top:6px">Explore the hills!</div></div>
@@ -404,7 +412,7 @@ document.querySelector('#rallyBtn').onclick=()=>{
  camera.lookAt(position.x,position.y+2.4,position.z);
 };
 
-const keys=new Set();addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys.add(e.code);if(garage.open)return;if(e.repeat)return;if(e.code==='KeyR')reset();if(e.code==='KeyH')honk()});addEventListener('keyup',e=>keys.delete(e.code));addEventListener('blur',()=>keys.clear());
+const keys=new Set();addEventListener('keydown',e=>{if(!window.gameLoadingScreen.canPlay)return;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys.add(e.code);if(garage.open)return;if(e.repeat)return;if(e.code==='KeyR')reset();if(e.code==='KeyH')honk()});addEventListener('keyup',e=>keys.delete(e.code));addEventListener('blur',()=>keys.clear());
 
 const controls=new DrivingInput({root:document.querySelector('#mobile'),toggle:document.querySelector('#touchToggle'),keys,actionsRoot:document.querySelector('#vehicleActions'),actionsToggle:document.querySelector('#actionsToggle')});
 if(typeof preferences.touchControls==='boolean')controls.setEnabled(preferences.touchControls);
@@ -482,7 +490,7 @@ function landingSound(impact){gameAudio.play(audioCannon?'cannon-land':'ramp-lan
 function honk(){gameAudio.horn();}
 
 document.querySelector('#gameLoading').dataset.phase='turbo-assets';
-await turboReady;
+// Optional pickups continue loading without delaying entry into gameplay.
 const turboHud=new TurboHud(),turboEffects=new TurboEffects(vehicleRoot);
 addEventListener('pagehide',e=>{if(!e.persisted)turboEffects.dispose();});
 // Safari can cache this live page on navigation; preserve its audio manager for return.
@@ -496,7 +504,9 @@ if(audioVehicle!==index){audioAirborne=!!flight;audioVehicle=index;}
 for(const tree of treeCollisions.trees){const previous=treeAudioStates.get(tree);if(previous==='FALLING'&&tree.state==='FALLEN')gameAudio.play('tree-thud',{cooldown:.15});if(previous==='FALLEN'&&tree.state==='RECOVERING')gameAudio.play('wood-creak',{cooldown:1.5,intensity:.35});treeAudioStates.set(tree,tree.state);}
 const cfg=configs[index];treeCollisions.setVehicles([{position,heading,bounds:cfg.collision,airborne:!!flight}]);treeCollisions.update(dt);rockInteractions.setVehicles([{position,heading,bounds:cfg.collision,airborne:!!flight}]);rockInteractions.update(dt);const pad=navigator.getGamepads?.()[0];
 
-const drivingInput=controls.read(speed,pad);
+const loadingActive=!window.gameLoadingScreen.canPlay;
+if(loadingActive){keys.clear();controls.clear();}
+const drivingInput=controls.read(speed,loadingActive?null:pad);
 rapierController.turbo.request(controls.turboInput.held&&drivingInput.accelerate&&!garage.open);
 const forward=drivingInput.accelerate,back=drivingInput.reverse,emergencyBrake=drivingInput.emergencyBrake;
 steer=smoothDrivingSteering(steer,drivingInput,cfg,dt);
@@ -598,7 +608,7 @@ if(window.rallyQA&&new URLSearchParams(location.search).has('driveProbe')){
 }
 // END temporary uphill driving probe
 let diagnosticFrames=0,diagnosticStart=performance.now();
-function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);wordHunt?.update(dt,vehicleRoot.position,garage.open||document.hidden);if(garage.open){gameAudio.stopAll();}if(!garage.open){update(dt);storybookBackground?.update(dt);groundTextures.update();groundDetails.update(camera.position);decorativeDebris?.update(camera.position);equipmentRattle.apply(vehicle,dt,{speed,bump:Math.max(0,...debrisContacts.wheels.map(c=>c.bump)),airborne:!!flight,reducedMotion:reducedMotion.matches});try{if(atmosphericEnvironment)atmosphericEnvironment.render(dt);else renderer.render(scene,camera);}finally{equipmentRattle.restore();}document.querySelector('#gameLoading').hidden=true;document.querySelector('#gameLoading').dataset.phase='ready';diagnosticFrames++;const now=performance.now();if(now-diagnosticStart>1000){if(document.body.classList.contains('show-debug'))document.querySelector('#renderTuning').textContent=Math.round(diagnosticFrames*1000/(now-diagnosticStart))+' FPS · '+renderer.info.render.calls+' draws · '+Math.round(renderer.info.render.triangles/1000)+'k triangles';diagnosticFrames=0;diagnosticStart=now;}}}animate();
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);wordHunt?.update(dt,vehicleRoot.position,garage.open||document.hidden);if(garage.open){gameAudio.stopAll();}if(!garage.open){update(dt);storybookBackground?.update(dt);groundTextures.update();groundDetails.update(camera.position);decorativeDebris?.update(camera.position);equipmentRattle.apply(vehicle,dt,{speed,bump:Math.max(0,...debrisContacts.wheels.map(c=>c.bump)),airborne:!!flight,reducedMotion:reducedMotion.matches});try{if(atmosphericEnvironment)atmosphericEnvironment.render(dt);else renderer.render(scene,camera);}finally{equipmentRattle.restore();}window.gameLoadingScreen.ready();diagnosticFrames++;const now=performance.now();if(now-diagnosticStart>1000){if(document.body.classList.contains('show-debug'))document.querySelector('#renderTuning').textContent=Math.round(diagnosticFrames*1000/(now-diagnosticStart))+' FPS · '+renderer.info.render.calls+' draws · '+Math.round(renderer.info.render.triangles/1000)+'k triangles';diagnosticFrames=0;diagnosticStart=now;}}}animate();
 
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 
