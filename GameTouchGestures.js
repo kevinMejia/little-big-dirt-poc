@@ -21,9 +21,11 @@ export function installGameTouchGuards(root = document) {
   for (const type of ['touchstart', 'touchend', 'touchcancel']) {
     on(type, event => {
       gameplayTouches = Array.from(event.touches || []).some(touch => isSurface(touch.target));
-      // Canvas interaction uses Pointer Events, not synthetic mouse clicks.
-      // Keep normal touch-to-click behavior for buttons and native form fields.
-      if (type === 'touchstart' && !isNativeUi(event) && event.target?.matches?.('canvas')) prevent(event);
+      // Canvas and driving buttons use Pointer Events. Cancel WebKit's native
+      // double-tap/hold selection recognizer before it can show the magnifier.
+      // Ordinary click-based menu buttons and native fields keep their defaults.
+      if (type === 'touchstart' && !isNativeUi(event) &&
+          event.composedPath().some(node => node.matches?.('canvas,[data-drive]'))) prevent(event);
     });
   }
   on('touchmove', event => {

@@ -38,6 +38,12 @@ with sync_playwright() as p:
         assert page.locator('input').evaluate('(e,type)=>e.dispatchEvent(new Event(type,{bubbles:true,cancelable:true}))',kind),kind
     print('PASS: gameplay browser defaults are canceled; editable/native UI defaults remain available.')
 
+    page.evaluate('''() => {
+      window.driveTouchDefaultPrevented=false;
+      document.addEventListener('touchstart',e=>{
+        if(e.target.closest?.('[data-drive]'))window.driveTouchDefaultPrevented=e.defaultPrevented;
+      });
+    }''')
     client=page.context.new_cdp_session(page)
     def point(selector,identifier):
         r=page.locator(selector).bounding_box()
@@ -46,6 +52,7 @@ with sync_playwright() as p:
     client.send('Input.dispatchTouchEvent',{'type':'touchStart','touchPoints':touches})
     state=page.evaluate('controls.read(0,null)')
     assert state['accelerate'] and state['steerLeft'],state
+    assert page.evaluate('driveTouchDefaultPrevented')
     client.send('Input.dispatchTouchEvent',{'type':'touchMove','touchPoints':[{**t,'y':t['y']-2} for t in touches]})
     state=page.evaluate('controls.read(0,null)')
     assert state['accelerate'] and state['steerLeft'],state
@@ -53,6 +60,20 @@ with sync_playwright() as p:
     state=page.evaluate('controls.read(0,null)')
     assert not state['accelerate'] and not state['steerLeft'],state
     print('PASS: simultaneous real touch drive/steer, movement and release retain independent pointer ownership.')
+
+    # Two touches followed by a hold must keep driving via Pointer Events while
+    # WebKit's touch-start default is canceled. iOS's native loupe needs device review.
+    forward=point('[data-drive=forward]',3)
+    client.send('Input.dispatchTouchEvent',{'type':'touchStart','touchPoints':[forward]})
+    client.send('Input.dispatchTouchEvent',{'type':'touchEnd','touchPoints':[]})
+    client.send('Input.dispatchTouchEvent',{'type':'touchStart','touchPoints':[forward]})
+    page.wait_for_timeout(600)
+    assert page.evaluate('driveTouchDefaultPrevented')
+    assert page.evaluate('controls.read(0,null).accelerate')
+    assert page.evaluate('getSelection().rangeCount')==0
+    client.send('Input.dispatchTouchEvent',{'type':'touchEnd','touchPoints':[]})
+    assert not page.evaluate('controls.read(0,null).accelerate')
+    print('PASS: double-tap-and-hold cancels the native touch default, retains driving and releases cleanly.')
 
     page.locator('#vehicleControlsToggle').tap()
     page.locator('#vehicleControlsToggle').tap()
