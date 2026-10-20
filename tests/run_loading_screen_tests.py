@@ -36,6 +36,15 @@ with sync_playwright() as p:
         return page
 
     page = setup()
+    # Startup must still yield/continue if the browser never supplies animation frames.
+    page.evaluate('() => {window.savedRaf=requestAnimationFrame; window.requestAnimationFrame=()=>0; window.yieldResumed=false; gameLoadingScreen.yieldToBrowser().then(()=>yieldResumed=true);}')
+    page.clock.run_for(10)
+    assert page.evaluate('yieldResumed')
+    page.evaluate('() => {window.requestAnimationFrame=savedRaf;}')
+    page.close()
+    print('PASS: initialization resumes even when animation-frame callbacks are suspended.')
+
+    page = setup()
     assert page.evaluate('initialLoadingOpacity') == '0'
     page.evaluate('gameLoadingScreen.ready()')
     page.clock.run_for(750)

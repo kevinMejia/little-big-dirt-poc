@@ -107,10 +107,10 @@
   window.gameLoadingScreen = {
     config: loadingScreenConfig,
     get canPlay() { return finished; },
-    // Two frame boundaries let the browser paint/composite before more setup work.
-    // This schedules work rather than adding a fixed loading delay.
+    // Yield a task, not animation frames: WebKit can throttle/suspend rAF during
+    // loading, low-power use or backgrounding. Startup must not depend on it.
     yieldToBrowser() {
-      return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      return new Promise(resolve => setTimeout(resolve, 0));
     },
     ready() {
       if (rendered || failed) return;

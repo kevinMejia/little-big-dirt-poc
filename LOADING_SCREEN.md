@@ -101,3 +101,15 @@ restored in the settings shadow root. Existing page overscroll prevention stays
 in place. `python tests/run_game_touch_tests.py` checks cancellation scope, native
 form editing, real simultaneous Chromium touch pointers, repeat taps and cleanup.
 Physical iOS callout/magnifier and pinch behavior still requires device review.
+
+
+## Startup scheduling recovery
+
+The first mobile optimization used two animation-frame callbacks per startup
+batch. That can multiply loading time when iOS throttles frame callbacks, or
+prevent a batch from resuming when frame callbacks are suspended. Startup now
+uses task yields (`setTimeout(..., 0)`) and does not wait on animation frames.
+CSS still owns loading animations. The controller URL is versioned again to avoid
+mixing cached old scheduling code with the updated page. This addresses an
+identified scheduling risk; the reported physical-device hang still needs a
+retry on the updated deployment to confirm its cause.
