@@ -62,6 +62,12 @@ export function installNavigation(){
  function destination(item){
   const row=document.createElement(item.action?'button':item.path?'a':'div');row.textContent=item.label;
   if(item.path){row.href=navigationURL(item).href;if(navigationItemActive(item,active))row.setAttribute('aria-current',item.id===active?'page':'location');
+   // Resume the existing Play document; a navigation would rebuild its scene,
+   // reset the session and replay the loading overlay. Keep native new-tab links.
+   if(item.id==='play'&&active==='play')row.addEventListener('click',event=>{
+    if(event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
+    event.preventDefault();dialog.close();
+   });
 
   }
   else if(item.action){row.type='button';row.className='settings';row.addEventListener('click',()=>{dialog.addEventListener('close',openSettingsPanel,{once:true});dialog.close();});}
