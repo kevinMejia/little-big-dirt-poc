@@ -84,3 +84,20 @@ that the indicator appears and that the gear's actual computed rotation changes.
 Reduce Motion deliberately disables these animations and simplifies the exit;
 iPhone Low Power Mode may also reduce animation frame rates. The current checks
 cannot establish the cause on a specific physical iPhone without device evidence.
+
+The slower-CPU Chromium startup smoke test reached gameplay without uncaught
+errors, then reached 26 MPH while holding keyboard drive across 12 rendered
+frames. This is emulation using software graphics, not an iPhone benchmark.
+
+## Play touch gesture guards
+
+`GameTouchGestures.js` installs scoped, non-passive WebKit gesture/touch guards on
+Play surfaces. CSS disables native touch gestures, selection, dragging and iOS
+callouts on the canvas and driving controls. Pointer Events still own driving,
+steering, camera orbit and independent multi-touch; the guard does not stop event
+propagation or cancel button clicks. Native selects, text fields, navigation and
+settings dialogs retain their normal interaction. Text editing is explicitly
+restored in the settings shadow root. Existing page overscroll prevention stays
+in place. `python tests/run_game_touch_tests.py` checks cancellation scope, native
+form editing, real simultaneous Chromium touch pointers, repeat taps and cleanup.
+Physical iOS callout/magnifier and pinch behavior still requires device review.

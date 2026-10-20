@@ -8,7 +8,7 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parents[1]
 html = (ROOT / 'index.html').read_text()
 css = re.search(r'<style>([\s\S]*?)</style>', html)[1]
-overlay = html[html.index('<div id="gameLoading"'):html.index('<script src="./LoadingScreen.js"')]
+overlay = html[html.index('<div id="gameLoading"'):html.index('<script src="./LoadingScreen.js')]
 controller = (ROOT / 'LoadingScreen.js').read_text()
 
 with sync_playwright() as p:
@@ -25,6 +25,10 @@ with sync_playwright() as p:
         page.clock.pause_at(1000)
         page.add_script_tag(content=controller)
         page.evaluate('''() => {
+          // CSS has its own timeline; normalize its start after fixture downloads.
+          // JS timers are controlled separately so compositor behavior is still real.
+          for(const animation of gameLoading.getAnimations({subtree:true})) animation.currentTime=0;
+          window.initialLoadingOpacity=getComputedStyle(document.querySelector('.loading-indicator')).opacity;
           window.events=[];
           new MutationObserver(() => events.push({at:performance.now(),hidden:gameLoading.hidden,exit:gameLoading.classList.contains('loading-exit')})).observe(gameLoading,{attributes:true});
           window.began=performance.now();
@@ -32,7 +36,7 @@ with sync_playwright() as p:
         return page
 
     page = setup()
-    assert page.locator('.loading-indicator').evaluate('(e)=>getComputedStyle(e).opacity') == '0'
+    assert page.evaluate('initialLoadingOpacity') == '0'
     page.evaluate('gameLoadingScreen.ready()')
     page.clock.run_for(750)
     assert page.locator('#gameLoading').is_visible()
