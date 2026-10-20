@@ -128,7 +128,7 @@ to{transform:translate3d(-8px,-26px,0) rotate(-18deg) scale(.95,1.09)}
 </style>
 
 <script type="importmap">{"imports":{"./WorldEnvironmentConfig.js":"./WorldEnvironmentConfig.js?v=contact-motion-1","three":"https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/","./TuningStore.js":"./TuningStore.js?v=turbo-integration-charge-2","./SettingsPanel.js":"./SettingsPanel.js?v=turbo-integration-charge-2","./VehicleConfig.js":"./VehicleConfig.js?v=turbo-charge-2","./RapierWorldVehicle.js":"./RapierWorldVehicle.js?v=turbo-charge-2","./ArcadeGroundDrive.js":"./ArcadeGroundDrive.js?v=turbo-charge-2","./DrivingInput.js":"./DrivingInput.js?v=turbo-charge-2","./VisualPolish.js":"./VisualPolish.js?v=contact-motion-1","./TurboBoost.js":"./TurboBoost.js?v=turbo-charge-2","./TurboPickupSystem.js":"./TurboPickupSystem.js?v=turbo-charge-2","./DirtJumpSystem.js":"./DirtJumpSystem.js?v=turbo-charge-2","./WorldAppearance.js?v=expanded-1":"./WorldAppearance.js?v=world-polish-1","./GroundDebrisSystem.js?v=expanded-1":"./GroundDebrisSystem.js?v=turbo-charge-2","./RapierWorldVehicle.js?v=rapier-world-5":"./RapierWorldVehicle.js?v=turbo-charge-2","./GroundTextures.js":"./GroundTextures.js?v=world-polish-1","./StorybookBackgroundConfig.js":"./StorybookBackgroundConfig.js?v=world-polish-1"}}</script>
-<script type="module" src="./SharedNavigation.js?v=touch-ui-1"></script><link rel="stylesheet" href="./TurboHud.css">
+<script type="module" src="./SharedNavigation.js?v=touch-ui-1"></script><link rel="stylesheet" href="./TurboHud.css"><link rel="stylesheet" href="./MobileDrivingControls.css?v=tire-controls-1">
 </head>
 
 <body>
@@ -151,7 +151,7 @@ to{transform:translate3d(-8px,-26px,0) rotate(-18deg) scale(.95,1.09)}
 
 <div id="help"><kbd>W</kbd> / <kbd>↑</kbd> Drive &nbsp; <kbd>S</kbd> / <kbd>↓</kbd> Reverse &nbsp; <kbd>A</kbd><kbd>D</kbd> Steer &nbsp; <kbd>Space</kbd> Brake &nbsp; <kbd>E</kbd> Emergency brake &nbsp; <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> Switch vehicle (hold for garage) &nbsp; <kbd>R</kbd> Reset &nbsp; <kbd>H</kbd> Honk</div>
 
-<div id="mobile" role="group" aria-label="Touch driving controls" hidden>
+<div id="mobile" data-illustrated-controls data-art-loading role="group" aria-label="Touch driving controls" hidden>
 <div class="cluster"><button type="button" class="touch" data-drive="left" aria-label="Steer left" aria-pressed="false">◀</button><button type="button" class="touch" data-drive="right" aria-label="Steer right" aria-pressed="false">▶</button></div>
 <div class="cluster"><button type="button" class="touch reverse" data-drive="back" aria-label="Brake and reverse" aria-pressed="false">▼</button><button type="button" class="touch accelerator" data-drive="forward" aria-label="Accelerate" aria-pressed="false">▲</button></div>
 <div id="actionArea"><div id="vehicleActions" hidden></div><button id="actionsToggle" type="button" aria-expanded="false" aria-controls="vehicleActions" hidden>Actions</button></div>
@@ -192,6 +192,7 @@ import { worldAppearance, createWorldAtmosphere, createTerrainPainter, createSce
 import { cameraSettings, groundDebrisConfig, jumpConfig } from './VehicleConfig.js';
 
 import { DrivingInput } from './DrivingInput.js';
+import {installMobileDrivingControls} from './MobileDrivingControls.js?v=tire-controls-1';
 import {installGameTouchGuards} from './GameTouchGestures.js?v=touch-hold-2';
 installGameTouchGuards();
 import { getSpeedMultiplier } from './VehicleMotion.js';
@@ -419,6 +420,7 @@ document.querySelector('#rallyBtn').onclick=()=>{
 const keys=new Set();addEventListener('keydown',e=>{if(!window.gameLoadingScreen.canPlay)return;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys.add(e.code);if(garage.open)return;if(e.repeat)return;if(e.code==='KeyR')reset();if(e.code==='KeyH')honk()});addEventListener('keyup',e=>keys.delete(e.code));addEventListener('blur',()=>keys.clear());
 
 const controls=new DrivingInput({root:document.querySelector('#mobile'),toggle:document.querySelector('#touchToggle'),keys,actionsRoot:document.querySelector('#vehicleActions'),actionsToggle:document.querySelector('#actionsToggle')});
+const mobileDrivingControls=installMobileDrivingControls();
 if(typeof preferences.touchControls==='boolean')controls.setEnabled(preferences.touchControls);
 document.querySelector('#touchToggle').addEventListener('click',()=>saveGamePreference(preferenceStorage,'touchControls',controls.enabled));
 function applyControlPreference(){const saved=readGamePreferences(preferenceStorage),enabled=typeof saved.touchControls==='boolean'?saved.touchControls:navigator.maxTouchPoints>0||matchMedia('(any-pointer: coarse)').matches;if(enabled!==controls.enabled)controls.setEnabled(enabled);}
@@ -529,6 +531,7 @@ let slope=0;
 
 turboPickups?.update(dt,position,rapierController);
 const boostRemaining=rapierController?.turbo.remaining??0;
+mobileDrivingControls.updateTurbo(rapierController.turbo.active);
 turboHud.update(rapierController.turbo);
 turboEffects.update(dt,rapierController.turbo.active,configs[index].collision.rear);
 if(!audioAirborne&&flight&&!audioCannon)gameAudio.play('ramp-takeoff',{cooldown:.3});

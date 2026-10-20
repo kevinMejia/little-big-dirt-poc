@@ -25,6 +25,6 @@ export class TurboHud {
   const requested=Math.max(.1,turboBoostConfig.turboHudScale);
   const size=Math.max(24,Math.min(120*requested,innerWidth-32,innerHeight-bottom-90));
   const key=`${size}:${bottom}`;
-  if(key!==this.layoutKey){e.style.setProperty('--turbo-hud-size',size+'px');e.style.setProperty('--turbo-hud-bottom',bottom+'px');this.layoutKey=layoutKey;}
+  if(key!==this.layoutKey){e.style.setProperty('--turbo-hud-size',size+'px');e.style.setProperty('--turbo-hud-bottom',bottom+'px');mobile?.style.setProperty('--drive-hud-size',size+'px');this.layoutKey=layoutKey;}
  }
 }

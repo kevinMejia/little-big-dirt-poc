@@ -1,0 +1,34 @@
+/* All adjustable defaults live in mobileControlsConfig in MobileDrivingControls.js. */
+#mobile[data-illustrated-controls]{
+ --drive-left:max(var(--drive-horizontal-inset),env(safe-area-inset-left));
+ --drive-right:max(var(--drive-horizontal-inset),env(safe-area-inset-right));
+ --drive-size:max(44px,min(var(--drive-button-size),calc((100vw - var(--drive-left) - var(--drive-right) - 4 * var(--drive-button-gap)) / 4),30svh));
+ --control-size:var(--drive-size);
+ left:var(--drive-left);right:var(--drive-right);bottom:max(var(--drive-bottom-inset),env(safe-area-inset-bottom));
+}
+#mobile[data-illustrated-controls]>.cluster{gap:var(--drive-button-gap)}
+#mobile[data-illustrated-controls] .drive-art{
+ position:relative;flex:none;width:var(--drive-size);height:var(--drive-size);min-width:44px;min-height:44px;
+ padding:0;border:0;border-radius:50%;clip-path:circle(50%);background:none;box-shadow:none;
+ color:inherit;font-size:0;transform:none;transition:none;overflow:visible;
+}
+#mobile[data-illustrated-controls] .drive-art img{
+ position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;
+ -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-user-drag:none;opacity:0;
+ transform:scale(var(--art-press,1)) var(--art-transform,translate(0,0));transition:transform 80ms ease-out;
+}
+#mobile[data-illustrated-controls] .drive-art:not(.pressed) .art-normal:not(.art-turbo),
+#mobile[data-illustrated-controls] .drive-art.pressed .art-pressed:not(.art-turbo){opacity:1}
+#mobile[data-illustrated-controls][data-turbo-active] .drive-art.accelerator img:not(.art-turbo){opacity:0}
+#mobile[data-turbo-active] .drive-art.accelerator:not(.pressed) .art-turbo.art-normal,
+#mobile[data-turbo-active] .drive-art.accelerator.pressed .art-turbo.art-pressed{opacity:1}
+/* Supplied blue pair has alpha bounds x72..378/y59..342 vs regular x22..378.
+   Uniform scaling plus translation centers the original pixels without editing them. */
+#mobile[data-illustrated-controls] .drive-art .art-turbo{--art-transform:translate(-7.271%, -.145%) scale(1.1634)}
+#mobile[data-illustrated-controls] .drive-art.pressed img{--art-press:var(--drive-pressed-scale)}
+#mobile[data-illustrated-controls] .drive-art:focus-visible{outline:3px solid #fff2b5;outline-offset:-3px}
+#mobile[data-art-loading] .drive-art{visibility:hidden;pointer-events:none}
+#mobile[data-illustrated-controls] #actionArea{right:max(calc(var(--drive-size) + var(--drive-button-gap)),calc(var(--drive-hud-size,120px) + var(--drive-button-gap)));bottom:calc(var(--drive-size) + var(--drive-button-gap));max-width:calc(100% - var(--drive-size) - var(--drive-button-gap))}
+#mobile .control-art-retry{position:absolute;right:0;bottom:0;pointer-events:auto;font:700 14px system-ui;min-height:44px}
+
+@media(prefers-reduced-motion:reduce){#mobile[data-illustrated-controls] .drive-art img{transition:none}}
