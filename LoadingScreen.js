@@ -22,7 +22,6 @@
   let minimumTimer, exitTimer;
   for (const [property, value] of Object.entries({
     '--logo-scale': loadingScreenConfig.logoScale,
-    '--logo-delay': `${loadingScreenConfig.logoInitialDelay}ms`,
     '--gear-size-max': `${loadingScreenConfig.gearSize}px`,
     '--label-size-max': `${loadingScreenConfig.loadingTextSize}px`,
     '--logo-move': `${loadingScreenConfig.logoMoveDistance}px`,
@@ -107,11 +106,6 @@
   window.gameLoadingScreen = {
     config: loadingScreenConfig,
     get canPlay() { return finished; },
-    // Yield a task, not animation frames: WebKit can throttle/suspend rAF during
-    // loading, low-power use or backgrounding. Startup must not depend on it.
-    yieldToBrowser() {
-      return new Promise(resolve => setTimeout(resolve, 0));
-    },
     ready() {
       if (rendered || failed) return;
       rendered = true;

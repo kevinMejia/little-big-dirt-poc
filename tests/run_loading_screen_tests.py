@@ -8,7 +8,7 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parents[1]
 html = (ROOT / 'index.html').read_text()
 css = re.search(r'<style>([\s\S]*?)</style>', html)[1]
-overlay = html[html.index('<div id="gameLoading"'):html.index('<script src="./LoadingScreen.js')]
+overlay = html[html.index('<div id="gameLoading"'):html.index('<script src="./LoadingScreen.js"')]
 controller = (ROOT / 'LoadingScreen.js').read_text()
 
 with sync_playwright() as p:
@@ -17,7 +17,7 @@ with sync_playwright() as p:
 
     def setup(width=1280, height=800, reduced=False):
         page = browser.new_page(viewport={'width': width, 'height': height}, reduced_motion='reduce' if reduced else 'no-preference')
-        page.route('https://loading.test/assets/logo-lossless.webp', lambda route: route.fulfill(path=str(ROOT / 'assets/logo-lossless.webp'), content_type='image/webp'))
+        page.route('https://loading.test/assets/logo.png', lambda route: route.fulfill(path=str(ROOT / 'assets/logo.png'), content_type='image/png'))
         page.route('https://loading.test/assets/fonts/PatrickHand-Regular.ttf', lambda route: route.fulfill(path=str(ROOT / 'assets/fonts/PatrickHand-Regular.ttf'), content_type='font/ttf', headers={'Access-Control-Allow-Origin': '*'}))
         page.set_content(f'<base href="https://loading.test/"><style>{css}</style>{overlay}')
         assert page.locator('.loading-logo').evaluate('(e)=>e.complete && e.naturalWidth === 1706 && e.naturalHeight === 922')
@@ -25,10 +25,6 @@ with sync_playwright() as p:
         page.clock.pause_at(1000)
         page.add_script_tag(content=controller)
         page.evaluate('''() => {
-          // CSS has its own timeline; normalize its start after fixture downloads.
-          // JS timers are controlled separately so compositor behavior is still real.
-          for(const animation of gameLoading.getAnimations({subtree:true})) animation.currentTime=0;
-          window.initialLoadingOpacity=getComputedStyle(document.querySelector('.loading-indicator')).opacity;
           window.events=[];
           new MutationObserver(() => events.push({at:performance.now(),hidden:gameLoading.hidden,exit:gameLoading.classList.contains('loading-exit')})).observe(gameLoading,{attributes:true});
           window.began=performance.now();
@@ -36,16 +32,7 @@ with sync_playwright() as p:
         return page
 
     page = setup()
-    # Startup must still yield/continue if the browser never supplies animation frames.
-    page.evaluate('() => {window.savedRaf=requestAnimationFrame; window.requestAnimationFrame=()=>0; window.yieldResumed=false; gameLoadingScreen.yieldToBrowser().then(()=>yieldResumed=true);}')
-    page.clock.run_for(10)
-    assert page.evaluate('yieldResumed')
-    page.evaluate('() => {window.requestAnimationFrame=savedRaf;}')
-    page.close()
-    print('PASS: initialization resumes even when animation-frame callbacks are suspended.')
-
-    page = setup()
-    assert page.evaluate('initialLoadingOpacity') == '0'
+    assert page.locator('.loading-indicator').evaluate('(e)=>getComputedStyle(e).opacity') == '0'
     page.evaluate('gameLoadingScreen.ready()')
     page.clock.run_for(750)
     assert page.locator('#gameLoading').is_visible()
@@ -53,7 +40,7 @@ with sync_playwright() as p:
     page.clock.run_for(950)
     assert page.locator('#loadingMessage').inner_text() == 'Loading...'
     assert page.locator('.gear-spinner').evaluate('(e)=>getComputedStyle(e).animationDuration') == '2s'
-    assert page.locator('.loading-logo').evaluate('(e)=>getComputedStyle(e).animationDuration') == '0.6s'
+    assert page.locator('.loading-logo').evaluate('(e)=>getComputedStyle(e).transitionDuration') == '0.6s'
     assert not page.evaluate('gameLoadingScreen.canPlay')
     page.clock.run_for(1000)
     assert page.evaluate('gameLoadingScreen.canPlay')
@@ -94,18 +81,5 @@ with sync_playwright() as p:
     page.clock.run_for(1000)
     assert page.evaluate('gameLoadingScreen.canPlay')
     page.close()
-    print('PASS: reduced motion disables animation and preserves minimum duration.')
-
-    # Pause JS timers while real compositor animation time advances. The visual
-    # sequence must not depend on the indicator's JavaScript timer firing.
-    page = setup(844, 390)
-    page.wait_for_timeout(1800)
-    assert not page.locator('#gameLoading').evaluate('(e)=>e.classList.contains("indicator-visible")')
-    assert float(page.locator('.loading-indicator').evaluate('(e)=>getComputedStyle(e).opacity')) > .95
-    first = page.locator('.gear-spinner').evaluate('(e)=>getComputedStyle(e).transform')
-    page.wait_for_timeout(200)
-    second = page.locator('.gear-spinner').evaluate('(e)=>getComputedStyle(e).transform')
-    assert first != second, (first, second)
-    page.close()
     browser.close()
-    print('PASS: indicator appears and gear visibly rotates even with JavaScript timers paused.')
+    print('PASS: reduced motion disables animation and preserves minimum duration.')

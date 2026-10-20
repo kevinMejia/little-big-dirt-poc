@@ -7,7 +7,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 
 <title>Little Big Dirt | Driving Sandbox</title>
-<link rel="preload" as="image" href="./assets/logo-lossless.webp" fetchpriority="high">
+<link rel="preload" as="image" href="./assets/logo.png" fetchpriority="high">
 
 <style>
 
@@ -90,27 +90,23 @@ body[data-lbd-controls-guide="true"] #help{display:block!important;max-width:cal
 @media(prefers-reduced-motion:reduce){#vehicleControls #switcher{transition:none}}
 @font-face{font-family:"Patrick Hand";src:url("./assets/fonts/PatrickHand-Regular.ttf") format("truetype");font-display:swap}
 /* Loading configuration is in LoadingScreen.js. Beige first paint stays inline. */
-#gameLoading{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;background:#f5dfaa;color:#24332c;text-align:center;font-family:"Patrick Hand","Comic Sans MS","Chalkboard SE",cursive;overflow:hidden;opacity:1;will-change:opacity;isolation:isolate;transition:opacity var(--exit-fade,500ms) ease-in-out;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+#gameLoading{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;background:#f5dfaa;color:#24332c;text-align:center;font-family:"Patrick Hand","Comic Sans MS","Chalkboard SE",cursive;overflow:hidden;opacity:1;transition:opacity var(--exit-fade,500ms) ease-in-out;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 #gameLoading::before,#gameLoading::after{content:"";position:absolute;width:78vmin;height:78vmin;background:#ead095;pointer-events:none;will-change:transform;backface-visibility:hidden;animation:loading-blob 12s cubic-bezier(.45,0,.55,1) infinite alternate}
 #gameLoading::before{border-radius:44% 56% 47% 53% / 53% 45% 55% 47%;transform:translate3d(-8px,-26px,0) rotate(-8deg) scale(.96,1.06)}
 #gameLoading::after{border-radius:56% 44% 54% 46% / 45% 56% 44% 55%;animation-name:loading-blob-back;transform:translate3d(8px,-12px,0) rotate(8deg) scale(1.06,.96)}
 
 #gameLoading .loading-content{position:relative;z-index:1;width:100%;height:100%;display:grid;place-items:center;--logo-width:min(calc(34vw * var(--logo-scale,1.2)),calc(52svh * var(--logo-scale,1.2)),90vw,100svh,1706px);--logo-height:calc(var(--logo-width) * .540445);--move:min(var(--logo-move,60px),8svh);--gear-size:clamp(32px,6.5svh,var(--gear-size-max,70px));--label-size:clamp(24px,6svh,var(--label-size-max,64px))}
-#gameLoading .loading-logo{position:absolute;width:var(--logo-width);height:auto;max-height:60svh;object-fit:contain;margin:0;transform:translate3d(0,0,0);will-change:transform;animation:loading-logo-rise var(--logo-duration,600ms) ease-in-out var(--logo-delay,1000ms) both}
-@keyframes loading-logo-rise{from{transform:translate3d(0,0,0)}to{transform:translate3d(0,calc(-1 * var(--move)),0)}}
-#gameLoading .loading-indicator{position:absolute;top:calc(50% + var(--logo-height) / 2 - var(--move) + 12px);display:grid;justify-items:center;gap:clamp(6px,1.5svh,16px);opacity:0;will-change:opacity;animation:loading-indicator-in var(--indicator-fade,400ms) ease-in-out var(--logo-delay,1000ms) both}
-@keyframes loading-indicator-in{from{opacity:0}to{opacity:1}}
-#gameLoading .gear-spinner{width:var(--gear-size);aspect-ratio:1;transform:translateZ(0);will-change:transform;backface-visibility:hidden}
-#gameLoading:not(.loading-error) .gear-spinner{animation:loading-turn var(--gear-duration,2000ms) linear var(--logo-delay,1000ms) infinite}
-#gameLoading .loading-gear{display:block;width:100%;height:100%}
+#gameLoading .loading-logo{position:absolute;width:var(--logo-width);height:auto;max-height:60svh;object-fit:contain;margin:0;transform:translateY(0);transition:transform var(--logo-duration,600ms) ease-in-out}
+#gameLoading.indicator-visible .loading-logo{transform:translateY(calc(-1 * var(--move)))}
+#gameLoading .loading-indicator{position:absolute;top:calc(50% + var(--logo-height) / 2 - var(--move) + 12px);display:grid;justify-items:center;gap:clamp(6px,1.5svh,16px);opacity:0;visibility:hidden;transition:opacity var(--indicator-fade,400ms) ease-in-out}
+#gameLoading.indicator-visible .loading-indicator{opacity:1;visibility:visible}
+#gameLoading .gear-spinner{width:var(--gear-size);aspect-ratio:1}
+#gameLoading.indicator-visible:not(.loading-error):not(.loading-exit) .gear-spinner{animation:loading-turn var(--gear-duration,2000ms) linear infinite}
+#gameLoading .loading-gear{display:block;width:100%;height:100%;filter:drop-shadow(2px 2px 0 #b98b38)}
 #gameLoading h2{font-size:var(--label-size);font-weight:900;letter-spacing:1px;margin:0;line-height:1.2;text-shadow:2px 3px #fff1cc}
 #gameLoading button{border:2px solid #273a30;border-radius:14px;background:#e9b72d;color:#24332c;padding:10px 20px;font:700 16px system-ui;cursor:pointer}
 #gameLoading[hidden],#gameLoading button[hidden]{display:none}
 #gameLoading.loading-exit{opacity:0}
-#gameLoading.loading-exit .loading-logo,#gameLoading.loading-exit .loading-indicator,#gameLoading.loading-exit .gear-spinner{animation-play-state:paused}
-#gameLoading[hidden] .gear-spinner{animation:none}
-#gameLoading.loading-error .loading-logo{animation:none;transform:translate3d(0,calc(-1 * var(--move)),0)}
-#gameLoading.loading-error .loading-indicator{animation:none;opacity:1}
 #gameLoading.loading-exit::before,#gameLoading.loading-exit::after,#gameLoading.loading-error::before,#gameLoading.loading-error::after{animation:none}
 #gameLoading.loading-error .loading-indicator{top:auto;bottom:max(12px,env(safe-area-inset-bottom));max-width:94%;gap:6px}
 #gameLoading.loading-error h2{font-size:clamp(18px,4svh,32px)}
@@ -127,7 +123,7 @@ from{transform:translate3d(8px,-12px,0) rotate(8deg) scale(1.06,.96)}
 to{transform:translate3d(-8px,-26px,0) rotate(-18deg) scale(.95,1.09)}
 }
 @keyframes loading-turn{from{transform:translateZ(0) rotate(0deg)}to{transform:translateZ(0) rotate(360deg)}}
-@media(prefers-reduced-motion:reduce){#gameLoading.indicator-visible .loading-indicator{opacity:1}#gameLoading.indicator-visible .loading-logo{transform:translate3d(0,calc(-1 * var(--move)),0)}#gameLoading *,#gameLoading::before,#gameLoading::after{animation:none!important;transition:none!important}}
+@media(prefers-reduced-motion:reduce){#gameLoading *,#gameLoading::before,#gameLoading::after{animation:none!important;transition:none!important}}
 
 </style>
 
@@ -137,11 +133,11 @@ to{transform:translate3d(-8px,-26px,0) rotate(-18deg) scale(.95,1.09)}
 
 <body>
 <div id="gameLoading" role="status" aria-live="polite" aria-label="Loading Little Big Dirt">
- <div class="loading-content"><img class="loading-logo" src="./assets/logo-lossless.webp" width="1706" height="922" alt="Little Big Dirt" fetchpriority="high" decoding="async">
+ <div class="loading-content"><img class="loading-logo" src="./assets/logo.png" width="1706" height="922" alt="Little Big Dirt" fetchpriority="high" decoding="sync">
  <div class="loading-indicator" aria-hidden="true"><div class="gear-spinner" aria-hidden="true"><svg class="loading-gear" viewBox="0 0 200 200" aria-hidden="true"><path d="M168.00,100.00 L184.27,111.09 L182.10,122.00 L162.82,126.02 L158.89,134.00 L167.44,151.74 L160.10,160.10 L141.40,153.95 L134.00,158.89 L132.53,178.53 L122.00,182.10 L108.88,167.42 L100.00,168.00 L88.91,184.27 L78.00,182.10 L73.98,162.82 L66.00,158.89 L48.26,167.44 L39.90,160.10 L46.05,141.40 L41.11,134.00 L21.47,132.53 L17.90,122.00 L32.58,108.88 L32.00,100.00 L15.73,88.91 L17.90,78.00 L37.18,73.98 L41.11,66.00 L32.56,48.26 L39.90,39.90 L58.60,46.05 L66.00,41.11 L67.47,21.47 L78.00,17.90 L91.12,32.58 L100.00,32.00 L111.09,15.73 L122.00,17.90 L126.02,37.18 L134.00,41.11 L151.74,32.56 L160.10,39.90 L153.95,58.60 L158.89,66.00 L178.53,67.47 L182.10,78.00 L167.42,91.12 Z M128,100 A28,28 0 1,0 72,100 A28,28 0 1,0 128,100 Z" fill="#efb923" stroke="#354034" stroke-width="5" stroke-linejoin="round" fill-rule="evenodd"/></svg></div>
  <h2 id="loadingMessage">Loading...</h2><button id="loadingRetry" type="button" hidden>Try again</button></div></div>
 </div>
-<script src="./LoadingScreen.js?v=mobile-startup-3"></script>
+<script src="./LoadingScreen.js"></script>
 
 
 <div id="hud"><div class="subtitle">FREE DRIVE</div><h1>LITTLE BIG DIRT</h1><div id="vehicleName">Backhoe Loader</div><div id="speed">0 <small>MPH</small></div><button id="debugToggle" type="button" aria-label="Toggle driving diagnostics" aria-pressed="false" title="Driving diagnostics">i</button><div id="treeTuning" style="font-size:11px;color:#ffe5a0;margin-top:6px"></div><div id="renderTuning" style="font-size:10px;color:#c6e3d5;margin-top:4px"></div><div id="terrainInfo" style="font-size:11px;color:#c6e3d5;margin-top:6px">Explore the hills!</div></div>
@@ -220,7 +216,7 @@ debugToggle.onclick=()=>{toggleDiagnostics(!document.body.classList.contains('sh
 toggleDiagnostics(new URLSearchParams(location.search).has('debug')||preferences.diagnostics===true);
 
 document.querySelector('#gameLoading').dataset.phase='terrain';
-await window.gameLoadingScreen.yieldToBrowser();
+await new Promise(resolve=>setTimeout(resolve,0));
 const scene=new THREE.Scene();scene.background=new THREE.Color(0xb5e1ee);
 
 const camera=new THREE.PerspectiveCamera(66,innerWidth/innerHeight,.1,600);
@@ -251,24 +247,20 @@ function groundNormal(x,z){const e=.7;return new THREE.Vector3(surfaceHeight(x-e
 
 // Full width is configurable; procedural coordinates and ramp dimensions stay fixed.
 
-await window.gameLoadingScreen.yieldToBrowser();
 const world=mapSettings.halfSize,baseWorldSurface=worldJumps.createWorldSurface(world,2,handlingCourse ? .75 : 1.5);
 const rallyRoads=rallyEnabled?[rallyTrack.createRoad(),rallyAccess.createRoad()]:[];
 const worldSurface=rallyEnabled?extendRallySurface(baseWorldSurface,rallyLandscape,rallyRoads,rallyTrackConfig):baseWorldSurface;
 const driveBounds=rallyEnabled?{minX:-world+mapSettings.boundaryInset,maxX:world+rallyTrackConfig.extension-mapSettings.boundaryInset,minZ:-world+mapSettings.boundaryInset,maxZ:world-mapSettings.boundaryInset}:world-mapSettings.boundaryInset;
 const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(worldSurface.terrainVertices??worldSurface.vertices,3));geo.setIndex(new THREE.BufferAttribute(worldSurface.terrainIndices??worldSurface.indices,1));const pos=geo.attributes.position,colors=[];
 
-await window.gameLoadingScreen.yieldToBrowser();
 const terrainPainter=createTerrainPainter(surfaceHeight,220),terrainColor=new THREE.Color();
 const baseSurface=terrainPainter.surface,baseColor=terrainPainter.sampleColor,rampSoil=new THREE.Color(0xb59057);
 terrainPainter.surface=(x,z)=>{const field=baseSurface(x,z),ramp=Math.max(worldJumps.dirtMask(x,z),rallyLandscape?.dirtMask(x,z)??0);return {...field,ramp,path:Math.max(field.path,ramp),dirtMask:Math.max(field.dirtMask,ramp)};};
 terrainPainter.sampleColor=(x,z,target=new THREE.Color())=>baseColor(x,z,target).lerp(rampSoil,Math.max(worldJumps.dirtMask(x,z),rallyLandscape?.dirtMask(x,z)??0)*.9);
-let terrainBatchStarted=performance.now();
-for(let i=0;i<pos.count;i++){const x=pos.getX(i),z=pos.getZ(i);if(!rallyLandscape)pos.setY(i,surfaceHeight(x,z));terrainPainter.sampleColor(x,z,terrainColor);colors.push(terrainColor.r,terrainColor.g,terrainColor.b);if(i%128===127&&performance.now()-terrainBatchStarted>=8){await window.gameLoadingScreen.yieldToBrowser();terrainBatchStarted=performance.now();}}
+for(let i=0;i<pos.count;i++){const x=pos.getX(i),z=pos.getZ(i);if(!rallyLandscape)pos.setY(i,surfaceHeight(x,z));terrainPainter.sampleColor(x,z,terrainColor);colors.push(terrainColor.r,terrainColor.g,terrainColor.b)}
 
 geo.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));geo.computeVertexNormals();const terrain=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}));terrain.receiveShadow=true;scene.add(terrain);
 
-await window.gameLoadingScreen.yieldToBrowser();
 const worldAtmosphere=createWorldAtmosphere(scene,surfaceHeight,world,worldAppearance,terrainPainter,worldSurface.bounds);
 addEventListener('pagehide',event=>{if(!event.persisted)worldAtmosphere.dispose();});
 // Crisp geometry backdrop; painted review remains available via ?storybook=1.
@@ -318,13 +310,10 @@ let seed=3184;function rand(){seed=(seed*1664525+1013904223)>>>0;return seed/429
 
 const sceneryLayout={trees:(handlingCourse?[]:originalLayout.trees).filter(t=>!rallyLandscape||!(rallyLandscape.nearest(t.x,t.z)?.distance<(rallyLandscape.nearest(t.x,t.z)?.width??0)/2+5)).filter(t=>!worldJumps.features.some(f=>rampClearance(f,t.x,t.z,t.scale*.35+3))),rocks:(handlingCourse?[]:originalLayout.rocks).filter(r=>!rallyLandscape||!(rallyLandscape.nearest(r.x,r.z)?.distance<(rallyLandscape.nearest(r.x,r.z)?.width??0)/2+5)).filter(r=>!worldJumps.features.some(f=>rampClearance(f,r.x,r.z,r.radius+4)))};
 terrainPainter.visualSurface=createTerrainDressing({trees:[...sceneryLayout.trees,...rallyPlacements.filter(p=>p.kind==='tree')],rocks:[...sceneryLayout.rocks,...rallyPlacements.filter(p=>p.kind==='rock').map(p=>({...p,radius:p.scale}))]},rallyLandscape?(x,z)=>rallyLandscape.nearest(x,z):null);
-await window.gameLoadingScreen.yieldToBrowser();
 polishTerrain(terrain,terrainPainter,sceneryLayout,world);
-await window.gameLoadingScreen.yieldToBrowser();
 const groundTextures=addGroundTextures(terrain,terrainPainter,world,renderer,undefined,worldSurface.bounds);
 addEventListener('pagehide',event=>{if(!event.persisted)groundTextures.dispose();});
-await window.gameLoadingScreen.yieldToBrowser();
-for(const [i,{x,z,scale}] of sceneryLayout.trees.entries()){makeTree(x,z,scale);if(i%16===15)await window.gameLoadingScreen.yieldToBrowser();}
+for(const {x,z,scale} of sceneryLayout.trees)makeTree(x,z,scale);
 
 const rockInteractions=new RockInteractionSystem(scene,{groundHeight:surfaceHeight,onImpact:rockImpactSound});
 function makeRock(x,z,s){rockInteractions.addRock(x,z,s);rand();rand();rand()}
@@ -348,7 +337,6 @@ addEventListener('pagehide',event=>{if(!event.persisted)surfaceEffects.dispose()
 const contactShading=new ContactShading(scene,surfaceHeight,sceneryLayout,rockInteractions);
 addEventListener('pagehide',event=>{if(!event.persisted)contactShading.dispose();});
 addEventListener('pagehide',event=>{if(!event.persisted){groundDebris.dispose();}});
-await window.gameLoadingScreen.yieldToBrowser();
 const groundDetails=createGroundDetails(scene,surfaceHeight,world,terrainPainter,sceneryLayout,worldAppearance,{areaScale:mapSettings.areaScale,viewDistance:150,kinds:['flowers']});
 let wordHunt=null;
 if(!handlingCourse)WordHuntSystem.load(scene,{halfSize:world,height:surfaceHeight,trees:sceneryLayout.trees,rocks:sceneryLayout.rocks,ramps:worldJumps.features,audio:{play:(...args)=>gameAudio.hunt(...args),dispose(){}}}).then(system=>wordHunt=system).catch(error=>console.warn('Word Hunt unavailable',error));
@@ -623,8 +611,8 @@ if(window.rallyQA&&new URLSearchParams(location.search).has('driveProbe')){
  setInterval(()=>{const q=window.rallyQA.read(),p=rapierController?.physics;output.textContent=JSON.stringify({car:q.index,speed:+q.speed.toFixed(2),y:+q.position.y.toFixed(2),u:+q.near.u.toFixed(4),edge:+(q.near.distance-q.near.width/2).toFixed(2),air:q.airborne,support:worldSurface.isContinuousRoad?.(q.position.x,q.position.z),mode:physicsMode,stats:window.driveProbeStats},null,2);},150);
 }
 // END temporary uphill driving probe
-let diagnosticFrames=0,diagnosticStart=performance.now(),firstFrameRendered=false;
-function animate(){requestAnimationFrame(animate);if(firstFrameRendered&&!window.gameLoadingScreen.canPlay){clock.getDelta();return;}const dt=Math.min(clock.getDelta(),.05);wordHunt?.update(dt,vehicleRoot.position,garage.open||document.hidden);if(garage.open){gameAudio.stopAll();}if(!garage.open){update(dt);storybookBackground?.update(dt);groundTextures.update();groundDetails.update(camera.position);decorativeDebris?.update(camera.position);equipmentRattle.apply(vehicle,dt,{speed,bump:Math.max(0,...debrisContacts.wheels.map(c=>c.bump)),airborne:!!flight,reducedMotion:reducedMotion.matches});try{if(atmosphericEnvironment)atmosphericEnvironment.render(dt);else renderer.render(scene,camera);}finally{equipmentRattle.restore();}firstFrameRendered=true;window.gameLoadingScreen.ready();diagnosticFrames++;const now=performance.now();if(now-diagnosticStart>1000){if(document.body.classList.contains('show-debug'))document.querySelector('#renderTuning').textContent=Math.round(diagnosticFrames*1000/(now-diagnosticStart))+' FPS · '+renderer.info.render.calls+' draws · '+Math.round(renderer.info.render.triangles/1000)+'k triangles';diagnosticFrames=0;diagnosticStart=now;}}}animate();
+let diagnosticFrames=0,diagnosticStart=performance.now();
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);wordHunt?.update(dt,vehicleRoot.position,garage.open||document.hidden);if(garage.open){gameAudio.stopAll();}if(!garage.open){update(dt);storybookBackground?.update(dt);groundTextures.update();groundDetails.update(camera.position);decorativeDebris?.update(camera.position);equipmentRattle.apply(vehicle,dt,{speed,bump:Math.max(0,...debrisContacts.wheels.map(c=>c.bump)),airborne:!!flight,reducedMotion:reducedMotion.matches});try{if(atmosphericEnvironment)atmosphericEnvironment.render(dt);else renderer.render(scene,camera);}finally{equipmentRattle.restore();}window.gameLoadingScreen.ready();diagnosticFrames++;const now=performance.now();if(now-diagnosticStart>1000){if(document.body.classList.contains('show-debug'))document.querySelector('#renderTuning').textContent=Math.round(diagnosticFrames*1000/(now-diagnosticStart))+' FPS · '+renderer.info.render.calls+' draws · '+Math.round(renderer.info.render.triangles/1000)+'k triangles';diagnosticFrames=0;diagnosticStart=now;}}}animate();
 
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 
