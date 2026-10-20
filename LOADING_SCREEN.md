@@ -38,8 +38,8 @@ exit, retain the overlay and show a friendly message with a reload button.
 ## Artwork
 
 `assets/logo.png` is the user's original 1706×922 transparent PNG, incorporated
-unchanged from commit `f836ff7`. The head preloads it at high priority, and the
-overlay uses an ordinary image with explicit intrinsic dimensions. No runtime
+unchanged from commit `f836ff7`. The head preloads a lossless delivery copy
+at high priority, and the overlay uses an ordinary image with explicit intrinsic dimensions. No runtime
 rendering, logo recreation, or generated replacement is used. Browser caching
 provides quick repeat visits; a first visit still needs to download the original
 image before displaying its pixels.
@@ -60,3 +60,27 @@ from 0 to 4 MPH after keyboard input. The cloud Chromium lacks the proxy CA for
 jsDelivr; that smoke test routed CDN downloads through Python's certificate-verified
 system HTTPS client without disabling TLS checks. Physical iPhone/Safari testing
 remains outstanding.
+
+## Mobile startup follow-up
+
+The iPhone report (static gear, late logo and abrupt exit) exposed avoidable
+startup scheduling dependencies. The visual sequence now uses delayed CSS
+keyframes, promoted transform/opacity layers, and no SVG drop-shadow filter, so
+its start no longer depends on the indicator's JavaScript timer. Startup yields
+to browser paints at stage boundaries and within terrain/tree batches while
+preserving calculation order and output. After the first successful render, the
+game loop avoids further scene updates/draws until the overlay finishes; this
+leaves more rendering capacity for the exit fade. Gameplay then resumes with a
+fresh clock delta. No physics parameters, graphics quality or world layout change.
+
+The preload and image use `assets/logo-lossless.webp` (1,594,698 bytes versus
+2,046,537 bytes for the PNG, about 22% smaller). Both decode to exactly the same
+1706×922 RGBA pixels; the original PNG remains unchanged. Async image decoding
+avoids requiring a synchronous decode in a busy startup frame. Network download
+and decode are still necessary on a cold visit.
+
+The loading browser suite additionally pauses JavaScript timers while confirming
+that the indicator appears and that the gear's actual computed rotation changes.
+Reduce Motion deliberately disables these animations and simplifies the exit;
+iPhone Low Power Mode may also reduce animation frame rates. The current checks
+cannot establish the cause on a specific physical iPhone without device evidence.

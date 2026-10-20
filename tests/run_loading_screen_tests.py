@@ -17,7 +17,7 @@ with sync_playwright() as p:
 
     def setup(width=1280, height=800, reduced=False):
         page = browser.new_page(viewport={'width': width, 'height': height}, reduced_motion='reduce' if reduced else 'no-preference')
-        page.route('https://loading.test/assets/logo.png', lambda route: route.fulfill(path=str(ROOT / 'assets/logo.png'), content_type='image/png'))
+        page.route('https://loading.test/assets/logo-lossless.webp', lambda route: route.fulfill(path=str(ROOT / 'assets/logo-lossless.webp'), content_type='image/webp'))
         page.route('https://loading.test/assets/fonts/PatrickHand-Regular.ttf', lambda route: route.fulfill(path=str(ROOT / 'assets/fonts/PatrickHand-Regular.ttf'), content_type='font/ttf', headers={'Access-Control-Allow-Origin': '*'}))
         page.set_content(f'<base href="https://loading.test/"><style>{css}</style>{overlay}')
         assert page.locator('.loading-logo').evaluate('(e)=>e.complete && e.naturalWidth === 1706 && e.naturalHeight === 922')
@@ -40,7 +40,7 @@ with sync_playwright() as p:
     page.clock.run_for(950)
     assert page.locator('#loadingMessage').inner_text() == 'Loading...'
     assert page.locator('.gear-spinner').evaluate('(e)=>getComputedStyle(e).animationDuration') == '2s'
-    assert page.locator('.loading-logo').evaluate('(e)=>getComputedStyle(e).transitionDuration') == '0.6s'
+    assert page.locator('.loading-logo').evaluate('(e)=>getComputedStyle(e).animationDuration') == '0.6s'
     assert not page.evaluate('gameLoadingScreen.canPlay')
     page.clock.run_for(1000)
     assert page.evaluate('gameLoadingScreen.canPlay')
@@ -81,5 +81,18 @@ with sync_playwright() as p:
     page.clock.run_for(1000)
     assert page.evaluate('gameLoadingScreen.canPlay')
     page.close()
-    browser.close()
     print('PASS: reduced motion disables animation and preserves minimum duration.')
+
+    # Pause JS timers while real compositor animation time advances. The visual
+    # sequence must not depend on the indicator's JavaScript timer firing.
+    page = setup(844, 390)
+    page.wait_for_timeout(1800)
+    assert not page.locator('#gameLoading').evaluate('(e)=>e.classList.contains("indicator-visible")')
+    assert float(page.locator('.loading-indicator').evaluate('(e)=>getComputedStyle(e).opacity')) > .95
+    first = page.locator('.gear-spinner').evaluate('(e)=>getComputedStyle(e).transform')
+    page.wait_for_timeout(200)
+    second = page.locator('.gear-spinner').evaluate('(e)=>getComputedStyle(e).transform')
+    assert first != second, (first, second)
+    page.close()
+    browser.close()
+    print('PASS: indicator appears and gear visibly rotates even with JavaScript timers paused.')

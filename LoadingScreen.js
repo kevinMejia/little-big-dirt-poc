@@ -22,6 +22,7 @@
   let minimumTimer, exitTimer;
   for (const [property, value] of Object.entries({
     '--logo-scale': loadingScreenConfig.logoScale,
+    '--logo-delay': `${loadingScreenConfig.logoInitialDelay}ms`,
     '--gear-size-max': `${loadingScreenConfig.gearSize}px`,
     '--label-size-max': `${loadingScreenConfig.loadingTextSize}px`,
     '--logo-move': `${loadingScreenConfig.logoMoveDistance}px`,
@@ -106,6 +107,11 @@
   window.gameLoadingScreen = {
     config: loadingScreenConfig,
     get canPlay() { return finished; },
+    // Two frame boundaries let the browser paint/composite before more setup work.
+    // This schedules work rather than adding a fixed loading delay.
+    yieldToBrowser() {
+      return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    },
     ready() {
       if (rendered || failed) return;
       rendered = true;
